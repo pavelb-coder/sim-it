@@ -55,6 +55,12 @@
     });
   }
 
+  function doneText(n) {
+    if (n === 1) return 'Готово: проверка пройдена.';
+    var word = (n % 10 >= 2 && n % 10 <= 4 && (n < 12 || n > 14)) ? 'проверки' : 'проверок';
+    return 'Готово: все ' + n + ' ' + word + ' пройдены.';
+  }
+
   function renderProgress() {
     var n = solvedCount();
     $('progressBar').style.width = (n / cfg.tasks.length * 100) + '%';
@@ -104,7 +110,7 @@
 
     var html = '';
     html += allOk
-      ? '<div class="summary good">✔ Готово: все ' + results.length + ' проверок пройдены.</div>'
+      ? '<div class="summary good">✔ ' + doneText(results.length) + '</div>'
       : '<div class="summary bad">Пройдено ' + passed + ' из ' + results.length + ' проверок. Ниже видно, что именно не так.</div>';
     html += '<div class="check-list">';
     results.forEach(function (r) {
