@@ -107,6 +107,7 @@
       $('ansCodeWrap').style.display = '';
       $('ansLine').value = '';
       $('ansKind').value = '';
+      if ($('secCodeBox') && task.code) $('secCodeBox').textContent = task.code;
     } else if (task.answer === 'password') {
       $('ansPassWrap').style.display = '';
       $('ansPass').value = '';

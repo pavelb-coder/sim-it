@@ -6,7 +6,7 @@
 
 ## Что уже работает
 
-**8 тренажёров, 488 задач.** Каталог: **https://pavelb-coder.github.io/sim-it/** — оттуда открывается
+**8 тренажёров, 583 задачи.** Каталог: **https://pavelb-coder.github.io/sim-it/** — оттуда открывается
 любой продукт. Каждый тренажёр — отдельный автономный HTML-файл со своей теорией, рабочей областью,
 автопроверкой и сохранением прогресса.
 
@@ -14,12 +14,12 @@
 |---|---|---|---|
 | **Python-класс** | свой интерпретатор Python в браузере, 26 тем от `print` до динамики и CSV | 239 | [`python/index.html`](python/index.html) |
 | **C++-класс** | учебное подмножество C++: типы, циклы, массивы, vector, функции, рекурсия, ДП | 211 | [`cpp/index.html`](cpp/index.html) |
-| **Терминал Linux** | виртуальная файловая система, 20+ команд, конвейеры и редиректы | 8 | [`terminal/index.html`](terminal/index.html) |
-| **Кибербезопасность** | base64, шифр Цезаря, хеши, аудит HTTP-заголовков, code review | 6 | [`security/index.html`](security/index.html) |
-| **Нейросети** | обучение перцептрона и мини-сети на canvas, граница решения, XOR | 6 | [`ai/index.html`](ai/index.html) |
-| **Сеть** | модель IPv4: подсети, шлюзы, таблицы маршрутов, настоящий `ping` | 6 | [`network/index.html`](network/index.html) |
-| **SQL** | настоящий движок запросов: SELECT/WHERE/ORDER BY/LIMIT и агрегаты | 6 | [`sql/index.html`](sql/index.html) |
-| **Веб-студия** | HTML/CSS с живым превью и проверкой вёрстки | 6 | [`web/index.html`](web/index.html) |
+| **Терминал Linux** | виртуальная файловая система, 20+ команд, шаблоны, права, перенаправления | 25 | [`terminal/index.html`](terminal/index.html) |
+| **Кибербезопасность** | base64, шифр Цезаря, хеши, аудит HTTP-заголовков, code review | 21 | [`security/index.html`](security/index.html) |
+| **Нейросети** | обучение перцептрона и мини-сети на canvas, граница решения, XOR, реальные данные | 15 | [`ai/index.html`](ai/index.html) |
+| **Сеть** | модель IPv4: подсети и маски /8…/30, шлюзы, таблицы маршрутов, настоящий `ping` | 22 | [`network/index.html`](network/index.html) |
+| **SQL** | настоящий движок запросов: SELECT/WHERE/LIKE/ORDER BY/LIMIT и агрегаты, 4 таблицы | 28 | [`sql/index.html`](sql/index.html) |
+| **Веб-студия** | HTML/CSS с живым превью и проверкой вёрстки | 22 | [`web/index.html`](web/index.html) |
 
 Все продукты работают офлайн: достаточно скачать один `index.html` и открыть двойным щелчком.
 

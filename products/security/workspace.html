@@ -38,7 +38,7 @@
     <div class="ws-label" style="margin-top:12px">Код на проверку</div>
     <div class="ws-panel">
       <div class="console" style="max-height:none;border:0;background:transparent;padding:0">
-        <div class="out" style="white-space:pre;font-family:ui-monospace,Consolas,monospace;font-size:13px">1  login = request.args.get('login')
+        <div class="out" id="secCodeBox" style="white-space:pre;font-family:ui-monospace,Consolas,monospace;font-size:13px">1  login = request.args.get('login')
 2  password = request.args.get('password')
 3  sql = "SELECT * FROM users WHERE login='" + login + "' AND password='" + password + "'"
 4  rows = db.execute(sql)
@@ -71,6 +71,7 @@
           <option value="XSS">XSS</option>
           <option value="Слабый пароль">Слабый пароль</option>
           <option value="Утечка версии сервера">Утечка версии сервера</option>
+          <option value="Внедрение команды">Внедрение команды</option>
         </select>
       </div>
 
