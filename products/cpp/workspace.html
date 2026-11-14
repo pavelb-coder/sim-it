@@ -1,0 +1,28 @@
+<div class="two-col" style="grid-template-columns:1.3fr 1fr">
+  <div>
+    <div class="ws-label">Редактор C++ <span style="color:#6b7a94">— Tab добавляет отступ, Ctrl+Enter запускает</span></div>
+    <textarea id="cppCode" class="code-area cpp-editor" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+    <div class="btn-row" style="margin-top:8px">
+      <button id="btnRun" class="btn btn-primary">▶ Запустить</button>
+      <button id="btnClearOut" class="btn">Очистить вывод</button>
+      <button id="btnResetCode" class="btn">Вернуть заготовку</button>
+    </div>
+    <div class="ws-label" style="margin-top:12px">Ввод для программы (как будто набрали с клавиатуры)</div>
+    <textarea id="cppStdin" class="code-area cpp-stdin" rows="2" spellcheck="false" placeholder="например: 2 3"></textarea>
+  </div>
+
+  <div>
+    <div class="ws-label">Вывод программы</div>
+    <pre id="cppOut" class="cpp-out"></pre>
+    <div id="cppErr" class="feedback err" style="margin-top:8px"></div>
+
+    <div class="ws-label" style="margin-top:12px">Частые ошибки</div>
+    <div class="ws-panel cpp-tips">
+      <p><b>expected ';'</b> — забыта точка с запятой в конце команды.</p>
+      <p><b>'x' was not declared</b> — переменная не объявлена (или объявлена ниже).</p>
+      <p><b>expected initializer</b> — в объявлении потерян тип или «=».</p>
+      <p><b>выход за границы</b> — индекс равен длине массива: нумерация с нуля.</p>
+      <p><b>деление на ноль</b> — проверь делитель перед делением.</p>
+    </div>
+  </div>
+</div>

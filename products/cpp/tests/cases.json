@@ -1,0 +1,62 @@
+[
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int a=7,b=2; cout<<a/b<<\" \"<<a%b<<\" \"<<a/(double)b<<\" \"<<a*b<<\" \"<<a-b<<endl;\n double d=1.0/3; cout<<d<<\" \"<<d*3<<endl; cout<<10/4*4<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int a,b; cin>>a>>b; if(a>b) cout<<\"bolshe\"<<endl; else if(a==b) cout<<\"ravno\"<<endl; else cout<<\"menshe\"<<endl; return 0; }",
+  "stdin": "5 3"
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int n; cin>>n; int s=0; for(int i=1;i<=n;i++){ if(i%3==0) continue; s+=i; } cout<<s<<endl;\n int k=0; while(true){ k++; if(k*k>50) break; } cout<<k<<endl; int j=0; do{ j+=2; }while(j<7); cout<<j<<endl; return 0; }",
+  "stdin": "10"
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint fact(int n){ if(n<=1) return 1; return n*fact(n-1); }\nint fib(int n){ if(n<2) return n; return fib(n-1)+fib(n-2); }\nint main(){ cout<<fact(6)<<\" \"<<fib(10)<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int n; cin>>n; int a[100]; for(int i=0;i<n;i++) cin>>a[i];\n int mx=a[0], sum=0; for(int i=0;i<n;i++){ if(a[i]>mx) mx=a[i]; sum+=a[i]; }\n cout<<mx<<\" \"<<sum<<endl; for(int i=n-1;i>=0;i--) cout<<a[i]<<\" \"; cout<<endl; return 0; }",
+  "stdin": "5 3 9 1 7 4"
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ string s; cin>>s; int c=0; for(int i=0;i<(int)s.size();i++){ if(s[i]=='a') c++; }\n cout<<s.size()<<\" \"<<c<<\" \"<<s.substr(0,3)<<endl; string r=\"\"; for(int i=(int)s.size()-1;i>=0;i--) r+=s[i]; cout<<r<<endl; return 0; }",
+  "stdin": "abrakadabra"
+ },
+ {
+  "program": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main(){ vector<int> v; int x; while(cin>>x){ v.push_back(x); }\n for(int i=0;i<(int)v.size();i++) for(int j=0;j+1<(int)v.size()-i;j++) if(v[j]>v[j+1]){ int t=v[j]; v[j]=v[j+1]; v[j+1]=t; }\n for(int i=0;i<(int)v.size();i++) cout<<v[i]<<\" \"; cout<<endl<<v.size()<<endl; return 0; }",
+  "stdin": "5 2 9 1 7"
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ bool ok = 3>2; cout<<ok<<\" \"<<(int)ok<<endl; char c='A'; cout<<c<<\" \"<<(int)c<<\" \"<<(char)(c+1)<<endl;\n double d=2.999; cout<<(int)d<<\" \"<<d+0.001<<endl; int z=0; cout<<!z<<\" \"<<(z==0)<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int x=5; x+=3; x-=1; x*=2; x/=3; cout<<x<<\" \";\n int y=x++; cout<<y<<\" \"<<x<<\" \"; int z=++x; cout<<z<<\" \"<<x<<endl;\n int m = x>5 ? 100 : 200; cout<<m<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint total=0;\nvoid add(int v){ total+=v; }\nint twice(int v){ return v*2; }\nint main(){ for(int i=1;i<=4;i++) add(twice(i)); cout<<total<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ for(int i=1;i<=3;i++){ for(int j=1;j<=3;j++) cout<<i*j<<\" \"; cout<<endl; } return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int x, n=0, s=0; while(cin>>x){ n++; s+=x; } cout<<n<<\" \"<<s<<endl; return 0; }",
+  "stdin": "4 8 15 16 23 42"
+ },
+ {
+  "program": "#include <iostream>\n#include <cmath>\nusing namespace std;\nint main(){ cout<<max(3,9)<<\" \"<<min(3,9)<<\" \"<<abs(-7)<<\" \"<<sqrt(144)<<endl; cout<<pow(2,10)<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ string a=\"kvant\", b=\"um\"; string c=a+b; cout<<c<<\" \"<<c.size()<<endl;\n cout<<(a<b)<<\" \"<<(a==\"kvant\")<<\" \"<<(c!=a)<<endl; string d=\"\"; for(int i=0;i<3;i++) d+=\"ab\"; cout<<d<<endl; return 0; }",
+  "stdin": ""
+ },
+ {
+  "program": "#include <iostream>\nusing namespace std;\nint main(){ int m[2][3]={{1,2,3},{4,5,6}}; int s=0; for(int i=0;i<2;i++) for(int j=0;j<3;j++) s+=m[i][j]; cout<<s<<endl; return 0; }",
+  "stdin": ""
+ }
+]

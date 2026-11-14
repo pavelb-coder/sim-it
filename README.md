@@ -6,13 +6,14 @@
 
 ## Что уже работает
 
-**7 тренажёров, 77 задач.** Каталог: **https://pavelb-coder.github.io/sim-it/** — оттуда открывается
+**8 тренажёров, 85 задач.** Каталог: **https://pavelb-coder.github.io/sim-it/** — оттуда открывается
 любой продукт. Каждый тренажёр — отдельный автономный HTML-файл со своей теорией, рабочей областью,
 автопроверкой и сохранением прогресса.
 
 | Продукт | Что внутри | Задач | Файл |
 |---|---|---|---|
 | **Python-класс** | свой интерпретатор Python в браузере, 6 модулей от `print` до CSV | 39 | [`python/index.html`](python/index.html) |
+| **C++-класс** | мини-компилятор C++ в браузере: лексер, парсер, интерпретатор | 8 | [`cpp/index.html`](cpp/index.html) |
 | **Терминал Linux** | виртуальная файловая система, 20+ команд, конвейеры и редиректы | 8 | [`terminal/index.html`](terminal/index.html) |
 | **Кибербезопасность** | base64, шифр Цезаря, хеши, аудит HTTP-заголовков, code review | 6 | [`security/index.html`](security/index.html) |
 | **Нейросети** | обучение перцептрона и мини-сети на canvas, граница решения, XOR | 6 | [`ai/index.html`](ai/index.html) |
@@ -45,9 +46,14 @@
 ## Проверки
 
 ```bash
-python3 build_site.py      # пересобрать все продукты и каталог
-cd python-class && ./test.sh   # тесты движка Python
+python3 build_site.py                          # пересобрать все продукты и каталог
+cd python-class && ./test.sh                   # тесты движка Python
+python3 products/cpp/tests/run_tests.py        # тесты мини-компилятора C++
 ```
+
+C++ проверяется двумя способами: эталонные решения всех 8 задач против их тестов и
+**дифференциальный тест с настоящим `g++`** — 15 программ прогоняются и через g++, и через
+наш интерпретатор, вывод сравнивается построчно (нужен установленный g++, иначе шаг пропускается).
 
 * 48 конструкций языка сверяются с настоящим CPython — совпадение построчное;
 * все 39 эталонных решений проходят все свои тесты (в движке и в CPython — 162 прогона);
@@ -123,7 +129,7 @@ sim-it/
 ├── build_site.py     сборщик: shared/ + products/* → <продукт>/index.html
 ├── shared/           общая тема, шаблон страницы, каркас задач и автопроверки
 ├── products/         исходники продуктов: workspace.html, tasks.js, app.js, style.css
-├── python/  terminal/  network/  web/  sql/  security/  ai/     собранные тренажёры
+├── python/  cpp/  terminal/  network/  web/  sql/  security/  ai/    собранные тренажёры
 ├── python-class/     движок Python: src → build.py → dist/один файл
 ├── start.bat         запуск на Windows (порт 8087)
 ├── start.sh          запуск на Ubuntu/Linux/macOS (порт 8087)
@@ -136,7 +142,8 @@ sim-it/
 ### Как добавить свой продукт
 
 1. Создать папку `products/<slug>/` с обязательным `workspace.html` (разметка рабочей области),
-   плюс `tasks.js` (массив задач) и `app.js` (логика + `Shell.init`).
+   плюс `tasks.js` (массив задач) и `app.js` (логика + `Shell.init`). Если продукту нужен
+   движок, его кладут отдельным `engine.js` — сборщик поставит его перед `app.js`.
 2. В `app.js` вызвать `Shell.init({storageKey, productTitle, productSubtitle, tasks, open, check})` —
    каркас сам нарисует список задач, прогресс, подсказки и кнопку проверки.
 3. Запустить `python3 build_site.py` — появятся `<slug>/index.html` и карточка в каталоге.
