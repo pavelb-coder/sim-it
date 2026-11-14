@@ -1,0 +1,50 @@
+# Держит ветку moodle-plugin в актуальном состоянии: на каждый push в main
+# пересобирает тренажёры, подкладывает их в плагин, поднимает версию и пушит.
+#
+# Включение: скопировать этот файл в .github/workflows/sync-moodle-plugin.yml
+# и запушить (нужен токен/права, умеющие менять workflow-файлы).
+# Обновление ветки плагина уже работает и без CI — через ./scripts/sync.sh.
+name: Обновление ветки moodle-plugin
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # можно запустить вручную из вкладки Actions
+
+permissions:
+  contents: write           # нужно, чтобы закоммитить в moodle-plugin
+
+concurrency:
+  group: sync-moodle-plugin
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Забрать репозиторий
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # нужны все ветки: скрипт работает с moodle-plugin
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Собрать тренажёры
+        run: python3 build_site.py
+
+      - name: Обновить ветку плагина
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bash scripts/sync_plugin.sh --check --force \
+            "chore(plugin): тренажёры из main@${GITHUB_SHA:0:7}"
+
+      - name: Итог
+        run: |
+          echo "main: $(git rev-parse --short HEAD)"
+          echo "moodle-plugin: $(git ls-remote origin refs/heads/moodle-plugin)"

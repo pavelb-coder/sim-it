@@ -28,3 +28,13 @@ else
 fi
 GIT_TERMINAL_PROMPT=0 git push origin main
 echo "синхронизировано: $(git log --oneline -1)"
+
+# После обновления main обновляем и ветку плагина Moodle:
+# пересобрать тренажёры внутри плагина, поднять версию, пересобрать ZIP, запушить.
+if [ -x scripts/sync_plugin.sh ]; then
+  echo
+  echo "— ветка moodle-plugin —"
+  PLUGIN_SYNC_FLAGS="${PLUGIN_SYNC_FLAGS:-}"
+  bash scripts/sync_plugin.sh $PLUGIN_SYNC_FLAGS \
+    || echo "внимание: ветку moodle-plugin обновить не удалось (main уже опубликован)"
+fi
