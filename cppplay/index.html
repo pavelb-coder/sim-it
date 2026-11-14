@@ -1,0 +1,2359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C++-песочница · свободный код в браузере</title>
+<meta name="description" content="C++-песочница: пиши любой код на учебном подмножестве C++ и запускай его в браузере. cin/cout, массивы, vector, функции. Без установки компилятора.">
+<style>/* ======================= Python-класс · IT-квантум ======================= */
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel2: #171d29;
+  --line: #242c3c;
+  --text: #e7ecf6;
+  --muted: #8b97ad;
+  --accent: #5aa9ff;
+  --green: #37d67a;
+  --red: #ff6b6b;
+  --yellow: #ffcc55;
+  --violet: #a78bfa;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+/* ------------------------------- шапка ------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #121722, #0d111a);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, #2f6df6, #7bd88f);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.logo small { display: block; font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.spacer { flex: 1; }
+.badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #0f141d;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.badge b { color: var(--green); font-weight: 600; }
+.badge.engine { cursor: help; }
+.progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.progress {
+  width: 120px; height: 6px; border-radius: 999px; background: #1b2231; overflow: hidden;
+}
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6df6, #37d67a); transition: width .35s ease; }
+.progress-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.progress-text b { color: var(--text); }
+
+/* ------------------------------- каркас ------------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ---------------------------- список задач ---------------------------- */
+.sidebar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 92px);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-head {
+  padding: 12px 14px 8px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
+.task-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.task-item:hover:not(.locked) { background: var(--panel2); }
+.task-item.active { background: #17233a; border-color: #2a4b7d; }
+.task-item.locked { color: #5d6879; cursor: not-allowed; }
+.task-item .num {
+  flex: 0 0 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: #1b2333; color: var(--muted);
+}
+.task-item.done .num { background: rgba(55,214,122,.16); color: var(--green); }
+.task-item.active .num { background: #2f6df6; color: #fff; }
+.task-item .t-main { min-width: 0; display: block; }
+.task-item .t-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.task-item .t-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.mini-btn {
+  background: #1a2130; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.mini-btn:hover { color: var(--text); border-color: #33405a; }
+
+/* ------------------------------- рабочая ------------------------------- */
+.work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.task-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.task-head h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.task-head .sub { color: var(--muted); font-size: 12.5px; }
+.task-body { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.prompt { font-size: 15px; }
+.theory {
+  background: #0f141d;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #c3ccdb;
+}
+.theory p { margin: 0 0 6px; }
+.theory p:last-child { margin-bottom: 0; }
+.theory code, .prompt code { background: #1b2433; border-radius: 5px; padding: 1px 5px; color: #dfe8ff; }
+.examples { display: flex; gap: 10px; flex-wrap: wrap; }
+.example {
+  background: #0f141d; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; font-family: var(--mono); font-size: 12.5px; min-width: 150px;
+}
+.example .lbl { color: var(--muted); font-family: var(--sans); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.example pre { margin: 2px 0 0; white-space: pre-wrap; color: #cfe0ff; }
+.example .arrow { color: var(--muted); font-family: var(--sans); font-size: 11px; margin-top: 6px; }
+.hint-box {
+  display: none;
+  background: rgba(255,204,85,.08);
+  border: 1px solid rgba(255,204,85,.3);
+  color: #ffe6a8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+.hint-box.show { display: block; }
+
+/* ------------------------------- редактор ------------------------------- */
+.editor-card { display: flex; flex-direction: column; }
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: #101620;
+}
+.btn {
+  border-radius: 9px; border: 1px solid var(--line);
+  background: #1a2130; color: var(--text);
+  padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: #3a4a68; }
+.btn.primary { background: linear-gradient(180deg, #2f6df6, #2559d6); border-color: #2b62e0; color: #fff; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ok { background: linear-gradient(180deg, #2fbd6c, #22a05a); border-color: #26a860; color: #06220f; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn kbd {
+  background: rgba(255,255,255,.16); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-weight: 700;
+}
+.editor-shell {
+  position: relative;
+  display: flex;
+  background: #0c1119;
+  min-height: 250px;
+  max-height: 52vh;
+}
+.gutter-nums {
+  flex: 0 0 auto;
+  white-space: pre;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  font: 14px/1.55 var(--mono);
+  color: #3f4a5e;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  background: #0a0f16;
+  border-right: 1px solid #1a2130;
+}
+.code-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+.code-hl, #code {
+  position: absolute; inset: 0;
+  margin: 0; padding: 12px 14px;
+  font: 14px/1.55 var(--mono);
+  white-space: pre; tab-size: 4;
+  border: 0; overflow: auto;
+}
+.code-hl { color: #cbd5e6; pointer-events: none; z-index: 1; }
+#code {
+  color: transparent; caret-color: #fff; background: transparent;
+  resize: none; outline: none; z-index: 2;
+}
+#code::selection { background: rgba(90,169,255,.32); }
+.tok-kw { color: #c792ea; }
+.tok-bi { color: #82aaff; }
+.tok-str { color: #a5e075; }
+.tok-num { color: #f78c6c; }
+.tok-com { color: #5a6779; font-style: italic; }
+.tok-def { color: #ffcb6b; }
+.editor-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--line); background: #101620;
+}
+.stdin-label { font-size: 12px; color: var(--muted); }
+#stdin {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px;
+  color: #cfe0ff; font: 13px/1.4 var(--mono); padding: 6px 9px; width: 190px; height: 32px; resize: vertical;
+}
+.hint-inline { font-size: 11.5px; color: #5f6b80; }
+
+/* ------------------------------- консоль ------------------------------- */
+.tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); background: #101620; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  color: var(--muted); padding: 7px 13px; font-size: 13px; border-radius: 9px 9px 0 0;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+.tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #38445a; }
+.tab.active .dot { background: var(--accent); }
+.tab .count { font-size: 11px; color: var(--muted); }
+.panel { padding: 12px 14px; min-height: 150px; max-height: 40vh; overflow: auto; }
+.panel[hidden] { display: none; }
+.out {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: #d7e2f2;
+}
+.out.empty { color: #55617a; font-style: italic; }
+.err {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  background: rgba(255,107,107,.07);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 9px; padding: 10px 12px; color: #ffb3b3; margin-top: 10px;
+}
+.err b { color: var(--red); }
+.test-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: #0f141d; margin-bottom: 7px; font-size: 12.5px;
+}
+.test-row.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.test-row.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.test-row .mark { font-weight: 800; width: 14px; flex: 0 0 14px; }
+.test-row.pass .mark { color: var(--green); }
+.test-row.fail .mark { color: var(--red); }
+.test-row .io { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+.test-row .io .k { color: var(--muted); }
+.test-row .io .bad { color: #ffb3b3; }
+.test-row .io .good { color: #a5e075; }
+.summary { font-size: 13.5px; margin-bottom: 10px; }
+.summary.good { color: var(--green); }
+.summary.bad { color: var(--yellow); }
+.celebrate {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(55,214,122,.08); border: 1px solid rgba(55,214,122,.35);
+  color: #a7f3c8; font-size: 13.5px;
+}
+.celebrate button { margin-top: 8px; }
+.solution {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #0c1119; border: 1px dashed #2f4364;
+}
+.solution .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.solution pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; color: #cfe0ff; }
+.trace-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 10px; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.trace-row:hover { background: #10192a; border-color: #22304a; }
+.trace-row.sel { background: #142441; border-color: #2c548f; }
+.trace-line { color: var(--muted); font: 12px/1.4 var(--mono); }
+.trace-body { font: 12px/1.45 var(--mono); min-width: 0; }
+.trace-code { color: #8fa3c4; white-space: pre-wrap; }
+.trace-vars { color: #a5e075; margin-top: 2px; white-space: pre-wrap; }
+.trace-vars .none { color: #55617a; }
+.foot-note { color: #4f5a6e; font-size: 11.5px; text-align: center; padding: 6px 0 22px; }
+
+/* ------------------------------- адаптив ------------------------------- */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .sidebar { position: static; max-height: none; }
+  .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
+  .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
+  .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
+  .editor-shell { min-height: 200px; max-height: 46vh; }
+  .topbar { padding: 8px 12px; }
+  .progress-wrap { order: 3; width: 100%; }
+  .progress { flex: 1; width: auto; }
+  .panel { max-height: 46vh; }
+  #stdin { width: 100%; }
+  .editing-foot { display: block; }
+}
+
+
+/* ===================== общий каркас для продуктов ===================== */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hub-card {
+  display: block; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; transition: transform .12s ease, border-color .12s ease;
+}
+.hub-card:hover { border-color: #35507e; }
+.hub-card h3 { margin: 0 0 4px; font-size: 16px; }
+.hub-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.hub-card .tag {
+  display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: #9dc0ff; border: 1px solid #2b4470; border-radius: 999px;
+  padding: 2px 9px;
+}
+.hub-card.soon { opacity: .55; }
+.workspace { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ws-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-label { font-size: 12px; color: var(--muted); }
+.ws-input {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px; color: #cfe0ff;
+  font: 13px/1.4 var(--mono); padding: 7px 10px;
+}
+.ws-input:focus { outline: none; border-color: #35507e; }
+.console {
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  font: 13px/1.5 var(--mono); padding: 12px 14px; min-height: 260px; max-height: 46vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.console .cmd { color: #7fd1ff; }
+.console .err { color: #ff9c9c; }
+.console .ok { color: #a5e075; }
+.console .dim { color: #5f6b80; }
+.prompt-line { display: flex; gap: 8px; align-items: center; }
+.prompt-line .ps1 { color: var(--green); font: 13px/1.4 var(--mono); white-space: nowrap; }
+.prompt-line input {
+  flex: 1; min-width: 0; background: #0a0e15; border: 1px solid var(--line); border-radius: 8px;
+  color: #e7ecf6; font: 13px/1.4 var(--mono); padding: 8px 10px;
+}
+.prompt-line input:focus { outline: none; border-color: #35507e; }
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #0f141d;
+}
+.check-item.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.check-item.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.check-item .mark { font-weight: 800; }
+.check-item.pass .mark { color: var(--green); }
+.check-item.fail .mark { color: var(--red); }
+.check-item .note { color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+.code-area {
+  width: 100%; min-height: 130px; background: #0c1119; border: 1px solid var(--line);
+  border-radius: 10px; color: #cfe0ff; font: 13px/1.5 var(--mono); padding: 10px 12px; resize: vertical;
+}
+.code-area:focus { outline: none; border-color: #35507e; }
+.data-table { width: 100%; border-collapse: collapse; font: 12.5px/1.4 var(--mono); }
+.data-table th, .data-table td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.data-table th { background: #131a26; color: #9dc0ff; font-weight: 600; }
+.data-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+</style>
+<style>/* Песочница свободного кода: общая вёрстка для Python- и C++-площадок. */
+
+.play-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 14px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 14px;
+  align-items: start;
+}
+.play-main { min-width: 0; }
+.play-side { display: grid; gap: 14px; min-width: 0; }
+
+.play-editor {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0d1117;
+  margin-top: 10px;
+}
+#playGutter {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  padding: 10px 6px 10px 0;
+  text-align: right;
+  color: #4b5670;
+  background: #0b0f16;
+  border-right: 1px solid var(--line);
+  user-select: none;
+  overflow: hidden;
+  white-space: pre;
+}
+#playCode {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 21px;
+  padding: 10px 12px;
+  min-height: 380px;
+  max-height: 62vh;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  outline: none;
+  resize: vertical;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+.play-under {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+#playStdin {
+  width: 100%;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 13px;
+  background: #0d1117;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+#playStatus {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-bottom: 8px;
+}
+#playStatus b { color: var(--green); font-weight: 600; }
+#playStatus.bad b { color: var(--red); }
+
+.play-select {
+  background: #0d1117;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 12.5px;
+  max-width: 260px;
+}
+
+#playOut {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  background: #0d1117;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0;
+  min-height: 90px;
+  max-height: 42vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#playOut .play-dim { color: #55617a; font-style: italic; }
+#playErr {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #ffb3b3;
+  background: rgba(255, 107, 107, .08);
+  border: 1px solid rgba(255, 107, 107, .35);
+  border-radius: 8px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+}
+.play-details summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+#cheat {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  color: #b9c4d8;
+  white-space: pre-wrap;
+}
+.play-note { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.play-note code { color: #9dc0ff; }
+
+@media (max-width: 1100px) {
+  .play-wrap { grid-template-columns: minmax(0, 1fr); }
+  #playCode { max-height: 50vh; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark">C++</span>
+    <span>C++-песочница<small>свободный код · 8 готовых примеров</small></span>
+  </a>
+  <div class="spacer"></div>
+  <span class="badge engine" id="engineBadge">движок: C++ в браузере · офлайн</span>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+</header>
+
+<div class="play-wrap">
+  <div class="play-main">
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn primary" id="btnRun">▶ Выполнить <kbd>Ctrl</kbd>+<kbd>Enter</kbd></button>
+        <button class="btn ghost" id="btnClearOut">Очистить вывод</button>
+        <div class="spacer"></div>
+        <select class="ws-input play-select" id="exampleSelect" title="готовые примеры"></select>
+        <button class="btn ghost" id="btnReset">Свой код с нуля</button>
+      </div>
+
+      <div class="play-editor">
+        <div class="play-gutter" id="playGutter">1</div>
+        <textarea id="playCode" class="play-code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off" aria-label="Код программы"></textarea>
+      </div>
+
+      <div class="play-under">
+        <div>
+          <div class="ws-label">Тестовый ввод — то, что прочитает <code id="playStdinHint">input()</code></div>
+          <textarea id="playStdin" class="code-area play-stdin" rows="3" spellcheck="false" placeholder="по одному значению на строку"></textarea>
+        </div>
+        <div class="play-status" id="playStatus">готов к запуску</div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="play-side">
+    <section class="card">
+      <div class="ws-label" style="margin-bottom:8px">Вывод программы</div>
+      <pre id="playOut" class="play-out"><span class="play-dim">Здесь появится то, что напечатает программа.</span></pre>
+      <div id="playErr" class="play-err" style="display:none"></div>
+    </section>
+
+    <section class="card">
+      <details class="play-details" open>
+        <summary>Шпаргалка</summary>
+        <pre id="cheat" class="play-cheat"></pre>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="ws-label" style="margin-bottom:6px">Как это работает</div>
+      <p class="play-note" id="noteBox"></p>
+    </section>
+  </aside>
+</div>
+
+<script>/* ==========================================================================
+   CppEngine — интерпретатор учебного подмножества C++ на JavaScript.
+   Без WebAssembly и без сети: лексер → парсер → дерево → вычисление.
+
+   Поддержано: #include/using (игнорируются), int/long/double/float/char/bool/
+   string/auto, массивы и vector, if/else, for, while, do-while, break/continue,
+   функции (включая рекурсию), cout << / cin >>, арифметика с типами как в C++
+   (целочисленное деление, переполнения нет), методы string и vector,
+   библиотечные abs/sqrt/pow/min/max/floor/ceil/round/to_string.
+   ========================================================================== */
+(function (G) {
+  'use strict';
+
+  function CppError(msg, line) {
+    var e = new Error(msg);
+    e.isCpp = true;
+    e.line = line || 0;
+    return e;
+  }
+
+  var KEYWORDS = ('int long short unsigned signed double float char bool void auto const string vector ' +
+    'if else for while do break continue return true false struct class using namespace static inline ' +
+    'switch case default goto sizeof').split(' ');
+  var KW = {};
+  KEYWORDS.forEach(function (k) { KW[k] = true; });
+
+  var TYPE_NAMES = { int: 1, long: 1, short: 1, unsigned: 1, signed: 1, double: 1, float: 1, char: 1, bool: 1, auto: 1, void: 1, string: 1 };
+
+  /* ------------------------------- лексер ------------------------------- */
+  var OPS2 = ['<<', '>>', '<=', '>=', '==', '!=', '&&', '||', '++', '--', '+=', '-=', '*=', '/=', '%=', '->', '::'];
+
+  function tokenize(src) {
+    var toks = [], i = 0, line = 1, n = src.length;
+    function push(type, value, ln) { toks.push({ type: type, value: value, line: ln }); }
+
+    while (i < n) {
+      var c = src[i];
+      if (c === '\n') { line++; i++; continue; }
+      if (c === ' ' || c === '\t' || c === '\r') { i++; continue; }
+
+      if (c === '/' && src[i + 1] === '/') { while (i < n && src[i] !== '\n') i++; continue; }
+      if (c === '/' && src[i + 1] === '*') {
+        i += 2;
+        while (i < n && !(src[i] === '*' && src[i + 1] === '/')) { if (src[i] === '\n') line++; i++; }
+        i += 2; continue;
+      }
+      if (c === '#') {
+        while (i < n && src[i] !== '\n') {
+          if (src[i] === '\\' && src[i + 1] === '\n') { line++; i += 2; continue; }
+          i++;
+        }
+        continue;
+      }
+
+      if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] || ''))) {
+        var start = i, isFloat = false;
+        while (i < n && /[0-9]/.test(src[i])) i++;
+        if (src[i] === '.') { isFloat = true; i++; while (i < n && /[0-9]/.test(src[i])) i++; }
+        if (src[i] === 'e' || src[i] === 'E') {
+          isFloat = true; i++;
+          if (src[i] === '+' || src[i] === '-') i++;
+          while (i < n && /[0-9]/.test(src[i])) i++;
+        }
+        var text = src.slice(start, i);
+        while (i < n && /[fFlLuU]/.test(src[i])) { if (/[fF]/.test(src[i])) isFloat = true; i++; }
+        push(isFloat ? 'NUMF' : 'NUM', Number(text), line);
+        continue;
+      }
+
+      if (c === '"' || c === "'") {
+        var quote = c, out = '', startLine = line;
+        i++;
+        while (i < n && src[i] !== quote) {
+          if (src[i] === '\\') {
+            var esc = src[i + 1];
+            out += esc === 'n' ? '\n' : esc === 't' ? '\t' : esc === '0' ? '\0' : esc === '\\' ? '\\'
+              : esc === '"' ? '"' : esc === "'" ? "'" : esc === '\n' ? (line++, '') : esc;
+            i += 2; continue;
+          }
+          if (src[i] === '\n') throw CppError('строка или символ не закрыты на этой строке', startLine);
+          out += src[i]; i++;
+        }
+        if (i >= n) throw CppError('строка или символ не закрыты', startLine);
+        i++;
+        push(quote === '"' ? 'STRING' : 'CHAR', out, startLine);
+        continue;
+      }
+
+      if (/[A-Za-z_]/.test(c)) {
+        var s0 = i;
+        while (i < n && /[A-Za-z0-9_]/.test(src[i])) i++;
+        var word = src.slice(s0, i);
+        push(KW[word] ? 'KW' : 'IDENT', word, line);
+        continue;
+      }
+
+      var two = src.substr(i, 2);
+      if (OPS2.indexOf(two) >= 0) { push('OP', two, line); i += 2; continue; }
+
+      if ('+-*/%(){}[];,<>=!?:.&|^~'.indexOf(c) >= 0) { push('OP', c, line); i++; continue; }
+
+      throw CppError('непонятный символ «' + c + '»', line);
+    }
+    toks.push({ type: 'EOF', value: '', line: line });
+    return toks;
+  }
+
+  /* ------------------------------- парсер ------------------------------- */
+  function Parser(toks) { this.toks = toks; this.i = 0; }
+
+  Parser.prototype.cur = function () { return this.toks[this.i]; };
+  Parser.prototype.peek = function (k) { return this.toks[this.i + (k || 1)]; };
+  Parser.prototype.next = function () { return this.toks[this.i++]; };
+  Parser.prototype.isOp = function (v) { var t = this.cur(); return t.type === 'OP' && t.value === v; };
+  Parser.prototype.isKw = function (v) { var t = this.cur(); return t.type === 'KW' && t.value === v; };
+  Parser.prototype.acceptOp = function (v) { if (this.isOp(v)) { this.i++; return true; } return false; };
+  Parser.prototype.acceptKw = function (v) { if (this.isKw(v)) { this.i++; return true; } return false; };
+  Parser.prototype.expectOp = function (v) {
+    if (!this.isOp(v)) {
+      var t = this.cur();
+      throw CppError('ожидалось «' + v + '», а встретилось «' + (t.value === '' ? 'конец файла' : t.value) + '»', t.line);
+    }
+    this.i++;
+  };
+  Parser.prototype.expectIdent = function () {
+    var t = this.cur();
+    if (t.type !== 'IDENT') throw CppError('ожидалось имя, а встретилось «' + (t.value === '' ? 'конец файла' : t.value) + '»', t.line);
+    this.i++;
+    return t.value;
+  };
+
+  Parser.prototype.parseProgram = function () {
+    var body = [];
+    while (this.cur().type !== 'EOF') {
+      if (this.isKw('using') || this.isKw('typedef')) { while (!this.isOp(';') && this.cur().type !== 'EOF') this.next(); this.next(); continue; }
+      if (this.isKw('struct') || this.isKw('class')) throw CppError('свои структуры (struct/class) в этом тренажёре не поддерживаются', this.cur().line);
+      if (this.isOp(';')) { this.next(); continue; }
+
+      var save = this.i;
+      var ty = this.parseType();
+      var t = this.cur();
+      if (ty && t.type === 'IDENT' && this.peek().type === 'OP' && this.peek().value === '(') {
+        body.push(this.parseFunction(ty));
+        continue;
+      }
+      this.i = save;
+      body.push(this.parseSimple());
+    }
+    return { type: 'Program', body: body };
+  };
+
+  Parser.prototype.parseType = function () {
+    var isConst = false, guard = 0;
+    while (this.isKw('const') || this.isKw('unsigned') || this.isKw('signed') || this.isKw('long') || this.isKw('short')) {
+      if (this.isKw('const')) isConst = true;
+      this.next();
+      if (++guard > 4) break;
+    }
+    var t = this.cur();
+    if (t.type === 'IDENT' && t.value === 'std' && this.peek().type === 'OP' && this.peek().value === '::') { this.next(); this.next(); t = this.cur(); }
+    if ((t.type === 'IDENT' || t.type === 'KW') && t.value === 'vector') {
+      this.next();
+      this.expectOp('<');
+      var elem = this.parseType();
+      if (!elem) throw CppError('внутри vector<…> нужен тип, например vector<int>', this.cur().line);
+      this.expectOp('>');
+      return { name: 'vector', elem: elem, isConst: isConst };
+    }
+    if (t.type === 'KW' && TYPE_NAMES[t.value]) {
+      this.next();
+      var name = t.value;
+      if (name === 'float') name = 'double';
+      if (name === 'long' || name === 'short' || name === 'unsigned' || name === 'signed') name = 'int';
+      if (name === 'void' && isConst) return null;
+      return { name: name, isConst: isConst };
+    }
+    if (t.type === 'IDENT' && t.value === 'size_t') { this.next(); return { name: 'int', isConst: isConst }; }
+    return null;
+  };
+
+  Parser.prototype.parseFunction = function (retType) {
+    var line = this.cur().line;
+    var name = this.expectIdent();
+    this.expectOp('(');
+    var params = [];
+    if (!this.isOp(')')) {
+      do {
+        var pt = this.parseType();
+        if (!pt) throw CppError('в параметрах функции нужен тип, например int x', this.cur().line);
+        var pname = this.expectIdent();
+        if (this.isOp('[')) { this.next(); if (!this.isOp(']')) this.parseExpr(); this.expectOp(']'); pt = { name: 'array', elem: pt }; }
+        params.push({ type: pt, name: pname });
+      } while (this.acceptOp(','));
+    }
+    this.expectOp(')');
+    if (this.acceptOp(';')) return { type: 'FuncProto', name: name, line: line };
+    var body = this.parseBlock();
+    return { type: 'Func', name: name, params: params, ret: retType, body: body, line: line };
+  };
+
+  Parser.prototype.parseBlock = function () {
+    var line = this.cur().line;
+    this.expectOp('{');
+    var body = [];
+    while (!this.isOp('}')) {
+      if (this.cur().type === 'EOF') throw CppError('не хватает закрывающей скобки «}»', this.cur().line);
+      body.push(this.parseStmt());
+    }
+    this.expectOp('}');
+    return { type: 'Block', body: body, line: line };
+  };
+
+  Parser.prototype.tryParseDecl = function () {
+    var save = this.i;
+    var ty = null;
+    try { ty = this.parseType(); } catch (e) { this.i = save; return null; }
+    if (!ty) { this.i = save; return null; }
+    var t = this.cur();
+    if (t.type !== 'IDENT') { this.i = save; return null; }
+    var decl = this.parseDeclRest(ty);
+    return decl;
+  };
+
+  Parser.prototype.parseDeclRest = function (ty) {
+    var line = this.cur().line, decls = [];
+    do {
+      var name = this.expectIdent();
+      var d = { name: name, init: null, dims: null, arrInit: null };
+      if (this.isOp('[')) {
+        d.dims = [];
+        while (this.isOp('[')) {
+          this.next();
+          d.dims.push(this.isOp(']') ? null : this.parseExpr());
+          this.expectOp(']');
+        }
+        if (this.isOp('=')) { this.next(); if (this.isOp('{')) d.arrInit = this.parseInitList(); else d.init = this.parseAssign(); }
+      } else if (this.isOp('=')) {
+        this.next();
+        d.init = this.isOp('{') ? this.parseInitList() : this.parseAssign();
+      } else if (this.isOp('{')) {
+        d.arrInit = this.parseInitList();
+      }
+      decls.push(d);
+    } while (this.acceptOp(','));
+    this.expectOp(';');
+    return { type: 'Decl', ty: ty, decls: decls, line: line };
+  };
+
+  Parser.prototype.parseInitList = function () {
+    var line = this.cur().line;
+    this.expectOp('{');
+    var items = [];
+    if (!this.isOp('}')) {
+      do { items.push(this.isOp('{') ? this.parseInitList() : this.parseAssign()); } while (this.acceptOp(','));
+    }
+    this.expectOp('}');
+    return { type: 'InitList', items: items, line: line };
+  };
+
+  Parser.prototype.parseSimple = function () {
+    var d = this.tryParseDecl();
+    if (d) return d;
+    var line = this.cur().line;
+    var e = this.parseExpr();
+    this.expectOp(';');
+    return { type: 'ExprStmt', value: e, line: line };
+  };
+
+  Parser.prototype.parseStmt = function () {
+    var t = this.cur(), line = t.line;
+
+    if (this.isOp('{')) return this.parseBlock();
+    if (this.isOp(';')) { this.next(); return { type: 'Empty', line: line }; }
+
+    if (this.isKw('if')) {
+      this.next(); this.expectOp('(');
+      var cond = this.parseExpr();
+      this.expectOp(')');
+      var thenS = this.parseStmt();
+      var elseS = null;
+      if (this.acceptKw('else')) elseS = this.parseStmt();
+      return { type: 'If', cond: cond, then: thenS, els: elseS, line: line };
+    }
+    if (this.isKw('for')) {
+      this.next(); this.expectOp('(');
+      var init = null;
+      if (this.isOp(';')) this.next();
+      else {
+        init = this.tryParseDecl();
+        if (!init) { init = { type: 'ExprStmt', value: this.parseExpr(), line: line }; this.expectOp(';'); }
+      }
+      var fc = this.isOp(';') ? null : this.parseExpr();
+      this.expectOp(';');
+      var step = this.isOp(')') ? null : this.parseExpr();
+      this.expectOp(')');
+      var fbody = this.parseStmt();
+      return { type: 'For', init: init, cond: fc, step: step, body: fbody, line: line };
+    }
+    if (this.isKw('while')) {
+      this.next(); this.expectOp('(');
+      var wc = this.parseExpr();
+      this.expectOp(')');
+      var wb = this.parseStmt();
+      return { type: 'While', cond: wc, body: wb, line: line };
+    }
+    if (this.isKw('do')) {
+      this.next();
+      var db = this.parseStmt();
+      if (!this.acceptKw('while')) throw CppError('после тела do нужен while (…)', this.cur().line);
+      this.expectOp('(');
+      var dc = this.parseExpr();
+      this.expectOp(')');
+      this.expectOp(';');
+      return { type: 'DoWhile', cond: dc, body: db, line: line };
+    }
+    if (this.isKw('return')) {
+      this.next();
+      if (this.isOp(';')) { this.next(); return { type: 'Return', value: null, line: line }; }
+      var rv = this.parseExpr();
+      this.expectOp(';');
+      return { type: 'Return', value: rv, line: line };
+    }
+    if (this.isKw('break')) { this.next(); this.expectOp(';'); return { type: 'Break', line: line }; }
+    if (this.isKw('continue')) { this.next(); this.expectOp(';'); return { type: 'Continue', line: line }; }
+    if (this.isKw('switch') || this.isKw('goto') || this.isKw('struct') || this.isKw('class')) {
+      throw CppError('конструкция «' + t.value + '» в этом тренажёре не поддерживается — используй if/else или функцию', line);
+    }
+    if (this.isKw('static') || this.isKw('inline')) { this.next(); return this.parseStmt(); }
+
+    // cout / cin
+    var isCout = (t.type === 'IDENT' && t.value === 'cout');
+    var isCin = (t.type === 'IDENT' && t.value === 'cin');
+    if (t.type === 'IDENT' && t.value === 'std' && this.peek().type === 'OP' && this.peek().value === '::') {
+      var after = this.toks[this.i + 2];
+      if (after && after.type === 'IDENT' && (after.value === 'cout' || after.value === 'cin')) {
+        isCout = after.value === 'cout';
+        isCin = after.value === 'cin';
+      }
+    }
+    if (isCout) {
+      if (t.value === 'std') { this.next(); this.next(); }
+      this.next();
+      var parts = [];
+      while (this.isOp('<<')) {
+        this.next();
+        var tt = this.cur();
+        if (tt.type === 'IDENT' && tt.value === 'endl') { this.next(); parts.push({ k: 'endl' }); continue; }
+        parts.push({ k: 'expr', e: this.parseAdd() });
+      }
+      this.expectOp(';');
+      return { type: 'Cout', parts: parts, line: line };
+    }
+    if (isCin) {
+      if (t.value === 'std') { this.next(); this.next(); }
+      this.next();
+      var targets = [];
+      while (this.isOp('>>')) {
+        this.next();
+        targets.push(this.parseUnary());
+      }
+      this.expectOp(';');
+      return { type: 'Cin', targets: targets, line: line };
+    }
+
+    var d2 = this.tryParseDecl();
+    if (d2) return d2;
+    var e2 = this.parseExpr();
+    this.expectOp(';');
+    return { type: 'ExprStmt', value: e2, line: line };
+  };
+
+  /* ----------------------------- выражения ----------------------------- */
+  Parser.prototype.parseExpr = function () { return this.parseAssign(); };
+
+  Parser.prototype.parseAssign = function () {
+    var line = this.cur().line;
+    var left = this.parseTernary();
+    var t = this.cur();
+    if (t.type === 'OP' && ['=', '+=', '-=', '*=', '/=', '%='].indexOf(t.value) >= 0) {
+      this.next();
+      var right = this.parseAssign();
+      return { type: 'Assign', op: t.value, target: left, value: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseTernary = function () {
+    var line = this.cur().line;
+    var c = this.parseOr();
+    if (this.isOp('?')) {
+      this.next();
+      var a = this.parseAssign();
+      this.expectOp(':');
+      var b = this.parseAssign();
+      return { type: 'Ternary', cond: c, a: a, b: b, line: line };
+    }
+    return c;
+  };
+
+  Parser.prototype.binLevel = function (ops, next) {
+    var self = this;
+    return function () {
+      var line = self.cur().line;
+      var left = next.call(self);
+      while (self.cur().type === 'OP' && ops.indexOf(self.cur().value) >= 0) {
+        var op = self.next().value;
+        var right = next.call(self);
+        left = { type: 'Bin', op: op, l: left, r: right, line: line };
+      }
+      return left;
+    };
+  };
+
+  Parser.prototype.parseOr = null; // назначаются ниже
+
+  Parser.prototype.parseMultiplicative = function () {
+    var line = this.cur().line;
+    var left = this.parseUnary();
+    while (this.cur().type === 'OP' && ['*', '/', '%'].indexOf(this.cur().value) >= 0) {
+      var op = this.next().value;
+      var right = this.parseUnary();
+      left = { type: 'Bin', op: op, l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseAdd = function () {
+    var line = this.cur().line;
+    var left = this.parseMultiplicative();
+    while (this.cur().type === 'OP' && ['+', '-'].indexOf(this.cur().value) >= 0) {
+      var op = this.next().value;
+      var right = this.parseMultiplicative();
+      left = { type: 'Bin', op: op, l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseShift = function () {
+    var line = this.cur().line;
+    var left = this.parseAdd();
+    while (this.cur().type === 'OP' && ['<<', '>>'].indexOf(this.cur().value) >= 0) {
+      var op = this.next().value;
+      var right = this.parseAdd();
+      left = { type: 'Bin', op: op, l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseRel = function () {
+    var line = this.cur().line;
+    var left = this.parseShift();
+    while (this.cur().type === 'OP' && ['<', '>', '<=', '>='].indexOf(this.cur().value) >= 0) {
+      var op = this.next().value;
+      var right = this.parseShift();
+      left = { type: 'Bin', op: op, l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseEq = function () {
+    var line = this.cur().line;
+    var left = this.parseRel();
+    while (this.cur().type === 'OP' && ['==', '!='].indexOf(this.cur().value) >= 0) {
+      var op = this.next().value;
+      var right = this.parseRel();
+      left = { type: 'Bin', op: op, l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseAnd = function () {
+    var line = this.cur().line;
+    var left = this.parseEq();
+    while (this.isOp('&&')) {
+      this.next();
+      var right = this.parseEq();
+      left = { type: 'Bin', op: '&&', l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseOr = function () {
+    var line = this.cur().line;
+    var left = this.parseAnd();
+    while (this.isOp('||')) {
+      this.next();
+      var right = this.parseAnd();
+      left = { type: 'Bin', op: '||', l: left, r: right, line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseUnary = function () {
+    var line = this.cur().line;
+    if (this.isOp('(')) {
+      var save = this.i;
+      this.next();
+      var castTy = null;
+      try { castTy = this.parseType(); } catch (e) { castTy = null; }
+      if (castTy && this.isOp(')')) {
+        this.next();
+        return { type: 'Cast', ty: castTy, value: this.parseUnary(), line: line };
+      }
+      this.i = save;
+    }
+    if (this.isOp('!')) { this.next(); return { type: 'Un', op: '!', value: this.parseUnary(), line: line }; }
+    if (this.isOp('-')) { this.next(); return { type: 'Un', op: '-', value: this.parseUnary(), line: line }; }
+    if (this.isOp('+')) { this.next(); return this.parseUnary(); }
+    if (this.isOp('++')) { this.next(); return { type: 'IncDec', op: '++', value: this.parseUnary(), prefix: true, line: line }; }
+    if (this.isOp('--')) { this.next(); return { type: 'IncDec', op: '--', value: this.parseUnary(), prefix: true, line: line }; }
+    if (this.isOp('&')) { this.next(); return this.parseUnary(); }  // ссылки не поддерживаем, читаем значение
+    return this.parsePostfix();
+  };
+
+  Parser.prototype.parsePostfix = function () {
+    var node = this.parsePrimary();
+    for (;;) {
+      var t = this.cur();
+      if (t.type === 'OP' && t.value === '[') {
+        this.next();
+        var idx = this.parseExpr();
+        this.expectOp(']');
+        node = { type: 'Index', obj: node, index: idx, line: t.line };
+        continue;
+      }
+      if (t.type === 'OP' && t.value === '(') {
+        this.next();
+        var args = [];
+        if (!this.isOp(')')) { do { args.push(this.parseAssign()); } while (this.acceptOp(',')); }
+        this.expectOp(')');
+        node = { type: 'Call', callee: node, args: args, line: t.line };
+        continue;
+      }
+      if (t.type === 'OP' && t.value === '.') {
+        this.next();
+        var meth = this.cur();
+        if (meth.type !== 'IDENT') throw CppError('после точки ожидалось имя метода', meth.line);
+        this.next();
+        node = { type: 'Member', obj: node, name: meth.value, line: t.line };
+        continue;
+      }
+      if (t.type === 'OP' && (t.value === '++' || t.value === '--')) {
+        this.next();
+        node = { type: 'IncDec', op: t.value, value: node, prefix: false, line: t.line };
+        continue;
+      }
+      return node;
+    }
+  };
+
+  Parser.prototype.parsePrimary = function () {
+    var t = this.cur();
+    if (t.type === 'NUM') { this.next(); return { type: 'Num', value: t.value, isFloat: false, line: t.line }; }
+    if (t.type === 'NUMF') { this.next(); return { type: 'Num', value: t.value, isFloat: true, line: t.line }; }
+    if (t.type === 'STRING') { this.next(); return { type: 'Str', value: t.value, line: t.line }; }
+    if (t.type === 'CHAR') { this.next(); return { type: 'Char', value: t.value, line: t.line }; }
+    if (t.type === 'KW' && (t.value === 'true' || t.value === 'false')) {
+      this.next(); return { type: 'Bool', value: t.value === 'true', line: t.line };
+    }
+    if (t.type === 'KW' && t.value === 'sizeof') throw CppError('sizeof в этом тренажёре не поддерживается', t.line);
+    if (t.type === 'IDENT') {
+      this.next();
+      var name = t.value;
+      if (name === 'std' && this.isOp('::')) { this.next(); name = this.expectIdent(); }
+      return { type: 'Name', id: name, line: t.line };
+    }
+    if (this.isOp('(')) {
+      this.next();
+      var e = this.parseExpr();
+      this.expectOp(')');
+      return e;
+    }
+    if (this.isOp('{')) return this.parseInitList();
+    throw CppError('неожиданное «' + (t.value === '' ? 'конец файла' : t.value) + '» в выражении', t.line);
+  };
+
+  /* ----------------------------- значения ----------------------------- */
+  function V(t, v) { return { t: t, v: v }; }
+  function isNumType(t) { return t === 'int' || t === 'double' || t === 'char' || t === 'bool'; }
+  function typeLabel(t) { return t === 'array' ? 'массив' : t === 'vector' ? 'vector' : t; }
+
+  function fmtDouble(x) {
+    if (!isFinite(x)) return x > 0 ? 'inf' : (x < 0 ? '-inf' : 'nan');
+    if (Number.isInteger(x) && Math.abs(x) < 1e15) return String(x);
+    var s = x.toPrecision(6);
+    if (s.indexOf('e') >= 0) return String(Number(s));
+    return String(Number(s));
+  }
+
+  /* ---------------------------- интерпретатор ---------------------------- */
+  function Interp(program) {
+    this.funcs = {};
+    this.globals = { vars: Object.create(null), parent: null };
+    this.out = [];
+    this.steps = 0;
+    this.depth = 0;
+    this.stdinTokens = [];
+    this.stdinPos = 0;
+    this.program = program;
+  }
+
+  Interp.prototype.tick = function (line) {
+    if (++this.steps > 4000000) throw CppError('программа выполняется слишком долго — похоже на бесконечный цикл', line);
+  };
+
+  Interp.prototype.declare = function (scope, name, value, isConst, line) {
+    if (scope.vars[name]) throw CppError('переменная «' + name + '» уже объявлена в этой области', line);
+    scope.vars[name] = { value: value, isConst: !!isConst };
+  };
+
+  Interp.prototype.findVar = function (scope, name, line) {
+    var s = scope;
+    while (s) {
+      if (s.vars[name]) return { scope: s, slot: s.vars[name] };
+      s = s.parent;
+    }
+    throw CppError('неизвестная переменная «' + name + '» — она не объявлена', line);
+  };
+
+  Interp.prototype.readVar = function (scope, name, line) {
+    var f = this.findVar(scope, name, line);
+    if (f.slot.value === null) throw CppError('переменная «' + name + '» объявлена, но ещё не получила значение', line);
+    return f.slot.value;
+  };
+
+  Interp.prototype.defaultValue = function (ty) {
+    if (ty.name === 'string') return V('string', '');
+    if (ty.name === 'bool') return V('bool', false);
+    if (ty.name === 'char') return V('char', '\0');
+    if (ty.name === 'double') return V('double', 0);
+    return V('int', 0);
+  };
+
+  Interp.prototype.coerce = function (value, ty, line) {
+    if (ty.name === 'auto' || !ty.name) return value;
+    if (ty.name === 'array' || ty.name === 'vector') return value;
+    if (ty.name === 'string') {
+      if (value.t === 'string') return value;
+      if (value.t === 'char') return V('string', String(value.v));
+      throw CppError('в string нельзя положить ' + typeLabel(value.t), line);
+    }
+    if (ty.name === 'bool') {
+      if (value.t === 'bool') return value;
+      if (isNumType(value.t)) return V('bool', numOf(value) !== 0);
+      throw CppError('в bool нельзя положить ' + typeLabel(value.t), line);
+    }
+    if (ty.name === 'char') {
+      if (value.t === 'char') return value;
+      if (isNumType(value.t)) return V('char', String.fromCharCode(Math.trunc(numOf(value))));
+      throw CppError('в char нельзя положить ' + typeLabel(value.t), line);
+    }
+    if (ty.name === 'double') {
+      if (!isNumType(value.t)) throw CppError('в double нельзя положить ' + typeLabel(value.t), line);
+      return V('double', numOf(value));
+    }
+    // int
+    if (!isNumType(value.t)) throw CppError('в int нельзя положить ' + typeLabel(value.t), line);
+    return V('int', Math.trunc(numOf(value)));
+  };
+
+  function numOf(v) {
+    if (v.t === 'char') return v.v.length ? v.v.codePointAt(0) : 0;
+    if (v.t === 'bool') return v.v ? 1 : 0;
+    return v.v;
+  }
+
+  Interp.prototype.valueOfType = function (typeName) {
+    return typeName === 'string' ? V('string', '') : typeName === 'bool' ? V('bool', false) : V('int', 0);
+  };
+
+  /* --- выполнение --- */
+  Interp.prototype.runProgram = function (input) {
+    this.stdinTokens = String(input || '').split(/\s+/).filter(function (s) { return s.length > 0; });
+    var body = this.program.body;
+
+    body.forEach(function (node) {
+      if (node.type === 'Func') this.funcs[node.name] = node;
+    }, this);
+    // глобальные переменные
+    body.forEach(function (node) {
+      if (node.type === 'Decl') this.execDecl(node, this.globals);
+    }, this);
+    body.forEach(function (node) {
+      if (node.type === 'Func' || node.type === 'Decl' || node.type === 'FuncProto') return;
+      this.exec(node, this.globals);
+    }, this);
+
+    var main = this.funcs['main'];
+    if (!main) throw CppError('в программе нет функции main() — с неё начинается любая программа на C++', 1);
+    this.callUser(main, [], 1);
+    return this.out.join('');
+  };
+
+  Interp.prototype.exec = function (node, scope) {
+    this.tick(node.line);
+    switch (node.type) {
+      case 'Block': {
+        var inner = { vars: Object.create(null), parent: scope };
+        for (var i = 0; i < node.body.length; i++) {
+          var sig = this.exec(node.body[i], inner);
+          if (sig) return sig;
+        }
+        return null;
+      }
+      case 'Empty': case 'Func': case 'FuncProto': return null;
+      case 'Decl': this.execDecl(node, scope); return null;
+      case 'ExprStmt': this.eval(node.value, scope); return null;
+      case 'Cout': this.execCout(node, scope); return null;
+      case 'Cin': this.execCin(node, scope); return null;
+      case 'If': {
+        var c = this.eval(node.cond, scope);
+        if (truthy(c)) return this.exec(node.then, scope);
+        if (node.els) return this.exec(node.els, scope);
+        return null;
+      }
+      case 'While': {
+        while (truthy(this.eval(node.cond, scope))) {
+          this.tick(node.line);
+          var s = this.exec(node.body, scope);
+          if (s && s.sig === 'break') break;
+          if (s && s.sig === 'return') return s;
+        }
+        return null;
+      }
+      case 'DoWhile': {
+        do {
+          this.tick(node.line);
+          var s2 = this.exec(node.body, scope);
+          if (s2 && s2.sig === 'break') break;
+          if (s2 && s2.sig === 'return') return s2;
+        } while (truthy(this.eval(node.cond, scope)));
+        return null;
+      }
+      case 'For': {
+        var fscope = { vars: Object.create(null), parent: scope };
+        if (node.init) {
+          if (node.init.type === 'Decl') this.execDecl(node.init, fscope);
+          else this.eval(node.init.value, fscope);
+        }
+        for (;;) {
+          this.tick(node.line);
+          if (node.cond && !truthy(this.eval(node.cond, fscope))) break;
+          var s3 = this.exec(node.body, fscope);
+          if (s3 && s3.sig === 'break') break;
+          if (s3 && s3.sig === 'return') return s3;
+          if (node.step) this.eval(node.step, fscope);
+        }
+        return null;
+      }
+      case 'Return': {
+        var val = node.value ? this.eval(node.value, scope) : V('void', null);
+        return { sig: 'return', value: val };
+      }
+      case 'Break': return { sig: 'break' };
+      case 'Continue': return { sig: 'continue' };
+      case 'InitList': return null;
+      default:
+        throw CppError('внутренняя ошибка: неизвестная конструкция ' + node.type, node.line);
+    }
+  };
+
+  Interp.prototype.execDecl = function (_node, scope) {
+    var self = this;
+    _node.decls.forEach(function (d) {
+      var ty = _node.ty;
+      var value;
+      if (d.dims && d.dims.length) {
+        value = self.buildArray(ty.name === 'vector' ? ty.elem : ty, d.dims, scope, d.arrInit, _node.line);
+        if (ty.name === 'vector') throw CppError('vector не объявляют квадратными скобками — используй vector<int> v; и v.push_back(x)', _node.line);
+      } else if (d.arrInit && d.arrInit.type === 'InitList') {
+        var elemTy = ty.name === 'vector' ? ty.elem : ty;
+        if (elemTy && elemTy.name === 'auto' && d.arrInit.items.length) elemTy = self.inferType(d.arrInit.items[0]);
+        var items = d.arrInit.items.map(function (it) { return self.coerce(self.eval(it, scope), elemTy || { name: 'int' }, it.line); });
+        value = V(ty.name === 'vector' ? 'vector' : 'array', items);
+      } else if (ty.name === 'vector' || ty.name === 'array') {
+        value = V(ty.name, []);
+      } else if (d.init) {
+        var inv = self.eval(d.init, scope);
+        if (ty.name === 'auto') value = inv;
+        else value = self.coerce(inv, ty, d.line || _node.line);
+      } else {
+        value = ty.name === 'auto' ? null : self.defaultValue(ty);
+      }
+      self.declare(scope, d.name, value, ty.isConst, _node.line);
+    });
+  };
+
+  Interp.prototype.buildArray = function (elemTy, dims, scope, initNode, line, level) {
+    level = level || 0;
+    var self = this;
+    var len;
+    if (dims[level]) len = Math.trunc(numOf(this.eval(dims[level], scope)));
+    else if (initNode && initNode.type === 'InitList') len = initNode.items.length;
+    else throw CppError('у массива нужно указать размер: int a[10];', line);
+    if (len < 0) throw CppError('размер массива не может быть отрицательным', line);
+    if (len > 100000) throw CppError('слишком большой массив для тренажёра (максимум 100000)', line);
+    var items = [];
+    var last = level === dims.length - 1;
+    for (var i = 0; i < len; i++) {
+      var sub = (initNode && initNode.type === 'InitList') ? initNode.items[i] : null;
+      if (last) {
+        if (sub) items.push(this.coerce(this.evalInitValue(sub, scope), elemTy || { name: 'int' }, line));
+        else items.push(this.defaultValue(elemTy || { name: 'int' }));
+      } else {
+        items.push(this.buildArray(elemTy, dims, scope, sub, line, level + 1));
+      }
+    }
+    return V('array', items);
+  };
+
+  Interp.prototype.evalInitValue = function (node, scope) {
+    if (node.type === 'InitList') {
+      var self = this;
+      return V('array', node.items.map(function (it) { return self.evalInitValue(it, scope); }).map(function (v) { return v; }));
+    }
+    return this.eval(node, scope);
+  };
+
+  Interp.prototype.inferType = function (initNode) {
+    if (!initNode) return { name: 'int' };
+    if (initNode.type === 'Str') return { name: 'string' };
+    if (initNode.type === 'Char') return { name: 'char' };
+    if (initNode.type === 'Bool') return { name: 'bool' };
+    if (initNode.type === 'Num') return { name: initNode.isFloat ? 'double' : 'int' };
+    return { name: 'int' };
+  };
+
+  Interp.prototype.execCout = function (node, scope) {
+    var self = this;
+    node.parts.forEach(function (p) {
+      if (p.k === 'endl') { self.out.push('\n'); return; }
+      var v = self.eval(p.e, scope);
+      self.out.push(fmtValue(v, p.e.line));
+    });
+  };
+
+  Interp.prototype.execCin = function (node, scope) {
+    for (var i = 0; i < node.targets.length; i++) {
+      var tgt = node.targets[i];
+      if (this.stdinPos >= this.stdinTokens.length) {
+        throw CppError('cin ждёт данные, но ввод закончился — проверь, сколько чисел вводится', tgt.line || node.line);
+      }
+      var raw = this.stdinTokens[this.stdinPos++];
+      var cur = this.getLValue(tgt, scope);
+      var ty = cur.value ? cur.value.t : 'int';
+      var newVal;
+      if (ty === 'string') newVal = V('string', raw);
+      else if (ty === 'char') newVal = V('char', raw[0] || ' ');
+      else if (ty === 'bool') newVal = V('bool', raw !== '0');
+      else if (ty === 'double') {
+        var dn = Number(raw);
+        if (isNaN(dn)) throw CppError('cin ждёт число, а во вводе «' + raw + '»', tgt.line || node.line);
+        newVal = V('double', dn);
+      } else {
+        var inn = Number(raw);
+        if (isNaN(inn)) throw CppError('cin ждёт целое число, а во вводе «' + raw + '»', tgt.line || node.line);
+        newVal = V('int', Math.trunc(inn));
+      }
+      cur.set(newVal);
+    }
+  };
+
+  Interp.prototype.getLValue = function (node, scope) {
+    var self = this;
+    if (node.type === 'Name') {
+      var f = this.findVar(scope, node.id, node.line);
+      if (f.slot.isConst) throw CppError('«' + node.id + '» объявлена как const — менять нельзя', node.line);
+      return {
+        value: f.slot.value,
+        set: function (v) { f.slot.value = v; }
+      };
+    }
+    if (node.type === 'Index') {
+      var objRef = this.getLValue(node.obj, scope);
+      var coll = objRef.value;
+      if (!coll || (coll.t !== 'array' && coll.t !== 'vector' && coll.t !== 'string')) {
+        throw CppError('индексы можно брать только у массива, vector или string', node.line);
+      }
+      var iv = Math.trunc(numOf(this.eval(node.index, scope)));
+      if (iv < 0 || iv >= coll.v.length) {
+        throw CppError('индекс ' + iv + ' вне диапазона: размер ' + typeLabel(coll.t) + ' = ' + coll.v.length, node.line);
+      }
+      if (coll.t === 'string') {
+        return {
+          value: V('char', coll.v[iv]),
+          set: function (v) {
+            var ch = v.t === 'char' ? v.v : String.fromCharCode(numOf(v));
+            coll.v = coll.v.slice(0, iv) + ch + coll.v.slice(iv + 1);
+          }
+        };
+      }
+      return {
+        value: coll.v[iv],
+        set: function (v) { coll.v[iv] = v; }
+      };
+    }
+    throw CppError('слева от «=» должно быть имя переменной или элемент массива', node.line);
+  };
+
+  /* --- выражения --- */
+  Interp.prototype.eval = function (node, scope) {
+    this.tick(node.line);
+    switch (node.type) {
+      case 'Num': return node.isFloat ? V('double', node.value) : V('int', node.value);
+      case 'Str': return V('string', node.value);
+      case 'Char': return V('char', node.value);
+      case 'Bool': return V('bool', node.value);
+      case 'Name': return this.readVar(scope, node.id, node.line);
+      case 'InitList': throw CppError('список в фигурных скобках можно использовать только при объявлении', node.line);
+      case 'Cast': {
+        var cv = this.eval(node.value, scope);
+        if (node.ty.name === 'string') throw CppError('приведение к string не поддерживается — используй to_string()', node.line);
+        return this.coerce(cv, node.ty, node.line);
+      }
+      case 'Index': return this.getLValue(node, scope).value;
+      case 'Ternary': {
+        var c = this.eval(node.cond, scope);
+        return truthy(c) ? this.eval(node.a, scope) : this.eval(node.b, scope);
+      }
+      case 'Un': {
+        var v = this.eval(node.value, scope);
+        if (node.op === '-') {
+          if (!isNumType(v.t)) throw CppError('минус перед ' + typeLabel(v.t), node.line);
+          return V(v.t === 'double' ? 'double' : 'int', -numOf(v));
+        }
+        if (node.op === '!') return V('bool', !truthy(v));
+        return v;
+      }
+      case 'IncDec': {
+        var lv = this.getLValue(node.value, scope);
+        var old = lv.value;
+        if (!old || !isNumType(old.t)) throw CppError('++ и -- работают только с числами', node.line);
+        var delta = node.op === '++' ? 1 : -1;
+        var nextType = old.t === 'double' ? 'double' : (old.t === 'char' ? 'char' : 'int');
+        var nextValue = numOf(old) + delta;
+        var next = nextType === 'char' ? V('char', String.fromCharCode(nextValue)) : V(nextType, nextValue);
+        lv.set(next);
+        return node.prefix ? next : old;
+      }
+      case 'Assign': {
+        var target = this.getLValue(node.target, scope);
+        var rv = this.eval(node.value, scope);
+        var result;
+        if (node.op === '=') {
+          result = target.value ? this.coerce(rv, { name: target.value.t === 'array' ? 'array' : target.value.t }, node.line) : rv;
+          if (target.value && (target.value.t === 'array' || target.value.t === 'vector')) result = cloneColl(rv);
+        } else {
+          var base = target.value;
+          if (!base) throw CppError('нельзя применить «' + node.op + '» к необъявленному значению', node.line);
+          var opChar = node.op[0];
+          result = this.arith(opChar, base, rv, node.line);
+          result = this.coerce(result, { name: base.t }, node.line);
+        }
+        target.set(result);
+        return result;
+      }
+      case 'Bin': return this.binOp(node, scope);
+      case 'Call': return this.callNode(node, scope);
+      case 'Member': throw CppError('метод «' + node.name + '» нужно вызвать со скобками', node.line);
+      default: throw CppError('внутренняя ошибка: неизвестное выражение ' + node.type, node.line);
+    }
+  };
+
+  function cloneColl(v) {
+    if (v.t === 'array' || v.t === 'vector') return V(v.t, v.v.slice());
+    return v;
+  }
+
+  function truthy(v) {
+    if (v.t === 'bool') return !!v.v;
+    if (v.t === 'string') return v.v.length > 0;
+    if (v.t === 'array' || v.t === 'vector') return v.v.length > 0;
+    if (v.t === 'void') return false;
+    if (v.v === null) return false;
+    return numOf(v) !== 0;
+  }
+
+  function fmtValue(v, line) {
+    if (v === null || v === undefined || v.t === 'void') throw CppError('нечего выводить: функция ничего не вернула (void)', line);
+    if (v.t === 'string') return v.v;
+    if (v.t === 'char') return v.v;
+    if (v.t === 'bool') return v.v ? '1' : '0';
+    if (v.t === 'double') return fmtDouble(v.v);
+    if (v.t === 'int') return String(v.v);
+    throw CppError('нельзя вывести ' + typeLabel(v.t) + ' целиком (выведи элементы по одному)', line);
+  }
+
+  Interp.prototype.arith = function (op, a, b, line) {
+    var aStr = a.t === 'string', bStr = b.t === 'string';
+    if (aStr || bStr) {
+      if (op === '+') {
+        if (aStr && (b.t === 'string' || b.t === 'char')) return V('string', a.v + (b.t === 'char' ? b.v : b.v));
+        if (bStr && a.t === 'char') return V('string', a.v + b.v);
+        throw CppError('нельзя сложить string и число. Сначала преврати число в строку: to_string(x)', line);
+      }
+      if (op === '==' || op === '!=' || op === '<' || op === '>' || op === '<=' || op === '>=') {
+        var sa = aStr ? a.v : (a.t === 'char' ? a.v : null);
+        var sb = bStr ? b.v : (b.t === 'char' ? b.v : null);
+        if (sa === null || sb === null) throw CppError('строку можно сравнивать только со строкой или символом', line);
+        if (op === '==') return V('bool', sa === sb);
+        if (op === '!=') return V('bool', sa !== sb);
+        if (op === '<') return V('bool', sa < sb);
+        if (op === '>') return V('bool', sa > sb);
+        if (op === '<=') return V('bool', sa <= sb);
+        return V('bool', sa >= sb);
+      }
+      throw CppError('для строк поддерживаются только + и сравнения', line);
+    }
+
+    if (op === '&&' || op === '||') {
+      return V('bool', op === '&&' ? (truthy(a) && truthy(b)) : (truthy(a) || truthy(b)));
+    }
+    if (!isNumType(a.t) || !isNumType(b.t)) {
+      throw CppError('операция «' + op + '» не работает с ' + typeLabel(a.t) + ' и ' + typeLabel(b.t), line);
+    }
+    var x = numOf(a), y = numOf(b);
+    var isDouble = a.t === 'double' || b.t === 'double';
+
+    switch (op) {
+      case '+': return isDouble ? V('double', x + y) : V('int', x + y);
+      case '-': return isDouble ? V('double', x - y) : V('int', x - y);
+      case '*': return isDouble ? V('double', x * y) : V('int', x * y);
+      case '/':
+        if (y === 0) throw CppError(isDouble ? 'деление на ноль' : 'целочисленное деление на ноль', line);
+        return isDouble ? V('double', x / y) : V('int', Math.trunc(x / y));
+      case '%':
+        if (isDouble) throw CppError('остаток % работает только с целыми числами', line);
+        if (y === 0) throw CppError('остаток от деления на ноль', line);
+        return V('int', x % y);
+      case '==': return V('bool', x === y);
+      case '!=': return V('bool', x !== y);
+      case '<': return V('bool', x < y);
+      case '>': return V('bool', x > y);
+      case '<=': return V('bool', x <= y);
+      case '>=': return V('bool', x >= y);
+      case '<<': return V('int', Math.trunc(x) * Math.pow(2, Math.trunc(y)));
+      case '>>': return V('int', Math.floor(Math.trunc(x) / Math.pow(2, Math.trunc(y))));
+      default: throw CppError('неизвестная операция «' + op + '»', line);
+    }
+  };
+
+  Interp.prototype.binOp = function (node, scope) {
+    if (node.op === '&&') {
+      var l = this.eval(node.l, scope);
+      if (!truthy(l)) return V('bool', false);
+      return V('bool', truthy(this.eval(node.r, scope)));
+    }
+    if (node.op === '||') {
+      var l2 = this.eval(node.l, scope);
+      if (truthy(l2)) return V('bool', true);
+      return V('bool', truthy(this.eval(node.r, scope)));
+    }
+    var a = this.eval(node.l, scope);
+    var b = this.eval(node.r, scope);
+    return this.arith(node.op, a, b, node.line);
+  };
+
+  Interp.prototype.callNode = function (node, scope) {
+    var self = this;
+    var callee = node.callee;
+
+    if (callee.type === 'Member') {
+      var objV = this.eval(callee.obj, scope);
+      return this.callMethod(objV, callee.name, node.args.map(function (a) { return self.eval(a, scope); }), node.line);
+    }
+    if (callee.type !== 'Name') throw CppError('вызвать можно только функцию', node.line);
+    var name = callee.id;
+    var args = node.args.map(function (a) { return self.eval(a, scope); });
+
+    if (this.funcs[name]) return this.callUser(this.funcs[name], args, node.line);
+    var builtin = this.callBuiltin(name, args, node.line, scope);
+    if (builtin !== undefined) return builtin;
+    throw CppError('функция «' + name + '» не объявлена' + (name === 'printf' || name === 'scanf'
+      ? ' — используй cout и cin' : ''), node.line);
+  };
+
+  Interp.prototype.callBuiltin = function (name, args, line, scope) {
+    function num(i) {
+      if (!args[i] || !isNumType(args[i].t)) throw CppError('функция ' + name + ' ждёт число', line);
+      return numOf(args[i]);
+    }
+    switch (name) {
+      case 'abs': return V('int', Math.abs(Math.trunc(num(0))));
+      case 'fabs': return V('double', Math.abs(num(0)));
+      case 'sqrt': return V('double', Math.sqrt(num(0)));
+      case 'pow': return V('double', Math.pow(num(0), num(1)));
+      case 'floor': return V('double', Math.floor(num(0)));
+      case 'ceil': return V('double', Math.ceil(num(0)));
+      case 'round': return V('double', Math.round(num(0)));
+      case 'min': return args[0].t === 'double' || args[1].t === 'double' ? V('double', Math.min(num(0), num(1))) : V('int', Math.min(num(0), num(1)));
+      case 'max': return args[0].t === 'double' || args[1].t === 'double' ? V('double', Math.max(num(0), num(1))) : V('int', Math.max(num(0), num(1)));
+      case 'to_string': {
+        var v = args[0];
+        if (!v) throw CppError('to_string ждёт значение', line);
+        if (v.t === 'string') return v;
+        return V('string', fmtValue(v, line));
+      }
+      case 'stoi': {
+        var s = args[0];
+        if (!s || s.t !== 'string') throw CppError('stoi ждёт строку', line);
+        var n = parseInt(s.v, 10);
+        return V('int', isNaN(n) ? 0 : n);
+      }
+      case 'stod': {
+        var s2 = args[0];
+        if (!s2 || s2.t !== 'string') throw CppError('stod ждёт строку', line);
+        var d = Number(s2.v);
+        return V('double', isNaN(d) ? 0 : d);
+      }
+      case 'rand': return V('int', Math.floor(Math.random() * 32768));
+      case 'srand': return V('void', null);
+      default: return undefined;
+    }
+  };
+
+  Interp.prototype.callMethod = function (obj, myname, args, line) {
+    function noArgs() {
+      if (args.length) throw CppError('метод ' + myname + ' не принимает аргументов', line);
+    }
+    if (obj.t === 'string') {
+      if (myname === 'size' || myname === 'length') { noArgs(); return V('int', obj.v.length); }
+      if (myname === 'empty') { noArgs(); return V('bool', obj.v.length === 0); }
+      if (myname === 'substr') {
+        var st = Math.trunc(numOf(args[0] || V('int', 0)));
+        var len = args[1] ? Math.trunc(numOf(args[1])) : obj.v.length - st;
+        if (st < 0 || st > obj.v.length) throw CppError('substr: начало ' + st + ' вне строки', line);
+        return V('string', obj.v.substr(st, Math.max(0, len)));
+      }
+      if (myname === 'find') {
+        var needle = args[0];
+        if (!needle) throw CppError('find ждёт строку', line);
+        var ns = needle.t === 'char' ? needle.v : needle.v;
+        var pos = obj.v.indexOf(ns);
+        return V('int', pos < 0 ? -1 : pos);
+      }
+      if (myname === 'push_back') {
+        var ch = args[0];
+        if (!ch || (ch.t !== 'char' && ch.t !== 'string')) throw CppError('у string.push_back аргумент — символ', line);
+        obj.v += ch.v;
+        return V('void', null);
+      }
+      if (myname === 'append') {
+        var s = args[0];
+        if (!s || s.t !== 'string') throw CppError('append ждёт строку', line);
+        obj.v += s.v;
+        return V('void', null);
+      }
+      if (myname === 'clear') { noArgs(); obj.v = ''; return V('void', null); }
+      throw CppError('у string нет метода «' + myname + '». Есть: size(), length(), empty(), substr(), find(), push_back(), append(), clear()', line);
+    }
+    if (obj.t === 'vector' || obj.t === 'array') {
+      if (myname === 'size') { noArgs(); return V('int', obj.v.length); }
+      if (myname === 'empty') { noArgs(); return V('bool', obj.v.length === 0); }
+      if (myname === 'push_back') {
+        if (obj.t !== 'vector') throw CppError('push_back есть только у vector, а это массив фиксированного размера', line);
+        obj.v.push(args[0]);
+        return V('void', null);
+      }
+      if (myname === 'pop_back') {
+        if (obj.t !== 'vector') throw CppError('pop_back есть только у vector', line);
+        if (!obj.v.length) throw CppError('pop_back у пустого vector', line);
+        obj.v.pop();
+        return V('void', null);
+      }
+      if (myname === 'clear') { noArgs(); obj.v.length = 0; return V('void', null); }
+      if (myname === 'at') {
+        var i = Math.trunc(numOf(args[0]));
+        if (i < 0 || i >= obj.v.length) throw CppError('at(' + i + ') вне диапазона', line);
+        return obj.v[i];
+      }
+      throw CppError('у ' + typeLabel(obj.t) + ' нет метода «' + myname + '». Есть: size(), push_back(), pop_back(), empty(), at()', line);
+    }
+    throw CppError('у ' + typeLabel(obj.t) + ' нет методов', line);
+  };
+
+  Interp.prototype.callUser = function (fn, args, line) {
+    if (fn.params.length !== args.length) {
+      throw CppError('функция ' + fn.name + ' ждёт ' + fn.params.length + ' аргумент(ов), а передано ' + args.length, line);
+    }
+    if (++this.depth > 400) { this.depth = 0; throw CppError('слишком глубокая рекурсия — проверь условие выхода', line); }
+    var scope = { vars: Object.create(null), parent: this.globals };
+    for (var i = 0; i < fn.params.length; i++) {
+      var p = fn.params[i];
+      var v = this.coerce(args[i], p.type, line);
+      if (v.t === 'array' || v.t === 'vector') v = cloneColl(v);
+      scope.vars[p.name] = { value: v, isConst: false };
+    }
+    var sig = this.exec(fn.body, scope);
+    this.depth--;
+    var retType = fn.ret ? fn.ret.name : 'void';
+    if (retType === 'void') {
+      if (sig && sig.sig === 'return') return V('void', null);
+      return V('void', null);
+    }
+    if (!sig || sig.sig !== 'return') {
+      if (fn.name === 'main') return V('int', 0);  // в C++ main возвращает 0 по умолчанию
+      throw CppError('функция ' + fn.name + ' должна вернуть значение типа ' + retType + ', но дошла до конца без return', fn.line);
+    }
+    return this.coerce(sig.value, fn.ret, fn.line);
+  };
+
+  /* ------------------------------ публичный API ------------------------------ */
+  function runProgram(code, input) {
+    var out = '';
+    try {
+      var toks = tokenize(String(code || ''));
+      var parser = new Parser(toks);
+      var program = parser.parseProgram();
+      var interp = new Interp(program);
+      out = interp.runProgram(input);
+      return { ok: true, output: out, error: null, line: 0 };
+    } catch (e) {
+      if (e && e.isCpp) return { ok: false, output: '', error: e.message, line: e.line || 0 };
+      return { ok: false, output: '', error: 'внутренняя ошибка движка: ' + (e && e.message ? e.message : String(e)), line: 0 };
+    }
+  }
+
+  G.CppEngine = { run: runProgram, version: '1.0' };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { run: runProgram };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* C++-песочница: примеры, шпаргалка и подключение движка CppEngine. */
+(function (global) {
+  'use strict';
+
+  var CHEAT = [
+    '#include <iostream>        подключить ввод-вывод',
+    'using namespace std;       писать cout вместо std::cout',
+    '',
+    'int a = 5;  double x = 1.5;  char c = \'A\';',
+    'bool ok = true;  string s = "текст";',
+    '',
+    'cout << "текст" << a << endl;   вывод',
+    'cin >> a >> b;                  ввод двух чисел',
+    '',
+    'if (a % 2 == 0) { … } else { … }',
+    'for (int i = 0; i < n; i++) { … }',
+    'while (n > 0) { … }',
+    '',
+    'int a[10];                  массив на 10 ячеек (0…9)',
+    'int m[5][5];                двумерный массив',
+    'vector<int> v;  v.push_back(x);  v.size();  v[i];',
+    '',
+    'int gcd(int a, int b) {      своя функция (объявляй до main)',
+    '    return b == 0 ? a : gcd(b, a % b);',
+    '}',
+    '',
+    'a / b   целое деление    a % b   остаток',
+    'a * 1.0 / b   вещественное    (int)x   приведение',
+    's.size()  s.substr(0, 3)  s[i]',
+    'abs/sqrt/pow/min/max/floor/ceil/round/to_string'
+  ].join('\n');
+
+  var NOTE = '<p style="margin:0 0 8px">Код не отправляется на сервер: его разбирает и выполняет ' +
+    'учебный интерпретатор подмножества C++ прямо в браузере. Компилятор и установка не нужны.</p>' +
+    '<p style="margin:0 0 8px">Что есть: <code>#include</code>, <code>using namespace std;</code>, ' +
+    '<code>int/long/double/float/char/bool/string/auto</code>, массивы (в том числе двумерные), ' +
+    '<code>vector</code>, <code>if/else</code>, <code>for</code>, <code>while</code>, <code>do-while</code>, ' +
+    'функции и рекурсия, <code>cout/cin</code>, приведение типов.</p>' +
+    '<p style="margin:0">Чего нет: указателей, <code>struct/class</code>, <code>switch</code> и сторонних ' +
+    'библиотек — площадка честно скажет об этом в ошибке с номером строки.</p>';
+
+  function adapt(res) {
+    if (res && res.ok) return { ok: true, output: res.output, error: null, ms: res.duration_ms };
+    var msg = (res && res.error) || 'не удалось выполнить код';
+    var line = res && res.line ? res.line : null;
+    return { ok: false, output: res && res.output, error: { msg: msg, line: line, kind: 'Ошибка' }, ms: res && res.duration_ms };
+  }
+
+  global.PLAY_CONFIG = {
+    storageKey: 'play.cpp.v1',
+    stdinLabel: 'cin',
+    engineLabel: 'движок: C++ в браузере · офлайн',
+    cheat: CHEAT,
+    note: NOTE,
+    defaultCode: [
+      '#include <iostream>',
+      'using namespace std;',
+      '',
+      'int main() {',
+      '    string name;',
+      '    int n;',
+      '    cin >> name >> n;',
+      '',
+      '    cout << "Привет, " << name << "!" << endl;',
+      '    cout << "квадрат числа: " << n * n << endl;',
+      '',
+      '    for (int i = 1; i <= n; i++) {',
+      '        cout << i << " x " << i << " = " << i * i << endl;',
+      '    }',
+      '    return 0;',
+      '}'
+    ].join('\n'),
+    defaultStdin: 'Аня 5',
+
+    run: function (code, stdinText) {
+      return adapt(global.CppEngine.run(code, String(stdinText || '')));
+    },
+
+    examples: [
+      {
+        name: 'Привет, мир',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'int main() {',
+          '    cout << "Привет, квантум!" << endl;',
+          '    cout << "C++ работает прямо в браузере" << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: ''
+      },
+      {
+        name: 'Ввод и арифметика',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'int main() {',
+          '    int a, b;',
+          '    cin >> a >> b;',
+          '    cout << "сумма: " << a + b << endl;',
+          '    cout << "разность: " << a - b << endl;',
+          '    cout << "произведение: " << a * b << endl;',
+          '    cout << "деление: " << a * 1.0 / b << endl;',
+          '    cout << "остаток: " << a % b << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '17 5'
+      },
+      {
+        name: 'Циклы и таблица умножения',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'int main() {',
+          '    int n;',
+          '    cin >> n;',
+          '    for (int i = 1; i <= n; i++) {',
+          '        for (int j = 1; j <= n; j++) {',
+          '            cout << i * j << " ";',
+          '        }',
+          '        cout << endl;',
+          '    }',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '5'
+      },
+      {
+        name: 'Массив: сумма и максимум',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'int main() {',
+          '    int n;',
+          '    cin >> n;',
+          '    int a[1000];',
+          '    for (int i = 0; i < n; i++) cin >> a[i];',
+          '',
+          '    int sum = 0, mx = a[0];',
+          '    for (int i = 0; i < n; i++) {',
+          '        sum += a[i];',
+          '        if (a[i] > mx) mx = a[i];',
+          '    }',
+          '    cout << "сумма: " << sum << endl;',
+          '    cout << "максимум: " << mx << endl;',
+          '    cout << "среднее: " << sum * 1.0 / n << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '6\n7 3 9 1 4 8'
+      },
+      {
+        name: 'vector и строки',
+        code: [
+          '#include <iostream>',
+          '#include <vector>',
+          'using namespace std;',
+          '',
+          'int main() {',
+          '    int n;',
+          '    cin >> n;',
+          '    vector<int> squares;',
+          '    for (int i = 1; i <= n; i++) squares.push_back(i * i);',
+          '',
+          '    cout << "квадраты:";',
+          '    for (int i = 0; i < squares.size(); i++) cout << " " << squares[i];',
+          '    cout << endl;',
+          '',
+          '    string s;',
+          '    cin >> s;',
+          '    cout << "слово " << s << " длиной " << s.size() << endl;',
+          '    cout << "с конца: ";',
+          '    for (int i = s.size() - 1; i >= 0; i--) cout << s[i];',
+          '    cout << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '5\nkvantum'
+      },
+      {
+        name: 'Функции и рекурсия',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'int fact(int n) {',
+          '    if (n <= 1) return 1;',
+          '    return n * fact(n - 1);',
+          '}',
+          '',
+          'int gcd(int a, int b) {',
+          '    if (b == 0) return a;',
+          '    return gcd(b, a % b);',
+          '}',
+          '',
+          'int main() {',
+          '    int a, b;',
+          '    cin >> a >> b;',
+          '    cout << "факториал " << a << " = " << fact(a) << endl;',
+          '    cout << "НОД(" << a << ", " << b << ") = " << gcd(a, b) << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '10 24'
+      },
+      {
+        name: 'Сортировка пузырьком',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'int main() {',
+          '    int n;',
+          '    cin >> n;',
+          '    int a[1000];',
+          '    for (int i = 0; i < n; i++) cin >> a[i];',
+          '',
+          '    for (int i = 0; i < n; i++) {',
+          '        for (int j = 0; j < n - 1 - i; j++) {',
+          '            if (a[j] > a[j + 1]) {',
+          '                int t = a[j];',
+          '                a[j] = a[j + 1];',
+          '                a[j + 1] = t;',
+          '            }',
+          '        }',
+          '    }',
+          '    for (int i = 0; i < n; i++) cout << a[i] << " ";',
+          '    cout << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '7\n5 2 9 1 5 6 3'
+      },
+      {
+        name: 'Простые числа',
+        code: [
+          '#include <iostream>',
+          'using namespace std;',
+          '',
+          'bool isPrime(int n) {',
+          '    if (n < 2) return false;',
+          '    for (int d = 2; d * d <= n; d++) {',
+          '        if (n % d == 0) return false;',
+          '    }',
+          '    return true;',
+          '}',
+          '',
+          'int main() {',
+          '    int limit;',
+          '    cin >> limit;',
+          '    int count = 0;',
+          '    cout << "простые до " << limit << ":";',
+          '    for (int x = 2; x <= limit; x++) {',
+          '        if (isPrime(x)) {',
+          '            cout << " " << x;',
+          '            count++;',
+          '        }',
+          '    }',
+          '    cout << endl << "всего: " << count << endl;',
+          '    return 0;',
+          '}'
+        ].join('\n'),
+        stdin: '30'
+      }
+    ]
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Песочница свободного кода — общая логика.
+   Продукт задаёт window.PLAY_CONFIG: движок (run), примеры, шпаргалку.
+   Ничего не отправляется в сеть: код исполняет движок прямо в браузере.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var cfg = global.PLAY_CONFIG || {};
+  function $(id) { return document.getElementById(id); }
+
+  var codeEl, stdinEl, gutterEl, outEl, errEl, statusEl;
+
+  /* ---------------------------- хранение ---------------------------- */
+  function save() {
+    try {
+      localStorage.setItem(cfg.storageKey, JSON.stringify({ code: codeEl.value, stdin: stdinEl.value }));
+    } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(cfg.storageKey);
+      if (!raw) return null;
+      var d = JSON.parse(raw);
+      if (typeof d.code !== 'string') return null;
+      return d;
+    } catch (e) { return null; }
+  }
+
+  /* ---------------------------- интерфейс ---------------------------- */
+  function renderGutter() {
+    var lines = codeEl.value.split('\n').length;
+    var html = '';
+    for (var i = 1; i <= Math.max(lines, 1); i++) html += i + '\n';
+    gutterEl.textContent = html;
+    gutterEl.scrollTop = codeEl.scrollTop;
+  }
+
+  function setStatus(text, bad) {
+    statusEl.innerHTML = text;
+    statusEl.className = 'play-status' + (bad ? ' bad' : '');
+  }
+
+  function showOut(text) {
+    if (!text) {
+      outEl.innerHTML = '<span class="play-dim">программа ничего не напечатала</span>';
+      return;
+    }
+    outEl.textContent = text;
+  }
+
+  function showError(text) {
+    if (!text) { errEl.style.display = 'none'; errEl.textContent = ''; return; }
+    errEl.style.display = '';
+    errEl.textContent = text;
+  }
+
+  /* ------------------------------ запуск ------------------------------ */
+  function run() {
+    var code = codeEl.value;
+    var stdin = stdinEl.value;
+    save();
+    showError('');
+    var t0 = Date.now();
+    var res;
+    try {
+      res = cfg.run(code, stdin);
+    } catch (e) {
+      showOut('');
+      showError('Внутренняя ошибка площадки: ' + (e && e.message ? e.message : e));
+      setStatus('сбой', true);
+      return;
+    }
+    var ms = (res && res.ms) || (Date.now() - t0);
+    showOut(res && res.output ? res.output : '');
+    if (res && res.error) {
+      var e = res.error;
+      var where = e.line ? ('строка ' + e.line + ': ') : '';
+      showError((e.kind ? e.kind + '. ' : '') + where + e.msg);
+      setStatus('<b>✕</b> ошибка', true);
+    } else {
+      setStatus('<b>✔</b> выполнено за ' + ms + ' мс');
+    }
+    if (res && res.output) {
+      outEl.scrollTop = 0;
+    }
+  }
+
+  /* ------------------------------ примеры ------------------------------ */
+  function fillExamples(select) {
+    var html = '<option value="">Примеры кода…</option>';
+    (cfg.examples || []).forEach(function (ex, i) {
+      html += '<option value="' + i + '">' + ex.name + '</option>';
+    });
+    select.innerHTML = html;
+  }
+
+  function loadExample(i) {
+    var ex = (cfg.examples || [])[i];
+    if (!ex) return;
+    codeEl.value = ex.code;
+    stdinEl.value = ex.stdin || '';
+    renderGutter();
+    save();
+    codeEl.focus();
+    run();
+  }
+
+  /* ------------------------------ события ------------------------------ */
+  function bind() {
+    codeEl = $('playCode');
+    stdinEl = $('playStdin');
+    gutterEl = $('playGutter');
+    outEl = $('playOut');
+    errEl = $('playErr');
+    statusEl = $('playStatus');
+
+    $('playStdinHint').textContent = cfg.stdinLabel || 'ввод';
+    $('cheat').textContent = cfg.cheat || '';
+    $('noteBox').innerHTML = cfg.note || '';
+    if (cfg.engineLabel) $('engineBadge').textContent = cfg.engineLabel;
+
+    fillExamples($('exampleSelect'));
+
+    $('btnRun').addEventListener('click', run);
+    $('btnClearOut').addEventListener('click', function () {
+      showOut('');
+      showError('');
+      setStatus('вывод очищен');
+    });
+    $('btnReset').addEventListener('click', function () {
+      codeEl.value = '';
+      stdinEl.value = '';
+      renderGutter();
+      save();
+      codeEl.focus();
+      setStatus('чистый лист');
+    });
+    $('exampleSelect').addEventListener('change', function () {
+      if (this.value === '') return;
+      loadExample(parseInt(this.value, 10));
+      this.value = '';
+    });
+
+    codeEl.addEventListener('input', function () { renderGutter(); save(); });
+    codeEl.addEventListener('scroll', function () { gutterEl.scrollTop = codeEl.scrollTop; });
+    codeEl.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); return; }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        var s = this.selectionStart, en = this.selectionEnd, v = this.value;
+        if (s !== en && v.slice(s, en).indexOf('\n') >= 0) {
+          var from = v.lastIndexOf('\n', s - 1) + 1;
+          var block = v.slice(from, en);
+          var shift = e.shiftKey ? block.replace(/^ {1,4}/gm, '') : block.replace(/^/gm, '    ');
+          this.value = v.slice(0, from) + shift + v.slice(en);
+          this.selectionStart = from;
+          this.selectionEnd = from + shift.length;
+        } else {
+          this.value = v.slice(0, s) + '    ' + v.slice(en);
+          this.selectionStart = this.selectionEnd = s + 4;
+        }
+        renderGutter();
+        save();
+        return;
+      }
+      if (e.key === 'Enter') {
+        var pos = this.selectionStart, v2 = this.value;
+        var lineStart = v2.lastIndexOf('\n', pos - 1) + 1;
+        var line = v2.slice(lineStart, pos);
+        var indent = (line.match(/^ */) || [''])[0];
+        if (/[:{(]\s*$/.test(line)) indent += '    ';
+        if (!indent) return;
+        e.preventDefault();
+        this.value = v2.slice(0, pos) + '\n' + indent + v2.slice(pos);
+        this.selectionStart = this.selectionEnd = pos + 1 + indent.length;
+        renderGutter();
+        save();
+      }
+    });
+
+    /* стартовое состояние */
+    var saved = load();
+    if (saved) {
+      codeEl.value = saved.code;
+      stdinEl.value = saved.stdin || '';
+    } else {
+      codeEl.value = cfg.defaultCode || '';
+      stdinEl.value = cfg.defaultStdin || '';
+    }
+    renderGutter();
+    setStatus('готов к запуску');
+  }
+
+  /* автотестам и консоли удобно дёргать одноимённую функции */
+  global.__play = {
+    run: run,
+    setCode: function (text, stdin) {
+      codeEl.value = text;
+      if (stdin !== undefined) stdinEl.value = stdin;
+      renderGutter();
+      save();
+    },
+    getCode: function () { return codeEl.value; },
+    output: function () { return outEl.textContent; },
+    error: function () { return errEl.style.display === 'none' ? '' : errEl.textContent; },
+    examples: function () { return (cfg.examples || []).length; },
+    loadExample: loadExample
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+</body>
+</html>

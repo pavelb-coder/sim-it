@@ -6,9 +6,9 @@
 
 ## Что уже работает
 
-**8 тренажёров, 583 задачи.** Каталог: **https://pavelb-coder.github.io/sim-it/** — оттуда открывается
-любой продукт. Каждый тренажёр — отдельный автономный HTML-файл со своей теорией, рабочей областью,
-автопроверкой и сохранением прогресса.
+**8 тренажёров, 583 задачи и 2 песочницы свободного кода.** Каталог:
+**https://pavelb-coder.github.io/sim-it/** — оттуда открывается любой продукт. Каждый тренажёр —
+отдельный автономный HTML-файл со своей теорией, рабочей областью, автопроверкой и сохранением прогресса.
 
 | Продукт | Что внутри | Задач | Файл |
 |---|---|---|---|
@@ -20,6 +20,8 @@
 | **Сеть** | модель IPv4: подсети и маски /8…/30, шлюзы, таблицы маршрутов, настоящий `ping` | 22 | [`network/index.html`](network/index.html) |
 | **SQL** | настоящий движок запросов: SELECT/WHERE/LIKE/ORDER BY/LIMIT и агрегаты, 4 таблицы | 28 | [`sql/index.html`](sql/index.html) |
 | **Веб-студия** | HTML/CSS с живым превью и проверкой вёрстки | 22 | [`web/index.html`](web/index.html) |
+| **Python-песочница** | свободная площадка: любой код, тестовый ввод, 8 примеров, без задач | — | [`pyplay/index.html`](pyplay/index.html) |
+| **C++-песочница** | свободная площадка: любой код на учебном C++, `cin`/`cout`, 8 примеров | — | [`cppplay/index.html`](cppplay/index.html) |
 
 Все продукты работают офлайн: достаточно скачать один `index.html` и открыть двойным щелчком.
 
@@ -92,7 +94,8 @@ GitHub Pages отдаёт тренажёр как обычный сайт:
 **https://pavelb-coder.github.io/sim-it/** — открыть в любом браузере, в том числе на планшете.
 
 Публикуется автоматически из ветки `main`. `index.html` в корне — каталог линейки, а каждый
-продукт лежит в своей папке (`python/`, `terminal/`, `network/`, `web/`, `sql/`, `security/`, `ai/`).
+продукт лежит в своей папке (`python/`, `terminal/`, `network/`, `web/`, `sql/`, `security/`, `ai/`,
+`pyplay/`, `cppplay/`).
 Всё это собирается командой `python3 build_site.py`.
 
 ### 2. Windows
@@ -153,6 +156,7 @@ sim-it/
 ├── products/         исходники продуктов: workspace.html, tasks.js, app.js, style.css
 ├── products/cpp/     C++-класс: engine.js (транслятор), tasks.js, test.sh
 ├── python/  cpp/  terminal/  network/  web/  sql/  security/  ai/    собранные тренажёры
+├── pyplay/  cppplay/     собранные песочницы свободного кода (Python и C++)
 ├── python-class/     движок Python: src → build.py → dist/один файл
 ├── start.bat         запуск на Windows (порт 8087)
 ├── start.sh          запуск на Ubuntu/Linux/macOS (порт 8087)
@@ -171,6 +175,15 @@ sim-it/
    каркас сам нарисует список задач, прогресс, подсказки и кнопку проверки.
 3. Запустить `python3 build_site.py` — появятся `<slug>/index.html` и карточка в каталоге.
    Пока нет `workspace.html`, продукт в каталоге помечен «скоро».
+
+### Как сделать песочницу свободного кода
+
+Песочница — это не тренажёр с задачами, а площадка «напиши что хочешь». Собирается из общего
+шаблона [`shared/play.html`](shared/play.html) плюс `shared/play.css` и `shared/play.js`:
+достаточно папки `products/<slug>/config.js`, которая описывает примеры, шпаргалку и вызов движка
+(`run(code, stdin)` → `{ok, output, error:{msg, line}}`). Движок берётся готовый: `python-class/src/py.js`
+или `products/cpp/engine.js`. Готовые площадки — `pyplay` и `cppplay`; проверка:
+`python3 qa/check_playground.py`.
 
 ## Программа курса Python
 

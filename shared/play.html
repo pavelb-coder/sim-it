@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<style>/*__THEME__*/</style>
+<style>/*__PLAYCSS__*/</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark">{{MARK}}</span>
+    <span>{{H1}}<small>{{SUBTITLE}}</small></span>
+  </a>
+  <div class="spacer"></div>
+  <span class="badge engine" id="engineBadge">{{ENGINE_LABEL}}</span>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+</header>
+
+<div class="play-wrap">
+  <div class="play-main">
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn primary" id="btnRun">▶ Выполнить <kbd>Ctrl</kbd>+<kbd>Enter</kbd></button>
+        <button class="btn ghost" id="btnClearOut">Очистить вывод</button>
+        <div class="spacer"></div>
+        <select class="ws-input play-select" id="exampleSelect" title="готовые примеры"></select>
+        <button class="btn ghost" id="btnReset">Свой код с нуля</button>
+      </div>
+
+      <div class="play-editor">
+        <div class="play-gutter" id="playGutter">1</div>
+        <textarea id="playCode" class="play-code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off" aria-label="Код программы"></textarea>
+      </div>
+
+      <div class="play-under">
+        <div>
+          <div class="ws-label">Тестовый ввод — то, что прочитает <code id="playStdinHint">input()</code></div>
+          <textarea id="playStdin" class="code-area play-stdin" rows="3" spellcheck="false" placeholder="по одному значению на строку"></textarea>
+        </div>
+        <div class="play-status" id="playStatus">готов к запуску</div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="play-side">
+    <section class="card">
+      <div class="ws-label" style="margin-bottom:8px">Вывод программы</div>
+      <pre id="playOut" class="play-out"><span class="play-dim">Здесь появится то, что напечатает программа.</span></pre>
+      <div id="playErr" class="play-err" style="display:none"></div>
+    </section>
+
+    <section class="card">
+      <details class="play-details" open>
+        <summary>Шпаргалка</summary>
+        <pre id="cheat" class="play-cheat"></pre>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="ws-label" style="margin-bottom:6px">Как это работает</div>
+      <p class="play-note" id="noteBox"></p>
+    </section>
+  </aside>
+</div>
+
+<script>/*__ENGINE__*/</script>
+<script>/*__CONFIG__*/</script>
+<script>/*__APP__*/</script>
+</body>
+</html>

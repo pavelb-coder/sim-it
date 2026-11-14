@@ -59,6 +59,30 @@ PRODUCTS = [
          tag='искусственный интеллект', color='#5aa9ff'),
 ]
 
+# Песочницы свободного кода: не тренажёры с задачами, а чистая площадка «напиши что хочешь».
+PLAYGROUNDS = {
+    'pyplay': dict(
+        slug='pyplay', mark='Py', h1='Python-песочница',
+        title='Python-песочница · свободный код в браузере',
+        subtitle='свободный код · 8 готовых примеров',
+        description='Python-песочница: пиши любой код и запускай его в браузере. Ввод, вывод, ошибки с номером строки, 8 примеров. Без установки и без интернета.',
+        tag='песочница · свободный код', color='#7bd88f',
+        engine='python-class/src/py.js',
+        config='products/pyplay/config.js',
+        engine_label='движок: Python в браузере · офлайн'),
+    'cppplay': dict(
+        slug='cppplay', mark='C++', h1='C++-песочница',
+        title='C++-песочница · свободный код в браузере',
+        subtitle='свободный код · 8 готовых примеров',
+        description='C++-песочница: пиши любой код на учебном подмножестве C++ и запускай его в браузере. cin/cout, массивы, vector, функции. Без установки компилятора.',
+        tag='песочница · свободный код', color='#5aa9ff',
+        engine='products/cpp/engine.js',
+        config='products/cppplay/config.js',
+        engine_label='движок: C++ в браузере · офлайн'),
+}
+
+PRODUCTS = PRODUCTS + [PLAYGROUNDS['pyplay'], PLAYGROUNDS['cppplay']]
+
 
 def inline(html: str, **parts) -> str:
     for marker, code in parts.items():
@@ -77,10 +101,36 @@ def build_python() -> str:
     return 'python/index.html'
 
 
+def build_playground(cfg: dict) -> str:
+    """Песочница свободного кода: движок + редактор, без списка задач."""
+    template = (SHARED / 'play.html').read_text(encoding='utf-8')
+    page = template
+    page = page.replace('{{TITLE}}', cfg['title'])
+    page = page.replace('{{DESCRIPTION}}', cfg['description'])
+    page = page.replace('{{MARK}}', cfg['mark'])
+    page = page.replace('{{H1}}', cfg['h1'])
+    page = page.replace('{{SUBTITLE}}', cfg['subtitle'])
+    page = page.replace('{{ENGINE_LABEL}}', cfg['engine_label'])
+    page = inline(
+        page,
+        theme=THEME,
+        playcss=(SHARED / 'play.css').read_text(encoding='utf-8'),
+        engine=(BASE / cfg['engine']).read_text(encoding='utf-8'),
+        config=(BASE / cfg['config']).read_text(encoding='utf-8'),
+        app=(SHARED / 'play.js').read_text(encoding='utf-8'),
+    )
+    out = BASE / cfg['slug'] / 'index.html'
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(page, encoding='utf-8')
+    return f"{cfg['slug']}/index.html"
+
+
 def build_product(cfg: dict) -> str:
     slug = cfg['slug']
     if slug == 'python':
         return build_python()
+    if slug in PLAYGROUNDS:
+        return build_playground(cfg)
 
     pdir = PRODUCTS_DIR / slug
     if not (pdir / 'workspace.html').exists():
@@ -151,10 +201,9 @@ def build_hub(products_built: list) -> str:
 <div style="max-width:1200px;margin:0 auto;padding:22px 16px 40px">
   <h1 style="font-size:26px;margin:6px 0 6px;letter-spacing:-.02em">Лаборатория IT-квантума</h1>
   <p style="color:var(--muted);max-width:760px;margin:0 0 20px">
-    Восемь тренажёров и <b>583 задачи с автопроверкой</b> по направлениям IT-квантума.
-    Каждый тренажёр работает целиком в браузере:
-    ничего не нужно устанавливать, не нужен интернет и аккаунт, код и действия выполняются
-    локально. Есть задачи с автопроверкой — как в хороших симуляторах, только для IT.
+    Восемь тренажёров с <b>583 задачами и автопроверкой</b> плюс две <b>песочницы свободного кода</b>
+    — Python и C++, где можно писать что угодно и сразу запускать. Всё работает целиком в браузере:
+    ничего не нужно устанавливать, не нужен интернет и аккаунт, код и действия выполняются локально.
   </p>
   <div class="hub-grid">
     {''.join(cards)}
@@ -163,10 +212,11 @@ def build_hub(products_built: list) -> str:
   <p style="color:var(--muted);max-width:760px;margin:0">
     Откройте тренажёр, решайте задачи по порядку — следующая открывается после сдачи предыдущей.
     Кнопка «Открыть все задачи» снимает ограничение (режим педагога). Прогресс хранится в браузере.
-    Работает и с телефона, и с планшета.
-  </p>
-  <p style="color:#4f5a6e;font-size:12px;margin-top:28px">
-    Исходники и инструкции — в <a href="https://github.com/pavelb-coder/sim-it">репозитории</a>.
+    Работает и с телефона, и с планшета.</p>
+  <p style="color:#8b98b0;font-size:13.5px;line-height:1.7;margin:10px 0 0">
+    Песочницы «Python-песочница» и «C++-песочница» — это свободные площадки: задач и проверки там нет,
+    можно писать любой свой код, задавать тестовый ввод и смотреть вывод и ошибки. Программа
+    запускается по кнопке «Выполнить» или по Ctrl+Enter, код сохраняется в браузере.
   </p>
 </div>
 </body>

@@ -1,0 +1,138 @@
+/* Песочница свободного кода: общая вёрстка для Python- и C++-площадок. */
+
+.play-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 14px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 14px;
+  align-items: start;
+}
+.play-main { min-width: 0; }
+.play-side { display: grid; gap: 14px; min-width: 0; }
+
+.play-editor {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0d1117;
+  margin-top: 10px;
+}
+#playGutter {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  padding: 10px 6px 10px 0;
+  text-align: right;
+  color: #4b5670;
+  background: #0b0f16;
+  border-right: 1px solid var(--line);
+  user-select: none;
+  overflow: hidden;
+  white-space: pre;
+}
+#playCode {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 21px;
+  padding: 10px 12px;
+  min-height: 380px;
+  max-height: 62vh;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  outline: none;
+  resize: vertical;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+.play-under {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+#playStdin {
+  width: 100%;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 13px;
+  background: #0d1117;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+#playStatus {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-bottom: 8px;
+}
+#playStatus b { color: var(--green); font-weight: 600; }
+#playStatus.bad b { color: var(--red); }
+
+.play-select {
+  background: #0d1117;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 12.5px;
+  max-width: 260px;
+}
+
+#playOut {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  background: #0d1117;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0;
+  min-height: 90px;
+  max-height: 42vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#playOut .play-dim { color: #55617a; font-style: italic; }
+#playErr {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #ffb3b3;
+  background: rgba(255, 107, 107, .08);
+  border: 1px solid rgba(255, 107, 107, .35);
+  border-radius: 8px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+}
+.play-details summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+#cheat {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  color: #b9c4d8;
+  white-space: pre-wrap;
+}
+.play-note { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.play-note code { color: #9dc0ff; }
+
+@media (max-width: 1100px) {
+  .play-wrap { grid-template-columns: minmax(0, 1fr); }
+  #playCode { max-height: 50vh; }
+}
