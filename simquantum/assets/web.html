@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Веб-студия · тренажёр для IT-квантума</title>
+<meta name="description" content="Веб-студия в браузере: 22 задачи по HTML и CSS, живое превью и проверка по критериям.">
+<style>/* ======================= Python-класс · IT-квантум ======================= */
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel2: #171d29;
+  --line: #242c3c;
+  --text: #e7ecf6;
+  --muted: #8b97ad;
+  --accent: #5aa9ff;
+  --green: #37d67a;
+  --red: #ff6b6b;
+  --yellow: #ffcc55;
+  --violet: #a78bfa;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+/* ------------------------------- шапка ------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #121722, #0d111a);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, #2f6df6, #7bd88f);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.logo small { display: block; font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.spacer { flex: 1; }
+.badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #0f141d;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.badge b { color: var(--green); font-weight: 600; }
+.badge.engine { cursor: help; }
+.progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.progress {
+  width: 120px; height: 6px; border-radius: 999px; background: #1b2231; overflow: hidden;
+}
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6df6, #37d67a); transition: width .35s ease; }
+.progress-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.progress-text b { color: var(--text); }
+
+/* ------------------------------- каркас ------------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ---------------------------- список задач ---------------------------- */
+.sidebar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 92px);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-head {
+  padding: 12px 14px 8px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
+.task-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.task-item:hover:not(.locked) { background: var(--panel2); }
+.task-item.active { background: #17233a; border-color: #2a4b7d; }
+.task-item.locked { color: #5d6879; cursor: not-allowed; }
+.task-item .num {
+  flex: 0 0 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: #1b2333; color: var(--muted);
+}
+.task-item.done .num { background: rgba(55,214,122,.16); color: var(--green); }
+.task-item.active .num { background: #2f6df6; color: #fff; }
+.task-item .t-main { min-width: 0; display: block; }
+.task-item .t-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.task-item .t-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.mini-btn {
+  background: #1a2130; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.mini-btn:hover { color: var(--text); border-color: #33405a; }
+
+/* ------------------------------- рабочая ------------------------------- */
+.work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.task-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.task-head h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.task-head .sub { color: var(--muted); font-size: 12.5px; }
+.task-body { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.prompt { font-size: 15px; }
+.theory {
+  background: #0f141d;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #c3ccdb;
+}
+.theory p { margin: 0 0 6px; }
+.theory p:last-child { margin-bottom: 0; }
+.theory code, .prompt code { background: #1b2433; border-radius: 5px; padding: 1px 5px; color: #dfe8ff; }
+.examples { display: flex; gap: 10px; flex-wrap: wrap; }
+.example {
+  background: #0f141d; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; font-family: var(--mono); font-size: 12.5px; min-width: 150px;
+}
+.example .lbl { color: var(--muted); font-family: var(--sans); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.example pre { margin: 2px 0 0; white-space: pre-wrap; color: #cfe0ff; }
+.example .arrow { color: var(--muted); font-family: var(--sans); font-size: 11px; margin-top: 6px; }
+.hint-box {
+  display: none;
+  background: rgba(255,204,85,.08);
+  border: 1px solid rgba(255,204,85,.3);
+  color: #ffe6a8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+.hint-box.show { display: block; }
+
+/* ------------------------------- редактор ------------------------------- */
+.editor-card { display: flex; flex-direction: column; }
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: #101620;
+}
+.btn {
+  border-radius: 9px; border: 1px solid var(--line);
+  background: #1a2130; color: var(--text);
+  padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: #3a4a68; }
+.btn.primary { background: linear-gradient(180deg, #2f6df6, #2559d6); border-color: #2b62e0; color: #fff; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ok { background: linear-gradient(180deg, #2fbd6c, #22a05a); border-color: #26a860; color: #06220f; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn kbd {
+  background: rgba(255,255,255,.16); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-weight: 700;
+}
+.editor-shell {
+  position: relative;
+  display: flex;
+  background: #0c1119;
+  min-height: 250px;
+  max-height: 52vh;
+}
+.gutter-nums {
+  flex: 0 0 auto;
+  white-space: pre;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  font: 14px/1.55 var(--mono);
+  color: #3f4a5e;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  background: #0a0f16;
+  border-right: 1px solid #1a2130;
+}
+.code-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+.code-hl, #code {
+  position: absolute; inset: 0;
+  margin: 0; padding: 12px 14px;
+  font: 14px/1.55 var(--mono);
+  white-space: pre; tab-size: 4;
+  border: 0; overflow: auto;
+}
+.code-hl { color: #cbd5e6; pointer-events: none; z-index: 1; }
+#code {
+  color: transparent; caret-color: #fff; background: transparent;
+  resize: none; outline: none; z-index: 2;
+}
+#code::selection { background: rgba(90,169,255,.32); }
+.tok-kw { color: #c792ea; }
+.tok-bi { color: #82aaff; }
+.tok-str { color: #a5e075; }
+.tok-num { color: #f78c6c; }
+.tok-com { color: #5a6779; font-style: italic; }
+.tok-def { color: #ffcb6b; }
+.editor-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--line); background: #101620;
+}
+.stdin-label { font-size: 12px; color: var(--muted); }
+#stdin {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px;
+  color: #cfe0ff; font: 13px/1.4 var(--mono); padding: 6px 9px; width: 190px; height: 32px; resize: vertical;
+}
+.hint-inline { font-size: 11.5px; color: #5f6b80; }
+
+/* ------------------------------- консоль ------------------------------- */
+.tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); background: #101620; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  color: var(--muted); padding: 7px 13px; font-size: 13px; border-radius: 9px 9px 0 0;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+.tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #38445a; }
+.tab.active .dot { background: var(--accent); }
+.tab .count { font-size: 11px; color: var(--muted); }
+.panel { padding: 12px 14px; min-height: 150px; max-height: 40vh; overflow: auto; }
+.panel[hidden] { display: none; }
+.out {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: #d7e2f2;
+}
+.out.empty { color: #55617a; font-style: italic; }
+.err {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  background: rgba(255,107,107,.07);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 9px; padding: 10px 12px; color: #ffb3b3; margin-top: 10px;
+}
+.err b { color: var(--red); }
+.test-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: #0f141d; margin-bottom: 7px; font-size: 12.5px;
+}
+.test-row.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.test-row.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.test-row .mark { font-weight: 800; width: 14px; flex: 0 0 14px; }
+.test-row.pass .mark { color: var(--green); }
+.test-row.fail .mark { color: var(--red); }
+.test-row .io { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+.test-row .io .k { color: var(--muted); }
+.test-row .io .bad { color: #ffb3b3; }
+.test-row .io .good { color: #a5e075; }
+.summary { font-size: 13.5px; margin-bottom: 10px; }
+.summary.good { color: var(--green); }
+.summary.bad { color: var(--yellow); }
+.celebrate {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(55,214,122,.08); border: 1px solid rgba(55,214,122,.35);
+  color: #a7f3c8; font-size: 13.5px;
+}
+.celebrate button { margin-top: 8px; }
+.solution {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #0c1119; border: 1px dashed #2f4364;
+}
+.solution .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.solution pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; color: #cfe0ff; }
+.trace-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 10px; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.trace-row:hover { background: #10192a; border-color: #22304a; }
+.trace-row.sel { background: #142441; border-color: #2c548f; }
+.trace-line { color: var(--muted); font: 12px/1.4 var(--mono); }
+.trace-body { font: 12px/1.45 var(--mono); min-width: 0; }
+.trace-code { color: #8fa3c4; white-space: pre-wrap; }
+.trace-vars { color: #a5e075; margin-top: 2px; white-space: pre-wrap; }
+.trace-vars .none { color: #55617a; }
+.foot-note { color: #4f5a6e; font-size: 11.5px; text-align: center; padding: 6px 0 22px; }
+
+/* ------------------------------- адаптив ------------------------------- */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .sidebar { position: static; max-height: none; }
+  .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
+  .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
+  .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
+  .editor-shell { min-height: 200px; max-height: 46vh; }
+  .topbar { padding: 8px 12px; }
+  .progress-wrap { order: 3; width: 100%; }
+  .progress { flex: 1; width: auto; }
+  .panel { max-height: 46vh; }
+  #stdin { width: 100%; }
+  .editing-foot { display: block; }
+}
+
+
+/* ===================== общий каркас для продуктов ===================== */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hub-card {
+  display: block; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; transition: transform .12s ease, border-color .12s ease;
+}
+.hub-card:hover { border-color: #35507e; }
+.hub-card h3 { margin: 0 0 4px; font-size: 16px; }
+.hub-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.hub-card .tag {
+  display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: #9dc0ff; border: 1px solid #2b4470; border-radius: 999px;
+  padding: 2px 9px;
+}
+.hub-card.soon { opacity: .55; }
+.workspace { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ws-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-label { font-size: 12px; color: var(--muted); }
+.ws-input {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px; color: #cfe0ff;
+  font: 13px/1.4 var(--mono); padding: 7px 10px;
+}
+.ws-input:focus { outline: none; border-color: #35507e; }
+.console {
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  font: 13px/1.5 var(--mono); padding: 12px 14px; min-height: 260px; max-height: 46vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.console .cmd { color: #7fd1ff; }
+.console .err { color: #ff9c9c; }
+.console .ok { color: #a5e075; }
+.console .dim { color: #5f6b80; }
+.prompt-line { display: flex; gap: 8px; align-items: center; }
+.prompt-line .ps1 { color: var(--green); font: 13px/1.4 var(--mono); white-space: nowrap; }
+.prompt-line input {
+  flex: 1; min-width: 0; background: #0a0e15; border: 1px solid var(--line); border-radius: 8px;
+  color: #e7ecf6; font: 13px/1.4 var(--mono); padding: 8px 10px;
+}
+.prompt-line input:focus { outline: none; border-color: #35507e; }
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #0f141d;
+}
+.check-item.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.check-item.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.check-item .mark { font-weight: 800; }
+.check-item.pass .mark { color: var(--green); }
+.check-item.fail .mark { color: var(--red); }
+.check-item .note { color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+.code-area {
+  width: 100%; min-height: 130px; background: #0c1119; border: 1px solid var(--line);
+  border-radius: 10px; color: #cfe0ff; font: 13px/1.5 var(--mono); padding: 10px 12px; resize: vertical;
+}
+.code-area:focus { outline: none; border-color: #35507e; }
+.data-table { width: 100%; border-collapse: collapse; font: 12.5px/1.4 var(--mono); }
+.data-table th, .data-table td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.data-table th { background: #131a26; color: #9dc0ff; font-weight: 600; }
+.data-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark"></></span>
+    <span>Веб-студия<small>22 задачи · HTML и CSS с живым превью</small></span>
+  </a>
+  <div class="spacer"></div>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn ok" id="btnCheck">✔ Проверить</button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        <button class="btn ghost" id="btnClean">Очистить панели</button>
+
+      </div>
+      <div class="workspace">
+        <div class="two-col">
+  <div>
+    <div class="ws-label" style="margin-bottom:4px">HTML</div>
+    <textarea class="code-area" id="htmlCode" spellcheck="false" style="min-height:150px"></textarea>
+    <div class="ws-label" style="margin:10px 0 4px">CSS</div>
+    <textarea class="code-area" id="cssCode" spellcheck="false" style="min-height:110px"></textarea>
+  </div>
+  <div>
+    <div class="ws-label" style="margin-bottom:4px">Что видит браузер</div>
+    <iframe id="preview" title="Предпросмотр" style="width:100%;height:330px;border:1px solid var(--line);border-radius:10px;background:#fff"></iframe>
+    <div class="ws-label" style="margin-top:8px" id="previewStatus"></div>
+  </div>
+</div>
+
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs"><button class="tab active"><span class="dot"></span>Проверка</button></div>
+      <div class="panel" id="panel-check"><pre class="out empty">Выполни задание и нажми «Проверить».</pre></div>
+    </section>
+
+    <div class="foot-note">Работает без интернета и без установки · всё выполняется локально в браузере · прогресс хранится на этом устройстве</div>
+  </main>
+</div>
+
+<script>/* ==========================================================================
+   Shell — общий каркас тренажёров IT-квантума.
+   Даёт: список задач с прогрессом, карточку задания, кнопку проверки,
+   подсказку, разбор результатов и хранение прогресса в браузере.
+   Продукт подключает свои задачи и две функции: open(task) и check(task).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var cfg = null;
+  var st = { solved: {}, current: 0, showAll: false };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function save() {
+    try { localStorage.setItem(cfg.storageKey, JSON.stringify(st)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(cfg.storageKey);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      st.solved = d.solved || {};
+      st.showAll = !!d.showAll;
+    } catch (e) {}
+  }
+  function tasks() { return cfg.tasks; }
+  function task(i) { return cfg.tasks[i]; }
+  function unlocked(i) { return st.showAll || i === 0 || !!st.solved[cfg.tasks[i - 1].id]; }
+  function solvedCount() {
+    var n = 0;
+    cfg.tasks.forEach(function (t) { if (st.solved[t.id]) n++; });
+    return n;
+  }
+
+  function renderSidebar() {
+    var html = '';
+    cfg.tasks.forEach(function (t, i) {
+      var done = !!st.solved[t.id];
+      var lock = !unlocked(i);
+      html += '<button class="task-item' + (i === st.current ? ' active' : '') + (done ? ' done' : '') +
+        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
+        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+        '<span class="t-sub">' + esc(t.subtitle || '') + '</span></span></button>';
+    });
+    $('taskList').innerHTML = html;
+    Array.prototype.forEach.call($('taskList').querySelectorAll('.task-item'), function (b) {
+      b.addEventListener('click', function () {
+        var i = parseInt(b.getAttribute('data-i'), 10);
+        if (unlocked(i)) openTask(i);
+      });
+    });
+  }
+
+  function doneText(n) {
+    if (n === 1) return 'Готово: проверка пройдена.';
+    var word = (n % 10 >= 2 && n % 10 <= 4 && (n < 12 || n > 14)) ? 'проверки' : 'проверок';
+    return 'Готово: все ' + n + ' ' + word + ' пройдены.';
+  }
+
+  function renderProgress() {
+    var n = solvedCount();
+    $('progressBar').style.width = (n / cfg.tasks.length * 100) + '%';
+    $('progressText').innerHTML = '<b>' + n + '</b> из ' + cfg.tasks.length + ' задач';
+  }
+
+  function openTask(i) {
+    st.current = i;
+    var t = tasks()[i];
+    $('taskTitle').textContent = t.title;
+    $('taskSub').textContent = t.subtitle || '';
+    $('taskModule').textContent = cfg.productTitle || '';
+    var lvl = $('taskLevel');
+    if (t.level) {
+      lvl.textContent = t.level;
+      lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard');
+    } else { lvl.textContent = ''; lvl.className = 'chip'; }
+
+    $('theory').innerHTML = t.theory || '';
+    $('prompt').innerHTML = t.prompt || '';
+    var ex = '';
+    (t.examples || []).forEach(function (e) {
+      ex += '<div class="example"><div class="lbl">' + esc(e.label || 'пример') + '</div><pre>' + esc(e.text) + '</pre></div>';
+    });
+    $('examples').innerHTML = ex;
+    var hint = $('hintBox');
+    hint.textContent = t.hint || 'Подсказки нет — попробуй сам.';
+    hint.classList.remove('show');
+
+    $('panel-check').innerHTML = '<pre class="out empty">Пока пусто. Выполни задание в рабочей области и нажми «Проверить».</pre>';
+    if (cfg.open) cfg.open(t, st);
+    renderSidebar();
+    renderProgress();
+    save();
+  }
+
+  function runCheck() {
+    var t = tasks()[st.current];
+    var results;
+    try {
+      results = cfg.check(t, st) || [];
+    } catch (e) {
+      results = [{ ok: false, label: 'Ошибка проверки: ' + (e && e.message ? e.message : e) }];
+    }
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var allOk = results.length > 0 && passed === results.length;
+
+    var html = '';
+    html += allOk
+      ? '<div class="summary good">✔ ' + doneText(results.length) + '</div>'
+      : '<div class="summary bad">Пройдено ' + passed + ' из ' + results.length + ' проверок. Ниже видно, что именно не так.</div>';
+    html += '<div class="check-list">';
+    results.forEach(function (r) {
+      html += '<div class="check-item ' + (r.ok ? 'pass' : 'fail') + '">' +
+        '<span class="mark">' + (r.ok ? '✔' : '✕') + '</span><div>' + esc(r.label) +
+        (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</div></div>';
+    });
+    html += '</div>';
+
+    if (allOk) {
+      var first = !st.solved[t.id];
+      st.solved[t.id] = true;
+      save();
+      if (first) html += '<div class="celebrate">Задача закрыта — прогресс сохранён.</div>';
+      if (st.current + 1 < tasks().length) {
+        html += '<div class="celebrate"><button class="btn ok" id="goNext">Следующая задача →</button></div>';
+      } else {
+        html += '<div class="celebrate"><b>Это последняя задача продукта.</b> Возвращайся на главную и пробуй другой тренажёр.</div>';
+      }
+      renderSidebar();
+      renderProgress();
+    }
+    $('panel-check').innerHTML = html;
+    var next = $('goNext');
+    if (next) next.addEventListener('click', function () { openTask(st.current + 1); });
+    $('panel-check').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function init(config) {
+    cfg = config;
+    load();
+    if ($('productTitle')) $('productTitle').textContent = cfg.productTitle || '';
+    if ($('productSub')) $('productSub').textContent = cfg.productSubtitle || '';
+
+    $('btnCheck').addEventListener('click', runCheck);
+    $('btnHint').addEventListener('click', function () { $('hintBox').classList.toggle('show'); });
+    $('btnShowAll').addEventListener('click', function () {
+      st.showAll = !st.showAll;
+      save();
+      this.textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+      renderSidebar();
+    });
+    $('btnResetProgress').addEventListener('click', function () {
+      if (!confirm('Сбросить прогресс продукта?')) return;
+      st.solved = {};
+      st.showAll = false;
+      save();
+      $('btnShowAll').textContent = 'Открыть все задачи';
+      openTask(0);
+    });
+    $('btnShowAll').textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+
+    var start = 0;
+    for (var i = 0; i < tasks().length; i++) { if (!st.solved[tasks()[i].id]) { start = i; break; } }
+    openTask(unlocked(start) ? start : 0);
+    if (cfg.onReady) cfg.onReady(st);
+  }
+
+  global.Shell = {
+    init: init,
+    state: st,
+    openTask: openTask,
+    runCheck: runCheck,
+    unlocked: unlocked,
+    esc: esc,
+    save: save
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Веб-студия — задачи. Проверка смотрит на готовую страницу: разбирается HTML
+   и правила CSS, а не текст программы.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  function parse(html) {
+    return new DOMParser().parseFromString('<div id="__root">' + html + '</div>', 'text/html');
+  }
+  function root(html) { return parse(html).getElementById('__root'); }
+  function all(html, sel) { return Array.prototype.slice.call(root(html).querySelectorAll(sel)); }
+  function cssHas(css, re) { return re.test(String(css).replace(/\s+/g, ' ').toLowerCase()); }
+
+  global.WEB_TASKS = [
+    {
+      id: 'w1',
+      level: 'легко',
+      title: 'Заголовок и абзац',
+      subtitle: 'h1, p, структура документа',
+      theory: '<p>Страница — это дерево тегов. <code>&lt;h1&gt;</code> — главный заголовок, <code>&lt;p&gt;</code> — абзац. ' +
+              'Браузер сам расставляет размеры и отступы, если не вмешиваться.</p>' +
+              '<p>Пиши теги закрытыми: <code>&lt;p&gt;текст&lt;/p&gt;</code>.</p>',
+      prompt: 'Сделай страницу с заголовком <code>Мой первый сайт</code> и абзацем текста в два предложения.',
+      examples: [{ label: 'критерии', text: 'есть один h1 с нужным текстом · есть p длиной больше 20 символов' }],
+      hint: '<h1>Мой первый сайт</h1>\n<p>Это мой первый абзац. Здесь два предложения.</p>',
+      solution: { html: '<h1>Мой первый сайт</h1>\n<p>Я учусь делать сайты. Это мой первый абзац.</p>', css: '' },
+      checks: [
+        {
+          label: 'есть ровно один заголовок h1',
+          fn: function (html) { return all(html, 'h1').length === 1; }
+        },
+        {
+          label: 'h1 содержит текст «Мой первый сайт»',
+          fn: function (html) {
+            var h = all(html, 'h1')[0];
+            return !!h && h.textContent.trim().toLowerCase() === 'мой первый сайт';
+          }
+        },
+        {
+          label: 'есть абзац p длиннее 20 символов',
+          fn: function (html) { return all(html, 'p').some(function (p) { return p.textContent.trim().length > 20; }); }
+        }
+      ]
+    },
+    {
+      id: 'w2',
+      level: 'легко',
+      title: 'Список',
+      subtitle: 'ul, li — перечисления',
+      theory: '<p><code>&lt;ul&gt;</code> — маркированный список, внутри только <code>&lt;li&gt;</code>. ' +
+              'Нумерованный — <code>&lt;ol&gt;</code>.</p>' +
+              '<p>Списки — семантика: скринридеры и поисковики понимают, что это перечисление.</p>',
+      prompt: 'Сделай маркированный список из трёх предметов: Python, сети, веб.',
+      examples: [{ label: 'критерии', text: 'один ul · ровно три li · тексты «Python», «сети», «веб»' }],
+      hint: '<ul>\n  <li>Python</li>\n  <li>сети</li>\n  <li>веб</li>\n</ul>',
+      solution: { html: '<ul>\n  <li>Python</li>\n  <li>сети</li>\n  <li>веб</li>\n</ul>', css: '' },
+      checks: [
+        { label: 'есть список ul', fn: function (html) { return all(html, 'ul').length >= 1; } },
+        { label: 'в нём ровно три пункта li', fn: function (html) { return all(html, 'ul li').length === 3; } },
+        {
+          label: 'пункты — Python, сети, веб',
+          fn: function (html) {
+            var texts = all(html, 'ul li').map(function (li) { return li.textContent.trim().toLowerCase(); });
+            return ['python', 'сети', 'веб'].every(function (w) { return texts.indexOf(w) >= 0; });
+          }
+        }
+      ]
+    },
+    {
+      id: 'w3',
+      level: 'средне',
+      title: 'Ссылка и картинка',
+      subtitle: 'a href, img alt, доступность',
+      theory: '<p><code>&lt;a href="адрес"&gt;</code> — ссылка. <code>&lt;img src="..." alt="описание"&gt;</code> — картинка.</p>' +
+              '<p><code>alt</code> — не формальность: без него страница недоступна для незрячих и плохо индексируется. ' +
+              'Это первое, что проверяют на ревью.</p>',
+      prompt: 'Добавь на страницу ссылку на <code>https://developer.mozilla.org</code> с текстом <code>Документация</code> ' +
+              'и картинку с непустым <code>alt</code> (адрес картинки любой).',
+      examples: [{ label: 'критерии', text: 'a с href и текстом · img с alt (не пустым)' }],
+      hint: '<a href="https://developer.mozilla.org">Документация</a>\n<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MiIgaGVpZ2h0PSI3MiI+PHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjcyIiByeD0iMTAiIGZpbGw9IiNmMDg4M2UiLz48Y2lyY2xlIGN4PSIyNCIgY3k9IjMwIiByPSI2IiBmaWxsPSIjMGQxMTE3Ii8+PGNpcmNsZSBjeD0iNDgiIGN5PSIzMCIgcj0iNiIgZmlsbD0iIzBkMTExNyIvPjxwYXRoIGQ9Ik0yMiA0OCBxMTQgMTAgMjggMCIgc3Ryb2tlPSIjMGQxMTE3IiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiLz48L3N2Zz4=" alt="кот в коробке">',
+      solution: {
+        html: '<a href="https://developer.mozilla.org">Документация</a>\n<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MiIgaGVpZ2h0PSI3MiI+PHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjcyIiByeD0iMTAiIGZpbGw9IiNmMDg4M2UiLz48Y2lyY2xlIGN4PSIyNCIgY3k9IjMwIiByPSI2IiBmaWxsPSIjMGQxMTE3Ii8+PGNpcmNsZSBjeD0iNDgiIGN5PSIzMCIgcj0iNiIgZmlsbD0iIzBkMTExNyIvPjxwYXRoIGQ9Ik0yMiA0OCBxMTQgMTAgMjggMCIgc3Ryb2tlPSIjMGQxMTE3IiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiLz48L3N2Zz4=" alt="кот в коробке">',
+        css: ''
+      },
+      checks: [
+        {
+          label: 'ссылка ведёт на developer.mozilla.org',
+          fn: function (html) {
+            return all(html, 'a').some(function (a) { return (a.getAttribute('href') || '').indexOf('developer.mozilla.org') >= 0; });
+          }
+        },
+        {
+          label: 'текст ссылки — «Документация»',
+          fn: function (html) {
+            return all(html, 'a').some(function (a) { return a.textContent.trim().toLowerCase() === 'документация'; });
+          }
+        },
+        {
+          label: 'у картинки есть непустой alt',
+          fn: function (html) {
+            return all(html, 'img').some(function (i) { return (i.getAttribute('alt') || '').trim().length > 3; });
+          }
+        }
+      ]
+    },
+    {
+      id: 'w4',
+      level: 'средне',
+      title: 'Первые стили',
+      subtitle: 'CSS: селектор, свойство, значение',
+      theory: '<p>CSS-правило состоит из селектора и блока свойств: <code>body { color: #111; }</code>.</p>' +
+              '<p>Цвет текста — <code>color</code>, фон — <code>background-color</code>, размер шрифта — <code>font-size</code>. ' +
+              'Значения: цвета можно словами (<code>navy</code>) или кодом (<code>#1d3557</code>).</p>',
+      prompt: 'Оформи страницу: у <code>body</code> должен быть фон (не белый) и тёмный цвет текста, ' +
+              'а у <code>h1</code> — размер шрифта больше 30px.',
+      examples: [{ label: 'критерии', text: 'body { background-color … } · body { color … } · h1 { font-size: 31px+ }' }],
+      hint: 'body { background-color: #f2f6ff; color: #10202f; }\nh1 { font-size: 36px; }',
+      solution: {
+        html: '<h1>Мой первый сайт</h1>\n<p>Со стилями страница выглядит иначе.</p>',
+        css: 'body { background-color: #f2f6ff; color: #10202f; }\nh1 { font-size: 36px; }'
+      },
+      checks: [
+        {
+          label: 'у body задан background-color',
+          fn: function (html, css) { return cssHas(css, /body\s*\{[^}]*background(-color)?\s*:/); }
+        },
+        {
+          label: 'у body задан цвет текста',
+          fn: function (html, css) { return cssHas(css, /body\s*\{[^}]*[^-]color\s*:/); }
+        },
+        {
+          label: 'у h1 размер шрифта больше 30px',
+          fn: function (html, css) {
+            var m = /h1\s*\{[^}]*font-size\s*:\s*([\d.]+)\s*(px|rem|em)/i.exec(String(css));
+            if (!m) return false;
+            var v = parseFloat(m[1]);
+            if (m[2].toLowerCase() !== 'px') v = v * 16;
+            return v > 30;
+          }
+        }
+      ]
+    },
+    {
+      id: 'w5',
+      level: 'средне',
+      title: 'Класс и карточка',
+      subtitle: 'class, border-radius, padding',
+      theory: '<p>Класс — способ пометить группу элементов: в HTML <code>class="card"</code>, в CSS селектор <code>.card</code>.</p>' +
+              '<p>Карточка обычно требует отступов внутри (<code>padding</code>), рамки (<code>border</code>) ' +
+              'и скругления (<code>border-radius</code>).</p>',
+      prompt: 'Сделай блок <code>&lt;div class="card"&gt;</code> с текстом и оформи класс <code>.card</code>: ' +
+              'внутренние отступы не меньше 12px, скругление не меньше 8px и рамка.',
+      examples: [{ label: 'критерии', text: 'div.card на странице · .card { padding ≥ 12px; border-radius ≥ 8px; border }' }],
+      hint: '<div class="card">Привет!</div>\n.card { padding: 16px; border-radius: 12px; border: 1px solid #ccc; }',
+      solution: {
+        html: '<div class="card">Это карточка с текстом.</div>',
+        css: '.card { padding: 16px; border-radius: 12px; border: 1px solid #c9d4e6; background: #fff; }'
+      },
+      checks: [
+        {
+          label: 'на странице есть элемент с классом card',
+          fn: function (html) { return all(html, '.card').length >= 1; }
+        },
+        {
+          label: 'padding не меньше 12px',
+          fn: function (html, css) {
+            var m = /\.card\s*\{[^}]*padding\s*:\s*([\d.]+)px/i.exec(String(css));
+            return !!m && parseFloat(m[1]) >= 12;
+          }
+        },
+        {
+          label: 'border-radius не меньше 8px',
+          fn: function (html, css) {
+            var m = /\.card\s*\{[^}]*border-radius\s*:\s*([\d.]+)px/i.exec(String(css));
+            return !!m && parseFloat(m[1]) >= 8;
+          }
+        },
+        {
+          label: 'есть рамка border',
+          fn: function (html, css) { return cssHas(css, /\.card\s*\{[^}]*border\s*:/); }
+        }
+      ]
+    },
+    {
+      id: 'w6',
+      level: 'сложно',
+      title: 'Флексбокс и адаптивность',
+      subtitle: 'display: flex, gap, @media',
+      theory: '<p><code>display: flex</code> выстраивает детей контейнера в строку. <code>gap</code> задаёт промежутки ' +
+              'без хитростей с полями.</p>' +
+              '<p><code>@media (max-width: 600px)</code> включает правила только на узком экране — так страница ' +
+              'становится удобной на телефоне.</p>',
+      prompt: 'Сделай контейнер <code>&lt;div class="row"&gt;</code> с тремя блоками и оформи: ' +
+              '<code>.row</code> — флекс с зазором, а внутри <code>@media (max-width: 600px)</code> — ' +
+              'переключение на колонку (<code>flex-direction: column</code>).',
+      examples: [{ label: 'критерии', text: '.row { display:flex; gap } · @media с flex-direction: column' }],
+      hint: '.row { display: flex; gap: 12px; }\n@media (max-width: 600px) { .row { flex-direction: column; } }',
+      solution: {
+        html: '<div class="row"><div>A</div><div>B</div><div>C</div></div>',
+        css: '.row { display: flex; gap: 12px; }\n.row > div { padding: 10px; border: 1px solid #ccc; border-radius: 8px; }\n' +
+             '@media (max-width: 600px) { .row { flex-direction: column; } }'
+      },
+      checks: [
+        {
+          label: 'есть контейнер .row с тремя дочерними блоками',
+          fn: function (html) {
+            var r = all(html, '.row')[0];
+            return !!r && r.children.length >= 3;
+          }
+        },
+        {
+          label: 'у .row display: flex и задан gap',
+          fn: function (html, css) {
+            return cssHas(css, /\.row\s*\{[^}]*display\s*:\s*flex/) && cssHas(css, /\.row\s*\{[^}]*gap\s*:/);
+          }
+        },
+        {
+          label: 'есть @media (max-width …) с flex-direction: column',
+          fn: function (html, css) {
+            return /@media[^{]*max-width[^{]*\{[\s\S]*flex-direction\s*:\s*column/i.test(String(css));
+          }
+        }
+      ]
+    }
+  ];
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ==========================================================================
+   Веб-студия — банк задач: 16 заданий на разметку и CSS.
+   Проверка разбирает готовую страницу (DOM) и правила CSS, а не текст программы.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  function root(html) {
+    return new DOMParser().parseFromString('<div id="__root">' + html + '</div>', 'text/html')
+      .getElementById('__root');
+  }
+  function all(html, sel) { return Array.prototype.slice.call(root(html).querySelectorAll(sel)); }
+  function cssHas(css, re) { return re.test(String(css).replace(/\s+/g, ' ').toLowerCase()); }
+  function txt(el) { return el ? String(el.textContent || '').trim() : ''; }
+
+  var bank = [
+    {
+      id: 'w7', level: 'легко',
+      title: 'Три абзаца',
+      subtitle: 'несколько p подряд',
+      theory: '<p>Одинаковые теги можно повторять: каждый <code>&lt;p&gt;</code> — отдельный абзац со своими отступами.</p>' +
+        '<p>Браузер добавляет между абзацами пустое место сам, поэтому разметка остаётся короткой.</p>',
+      prompt: 'Сделай страницу с заголовком <code>Мои увлечения</code> и <b>тремя абзацами</b> текста.',
+      examples: [{ label: 'критерии', text: 'один h1 · три p, в каждом больше 10 символов' }],
+      hint: '<h1>Мои увлечения</h1>\\n<p>Первый абзац про роботов и схемы.</p>\\n<p>Второй — про игры и код.</p>\\n<p>Третий — про спорт.</p>',
+      starter: { html: '<h1>Мои увлечения</h1>\n<p></p>\n', css: '' },
+      solution: {
+        html: '<h1>Мои увлечения</h1>\n<p>Собираю роботов из конструктора.</p>\n' +
+              '<p>Пишу игры на Python и C++.</p>\n<p>Ещё хожу на плавание.</p>',
+        css: ''
+      },
+      checks: [
+        { label: 'есть заголовок h1', fn: function (html) { return all(html, 'h1').length >= 1; } },
+        {
+          label: 'есть три абзаца p, в каждом есть текст',
+          fn: function (html) {
+            var ps = all(html, 'p');
+            return ps.length >= 3 && ps.slice(0, 3).every(function (p) { return txt(p).length > 10; });
+          }
+        }
+      ]
+    },
+    {
+      id: 'w8', level: 'легко',
+      title: 'Нумерованный список',
+      subtitle: 'ol и li',
+      theory: '<p><code>&lt;ol&gt;</code> — упорядоченный список: браузер сам нумерует пункты <code>&lt;li&gt;</code>.</p>' +
+        '<p>Если важен порядок шагов (рецепт, инструкция) — это <code>ol</code>. Если порядок не важен — <code>ul</code>.</p>',
+      prompt: 'Сделай <b>нумерованный список из четырёх пунктов</b> — шаги «Как запустить программу».',
+      examples: [{ label: 'критерии', text: 'один ol · минимум четыре li с текстом' }],
+      hint: '<ol>\\n  <li>Открыть редактор</li>\\n  …\\n</ol>',
+      starter: { html: '<h2>Как запустить программу</h2>\n<ol>\n  <li></li>\n</ol>', css: '' },
+      solution: {
+        html: '<h2>Как запустить программу</h2>\n<ol>\n  <li>Открыть редактор кода</li>\n' +
+              '  <li>Написать программу</li>\n  <li>Проверить, что нет ошибок</li>\n  <li>Нажать «Запустить»</li>\n</ol>',
+        css: ''
+      },
+      checks: [
+        { label: 'есть нумерованный список ol', fn: function (html) { return all(html, 'ol').length === 1; } },
+        {
+          label: 'в списке не меньше четырёх пунктов li',
+          fn: function (html) {
+            var li = all(html, 'ol li');
+            return li.length >= 4 && li.every(function (x) { return txt(x).length > 2; });
+          }
+        }
+      ]
+    },
+    {
+      id: 'w9', level: 'средне',
+      title: 'Вложенный список',
+      subtitle: 'список внутри списка',
+      theory: '<p>Внутренний список кладут <b>внутрь</b> пункта <code>&lt;li&gt;</code>, а не рядом с ним. Так появляется структура «тема → подтемы».</p>' +
+        '<p>Каждый уровень вложенности получает свой отступ — дерево видно сразу.</p>',
+      prompt: 'Сделай список направлений, где у пункта «Программирование» есть <b>вложенный список</b> из двух пунктов.',
+      examples: [{ label: 'критерии', text: 'внешний ul с 2+ li · внутри одного li есть ещё один ul с 2+ li' }],
+      hint: '<ul>\\n  <li>Программирование\\n    <ul><li>Python</li><li>C++</li></ul>\\n  </li>\\n  <li>Робототехника</li>\\n</ul>',
+      starter: { html: '<ul>\n  <li>Программирование\n    <ul>\n    </ul>\n  </li>\n</ul>', css: '' },
+      solution: {
+        html: '<ul>\n  <li>Программирование\n    <ul>\n      <li>Python</li>\n      <li>C++</li>\n    </ul>\n  </li>\n' +
+              '  <li>Робототехника</li>\n</ul>',
+        css: ''
+      },
+      checks: [
+        {
+          label: 'есть внешний список с двумя и более пунктами',
+          fn: function (html) { return all(html, 'ul').length >= 1 && all(html, 'ul')[0].querySelectorAll(':scope > li').length >= 2; }
+        },
+        {
+          label: 'внутри пункта есть вложенный список с двумя пунктами',
+          fn: function (html) {
+            var inner = all(html, 'ul li ul');
+            return inner.length >= 1 && inner[0].querySelectorAll(':scope > li').length >= 2;
+          }
+        }
+      ]
+    },
+    {
+      id: 'w10', level: 'средне',
+      title: 'Таблица',
+      subtitle: 'table, th, td, tr',
+      theory: '<p>Таблица собирается из строк <code>&lt;tr&gt;</code>. В первой строке — заголовки <code>&lt;th&gt;</code>, дальше ячейки <code>&lt;td&gt;</code>.</p>' +
+        '<p>Браузер рисует рамки только если их попросить в CSS: <code>table { border-collapse: collapse; }</code>. А без <code>border</code> у ячеек получится «голая» сетка.</p>',
+      prompt: 'Сделай таблицу расписания: <b>две колонки-заголовка</b> («День», «Занятие») и <b>две строки данных</b>.',
+      examples: [{ label: 'критерии', text: 'один table · 2 th · не меньше 4 td' }],
+      hint: '<table>\\n  <tr><th>День</th><th>Занятие</th></tr>\\n  <tr><td>Пн</td><td>Python</td></tr>\\n</table>',
+      starter: { html: '<table>\n  <tr><th>День</th><th>Занятие</th></tr>\n</table>', css: '' },
+      solution: {
+        html: '<table>\n  <tr><th>День</th><th>Занятие</th></tr>\n  <tr><td>Понедельник</td><td>Python</td></tr>\n' +
+              '  <tr><td>Среда</td><td>Робототехника</td></tr>\n</table>',
+        css: 'table { border-collapse: collapse; }\ntd, th { border: 1px solid #888; padding: 6px 10px; }'
+      },
+      checks: [
+        { label: 'есть таблица', fn: function (html) { return all(html, 'table').length === 1; } },
+        { label: 'два заголовка th', fn: function (html) { return all(html, 'th').length >= 2; } },
+        { label: 'не меньше четырёх ячеек td', fn: function (html) { return all(html, 'td').length >= 4; } }
+      ]
+    },
+    {
+      id: 'w11', level: 'легко',
+      title: 'Ссылка на почту',
+      subtitle: 'a href="mailto:"',
+      theory: '<p>Атрибут <code>href</code> задаёт адрес ссылки. Кроме сайтов бывают схемы: <code>mailto:</code> — письмо, <code>tel:</code> — звонок.</p>' +
+        '<p>Если адрес в <code>mailto:</code> написан правильно, клик откроет почтовую программу с готовым получателем.</p>',
+      prompt: 'Сделай страницу с заголовком <code>Связаться</code> и ссылкой, которая открывает письмо на адрес <code>info@kvantum.ru</code>.',
+      examples: [{ label: 'критерии', text: 'один a с href, начинающимся на mailto:info@kvantum.ru' }],
+      hint: '<a href="mailto:info@kvantum.ru">Написать нам</a>',
+      starter: { html: '<h1>Связаться</h1>\n<a href="">Написать нам</a>', css: '' },
+      solution: {
+        html: '<h1>Связаться</h1>\n<p>Пишите по любым вопросам.</p>\n<a href="mailto:info@kvantum.ru">Написать нам</a>',
+        css: ''
+      },
+      checks: [
+        {
+          label: 'есть ссылка с mailto:info@kvantum.ru',
+          fn: function (html) {
+            var as = all(html, 'a');
+            return as.length >= 1 && as.some(function (a) {
+              return String(a.getAttribute('href') || '').toLowerCase().indexOf('mailto:info@kvantum.ru') === 0;
+            });
+          }
+        },
+        { label: 'у ссылки есть видимый текст', fn: function (html) { return all(html, 'a').some(function (a) { return txt(a).length > 2; }); } }
+      ]
+    },
+    {
+      id: 'w12', level: 'средне',
+      title: 'Картинка с описанием',
+      subtitle: 'img src и alt',
+      theory: '<p>У <code>&lt;img&gt;</code> нет закрывающего тега: всё задаётся атрибутами. <code>src</code> — откуда взять файл, <code>alt</code> — текстовое описание.</p>' +
+        '<p><code>alt</code> нужен не «для галочки»: его читают программы для незрячих людей и он появляется, если картинка не загрузилась.</p>',
+      prompt: 'Вставь картинку: <code>src</code> с любым адресом (можно <code>robot.png</code>), осмысленный <code>alt</code> и CSS-класс, который задаёт ширину.',
+      examples: [{ label: 'критерии', text: 'один img с непустым src и alt длиннее 3 символов · в CSS правило для класса картинки' }],
+      hint: '<img class="pic" src="robot.png" alt="Робот из конструктора">\n.pic { width: 240px; }',
+      starter: { html: '<h2>Наш робот</h2>\n<img class="pic" src="" alt="">', css: '.pic { }' },
+      solution: {
+        html: '<h2>Наш робот</h2>\n<img class="pic" src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'60\'%3E%3Crect width=\'80\' height=\'60\' fill=\'%235aa9ff\'/%3E%3C/svg%3E" alt="Синий прямоугольник вместо фото робота">\n<p>Собрали за два занятия.</p>',
+        css: '.pic { width: 240px; border-radius: 8px; }'
+      },
+      checks: [
+        {
+          label: 'есть картинка с непустым src',
+          fn: function (html) {
+            return all(html, 'img').some(function (i) { return String(i.getAttribute('src') || '').trim().length > 0; });
+          }
+        },
+        {
+          label: 'у картинки осмысленный alt (длиннее трёх символов)',
+          fn: function (html) {
+            return all(html, 'img').some(function (i) { return String(i.getAttribute('alt') || '').trim().length > 3; });
+          }
+        },
+        {
+          label: 'в CSS у класса картинки задана ширина',
+          fn: function (html, css) { return /\.pic\s*\{[^}]*width\s*:/i.test(String(css)); }
+        }
+      ]
+    },
+    {
+      id: 'w13', level: 'средне',
+      title: 'Поле и кнопка',
+      subtitle: 'input и button',
+      theory: '<p>Форма в минимуме — это <code>&lt;input&gt;</code> и <code>&lt;button&gt;</code>. Атрибут <code>placeholder</code> подсказывает, что вводить.</p>' +
+        '<p>Кнопка внутри формы по умолчанию отправляет данные. Саму отправку обрабатывают скриптом, но разметка уже рабочая.</p>',
+      prompt: 'Сделай форму подписки: заголовок, поле ввода с подсказкой <code>ваш e-mail</code> и кнопку с текстом <code>Подписаться</code>.',
+      examples: [{ label: 'критерии', text: 'один input с placeholder · одна button с текстом «Подписаться»' }],
+      hint: '<input placeholder="ваш e-mail">\\n<button>Подписаться</button>',
+      starter: { html: '<h2>Подписка на новости</h2>\n<form>\n  <input>\n  <button></button>\n</form>', css: '' },
+      solution: {
+        html: '<h2>Подписка на новости</h2>\n<form>\n  <input type="email" placeholder="ваш e-mail">\n  <button>Подписаться</button>\n</form>',
+        css: 'input { padding: 6px 10px; }\nbutton { padding: 6px 14px; }'
+      },
+      checks: [
+        {
+          label: 'есть поле ввода с подсказкой',
+          fn: function (html) {
+            return all(html, 'input').some(function (i) { return String(i.getAttribute('placeholder') || '').length > 3; });
+          }
+        },
+        {
+          label: 'есть кнопка с текстом «Подписаться»',
+          fn: function (html) {
+            return all(html, 'button').some(function (b) { return txt(b).toLowerCase().indexOf('подписаться') >= 0; });
+          }
+        }
+      ]
+    },
+    {
+      id: 'w14', level: 'средне',
+      title: 'Подпись к полю',
+      subtitle: 'label и id',
+      theory: '<p><code>&lt;label for="почта"&gt;</code> связывается с полем через <code>id</code>. Тогда щелчок по подписи ставит курсор в поле.</p>' +
+        '<p>Это вопрос доступности: без подписи человек не понимает, что вводить, а программы для незрячих не могут прочитать поле.</p>',
+      prompt: 'Сделай поле «Ваше имя»: подпись <code>&lt;label&gt;</code>, связанная с полем через <code>for</code> и <code>id</code>.',
+      examples: [{ label: 'критерии', text: 'label с for · input с тем же id' }],
+      hint: '<label for="имя">Ваше имя</label>\\n<input id="имя">',
+      starter: { html: '<label for="">Ваше имя</label>\n<input id="">', css: '' },
+      solution: {
+        html: '<form>\n  <label for="имя">Ваше имя</label>\n  <input id="имя" placeholder="Как тебя зовут">\n</form>',
+        css: 'label { display: block; margin-bottom: 4px; }'
+      },
+      checks: [
+        {
+          label: 'у label заполнен for',
+          fn: function (html) {
+            return all(html, 'label').some(function (l) { return String(l.getAttribute('for') || '').length > 0; });
+          }
+        },
+        {
+          label: 'есть поле с таким же id',
+          fn: function (html) {
+            var labels = all(html, 'label');
+            return labels.some(function (l) {
+              var id = l.getAttribute('for');
+              return !!id && !!root(html).querySelector('#' + CSS.escape(id));
+            });
+          }
+        }
+      ]
+    },
+    {
+      id: 'w15', level: 'средне',
+      title: 'Каркас страницы',
+      subtitle: 'header, main, footer',
+      theory: '<p>Семантические теги описывают <b>роль</b> блока: <code>header</code> — шапка, <code>main</code> — основное содержимое, <code>footer</code> — подвал.</p>' +
+        '<p>Для браузера они выглядят как обычные блоки, но для поисковиков, программ чтения с экрана и других разработчиков структура становится понятной.</p>',
+      prompt: 'Собери каркас: <code>header</code> с названием сайта, <code>main</code> с абзацем и <code>footer</code> с подписью.',
+      examples: [{ label: 'критерии', text: 'есть header, main и footer, в каждом есть текст' }],
+      hint: '<header>Квантум</header>\\n<main><p>…</p></main>\\n<footer>2024</footer>',
+      starter: { html: '<header></header>\n<main></main>\n<footer></footer>', css: '' },
+      solution: {
+        html: '<header><h1>Квантум</h1></header>\n<main>\n  <p>Мы учимся программировать и собирать роботов.</p>\n</main>\n<footer>IT-квантум, 2024</footer>',
+        css: 'header, footer { padding: 12px; background: #eef; }\nmain { padding: 12px; }'
+      },
+      checks: [
+        { label: 'есть header с текстом', fn: function (html) { return all(html, 'header').some(function (h) { return txt(h).length > 0; }); } },
+        { label: 'есть main с текстом', fn: function (html) { return all(html, 'main').some(function (m) { return txt(m).length > 10; }); } },
+        { label: 'есть footer с текстом', fn: function (html) { return all(html, 'footer').some(function (f) { return txt(f).length > 0; }); } }
+      ]
+    },
+    {
+      id: 'w16', level: 'легко',
+      title: 'Цвет текста',
+      subtitle: 'color',
+      theory: '<p>Свойство <code>color</code> меняет цвет <b>текста</b>, а <code>background</code> — цвет фона. Это разные свойства, их часто путают.</p>' +
+        '<p>Цвет задают словом (<code>tomato</code>), шестнадцатеричным кодом (<code>#c0392b</code>) или функцией <code>rgb()</code>.</p>',
+      prompt: 'Сделай абзац с классом <code>warn</code> и покрась его текст в красный цвет через CSS.',
+      examples: [{ label: 'критерии', text: 'p.warn в HTML · в CSS у .warn есть color' }],
+      hint: '.warn { color: #c0392b; }',
+      starter: { html: '<p class="warn">Осторожно: файл будет перезаписан.</p>', css: '' },
+      solution: {
+        html: '<p class="warn">Осторожно: файл будет перезаписан.</p>\n<p>Обычный текст остаётся тёмным.</p>',
+        css: '.warn { color: #c0392b; font-weight: bold; }'
+      },
+      checks: [
+        { label: 'есть абзац с классом warn', fn: function (html) { return all(html, 'p.warn').length >= 1; } },
+        { label: 'в CSS у .warn задан color', fn: function (html, css) { return cssHas(css, /\.warn\s*\{[^}]*color\s*:/); } }
+      ]
+    },
+    {
+      id: 'w17', level: 'легко',
+      title: 'Фон страницы',
+      subtitle: 'background',
+      theory: '<p>Фон можно задать любому блоку, но чаще всего его задают <code>body</code> — тогда он растягивается на всю страницу.</p>' +
+        '<p>Светлый фон и тёмный текст читаются легче, чем наоборот: контраст — это про удобство, а не про вкус.</p>',
+      prompt: 'Задай странице светло-серый фон через <code>body</code> в CSS и оставь заголовок с абзацем.',
+      examples: [{ label: 'критерии', text: 'в CSS body { background: … } · есть h1 и p' }],
+      hint: 'body { background: #f4f6fb; }',
+      starter: { html: '<h1>Мой дневник</h1>\n<p>Сегодня собрал первого робота.</p>', css: '' },
+      solution: {
+        html: '<h1>Мой дневник</h1>\n<p>Сегодня собрал первого робота.</p>',
+        css: 'body { background: #f4f6fb; color: #1f2430; padding: 16px; }'
+      },
+      checks: [
+        { label: 'есть заголовок и абзац', fn: function (html) { return all(html, 'h1').length >= 1 && all(html, 'p').length >= 1; } },
+        { label: 'в CSS у body задан background', fn: function (html, css) { return cssHas(css, /body\s*\{[^}]*background\s*:/); } }
+      ]
+    },
+    {
+      id: 'w18', level: 'средне',
+      title: 'Шрифт страницы',
+      subtitle: 'font-family, font-size',
+      theory: '<p><code>font-family</code> задаёт шрифт, а перечисление через запятую — запасные варианты: если первого шрифта нет, берётся следующий.</p>' +
+        '<p>В конце всегда пишут семейство: <code>sans-serif</code> (без засечек) или <code>serif</code> (с засечками). Так текст всё равно останется читаемым.</p>',
+      prompt: 'Задай <code>body</code> шрифт без засечек с запасным вариантом и размер 18px.',
+      examples: [{ label: 'критерии', text: 'в CSS body { font-family: … , sans-serif; font-size: … }' }],
+      hint: 'body { font-family: "Segoe UI", Arial, sans-serif; font-size: 18px; }',
+      starter: { html: '<h1>Текст и шрифт</h1>\n<p>Читать длинный текст удобнее крупным шрифтом.</p>', css: '' },
+      solution: {
+        html: '<h1>Текст и шрифт</h1>\n<p>Читать длинный текст удобнее крупным шрифтом.</p>',
+        css: 'body { font-family: "Segoe UI", Arial, sans-serif; font-size: 18px; line-height: 1.5; }'
+      },
+      checks: [
+        { label: 'задан font-family с запасным sans-serif', fn: function (html, css) { return cssHas(css, /font-family\s*:[^;}]*sans-serif/); } },
+        { label: 'задан font-size', fn: function (html, css) { return cssHas(css, /font-size\s*:/); } }
+      ]
+    },
+    {
+      id: 'w19', level: 'средне',
+      title: 'Отступы внутри и снаружи',
+      subtitle: 'padding и margin',
+      theory: '<p><code>padding</code> — отступ <b>внутри</b> блока, между рамкой и текстом. <code>margin</code> — отступ <b>снаружи</b>, между блоками.</p>' +
+        '<p>Если текст «прилип» к рамке — не хватает padding. Если блоки слиплись — не хватает margin.</p>',
+      prompt: 'Сделай блок с заметкой: класс <code>note</code>, внутри отступ <code>padding</code>, снаружи <code>margin</code> и тонкая рамка.',
+      examples: [{ label: 'критерии', text: 'div.note в HTML · в CSS у .note есть padding, margin и border' }],
+      hint: '.note { padding: 12px; margin: 16px 0; border: 1px solid #ccc; }',
+      starter: { html: '<div class="note">Проверка в пятницу.</div>', css: '' },
+      solution: {
+        html: '<div class="note">Проверка проекта в пятницу.</div>\n<p>Обычный абзац вне заметки.</p>',
+        css: '.note { padding: 12px 16px; margin: 16px 0; border: 1px solid #c9d2e3; background: #f8fbff; }'
+      },
+      checks: [
+        { label: 'есть блок с классом note', fn: function (html) { return all(html, 'div.note').length >= 1; } },
+        { label: 'у .note есть padding', fn: function (html, css) { return cssHas(css, /\.note\s*\{[^}]*padding\s*:/); } },
+        { label: 'у .note есть margin', fn: function (html, css) { return cssHas(css, /\.note\s*\{[^}]*margin\s*:/); } },
+        { label: 'у .note есть border', fn: function (html, css) { return cssHas(css, /\.note\s*\{[^}]*border\s*:/); } }
+      ]
+    },
+    {
+      id: 'w20', level: 'сложно',
+      title: 'Колонка по центру',
+      subtitle: 'max-width и margin: auto',
+      theory: '<p>Классический приём: <code>max-width</code> ограничивает ширину, а <code>margin: 0 auto</code> центрирует блок.</p>' +
+        '<p>Так делают «читальную колонку»: на большом экране текст не растягивается на всю ширину и глаз не устаёт.</p>',
+      prompt: 'Сделай <code>main</code> шириной не больше 640px, по центру экрана и с внутренними отступами.',
+      examples: [{ label: 'критерии', text: 'в CSS main { max-width: 640px; margin: 0 auto; padding: … }' }],
+      hint: 'main { max-width: 640px; margin: 0 auto; padding: 0 16px; }',
+      starter: { html: '<main>\n  <h1>Статья</h1>\n  <p>Текст статьи.</p>\n</main>', css: 'main { }' },
+      solution: {
+        html: '<main>\n  <h1>Статья</h1>\n  <p>Длинный текст, который должен читаться в узкой колонке.</p>\n</main>',
+        css: 'main { max-width: 640px; margin: 0 auto; padding: 0 16px; }'
+      },
+      checks: [
+        { label: 'у main задан max-width', fn: function (html, css) { return cssHas(css, /main\s*\{[^}]*max-width\s*:/); } },
+        { label: 'у main есть margin: auto (центрирование)', fn: function (html, css) { return cssHas(css, /main\s*\{[^}]*margin\s*:[^;}]*auto/); } },
+        { label: 'у main есть padding', fn: function (html, css) { return cssHas(css, /main\s*\{[^}]*padding\s*:/); } }
+      ]
+    },
+    {
+      id: 'w21', level: 'средне',
+      title: 'Ссылка без подчёркивания',
+      subtitle: 'a и text-decoration',
+      theory: '<p>Ссылки подчёркнуты по умолчанию — так их видно. Убирать подчёркивание можно, но тогда нужно дать другой признак: цвет, жирность, фон.</p>' +
+        '<p>Кнопка-ссылка делается так же: <code>a</code> со стилями <code>padding</code>, <code>background</code> и <code>border-radius</code>.</p>',
+      prompt: 'Сделай ссылку-кнопку с классом <code>btn</code>: без подчёркивания, с фоном и внутренними отступами.',
+      examples: [{ label: 'критерии', text: 'a.btn в HTML · у .btn есть text-decoration: none, background, padding' }],
+      hint: '.btn { text-decoration: none; background: #2d6cdf; color: #fff; padding: 8px 14px; border-radius: 6px; }',
+      starter: { html: '<a class="btn" href="mailto:info@kvantum.ru">Написать</a>', css: '' },
+      solution: {
+        html: '<p>Есть вопросы?</p>\n<a class="btn" href="mailto:info@kvantum.ru">Написать нам</a>',
+        css: '.btn { text-decoration: none; background: #2d6cdf; color: #fff; padding: 8px 14px; border-radius: 6px; display: inline-block; }'
+      },
+      checks: [
+        { label: 'есть ссылка с классом btn', fn: function (html) { return all(html, 'a.btn').length >= 1; } },
+        { label: 'у .btn убрано подчёркивание', fn: function (html, css) { return cssHas(css, /\.btn\s*\{[^}]*text-decoration\s*:\s*none/); } },
+        { label: 'у .btn есть фон и padding', fn: function (html, css) { return cssHas(css, /\.btn\s*\{[^}]*background\s*:/) && cssHas(css, /\.btn\s*\{[^}]*padding\s*:/); } }
+      ]
+    },
+    {
+      id: 'w22', level: 'сложно',
+      title: 'Стилизация по id',
+      subtitle: '#id и приоритеты',
+      theory: '<p>Кроме тегов и классов селектором бывает <code>id</code>: <code>#hero</code>. Класс можно повторять, id — только один на странице.</p>' +
+        '<p>Приоритет: стиль по id сильнее стиля по классу, а класс сильнее тега. Поэтому id используют редко — с ним трудно переопределять стили.</p>',
+      prompt: 'Сделай блок с <code>id="hero"</code> и задай ему в CSS высоту не меньше 200px, фон и выравнивание текста по центру.',
+      examples: [{ label: 'критерии', text: 'есть #hero · в CSS #hero { min-height/height, background, text-align: center }' }],
+      hint: '#hero { min-height: 200px; background: #dbeafe; text-align: center; }',
+      starter: { html: '<div id="hero"><h1>Квантум</h1></div>', css: '' },
+      solution: {
+        html: '<div id="hero">\n  <h1>Квантум</h1>\n  <p>Тренажёры для школьников.</p>\n</div>',
+        css: '#hero { min-height: 200px; background: #dbeafe; text-align: center; padding: 24px; }'
+      },
+      checks: [
+        { label: 'есть блок с id="hero"', fn: function (html) { return all(html, '#hero').length === 1; } },
+        { label: 'в CSS задана высота блока', fn: function (html, css) { return cssHas(css, /#hero\s*\{[^}]*(min-height|height)\s*:/); } },
+        { label: 'в CSS задан фон', fn: function (html, css) { return cssHas(css, /#hero\s*\{[^}]*background\s*:/); } },
+        { label: 'текст выровнен по центру', fn: function (html, css) { return cssHas(css, /#hero\s*\{[^}]*text-align\s*:\s*center/); } }
+      ]
+    }
+  ];
+
+  global.WEB_TASKS = (global.WEB_TASKS || []).concat(bank);
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Веб-студия: HTML + CSS с живым превью и проверкой по критериям.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var state = { html: '', css: '' };
+
+  function $(id) { return document.getElementById(id); }
+
+  function doc() {
+    return '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><style>' +
+      'body{font:15px/1.5 system-ui,sans-serif;margin:14px;color:#111;background:#fff}' +
+      state.css + '</style></head><body>' + state.html + '</body></html>';
+  }
+
+  var timer = null;
+  function update() {
+    state.html = $('htmlCode').value;
+    state.css = $('cssCode').value;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      $('preview').srcdoc = doc();
+      var tags = (state.html.match(/<([a-z][a-z0-9-]*)/gi) || []).length;
+      $('previewStatus').textContent = 'тегов: ' + tags + ' · CSS-правил: ' +
+        ((state.css.match(/\{/g) || []).length);
+    }, 200);
+  }
+
+  window.WEBAPI = {
+    html: function () { return $('htmlCode').value; },
+    css: function () { return $('cssCode').value; }
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    ['htmlCode', 'cssCode'].forEach(function (id) {
+      $(id).addEventListener('input', update);
+    });
+
+    $('btnClean').addEventListener('click', function () {
+      if (!confirm('Очистить обе панели?')) return;
+      $('htmlCode').value = '';
+      $('cssCode').value = '';
+      update();
+    });
+
+    window.Shell.init({
+      storageKey: 'web.v1',
+      productTitle: 'Веб-студия',
+      productSubtitle: 'HTML, CSS и живое превью',
+      tasks: window.WEB_TASKS,
+      open: function (task) {
+        $('htmlCode').value = task.starter ? task.starter.html : '';
+        $('cssCode').value = task.starter ? task.starter.css : '';
+        update();
+      },
+      check: function (task) {
+        var html = $('htmlCode').value, css = $('cssCode').value;
+        return task.checks.map(function (c) {
+          var ok = false;
+          try { ok = !!c.fn(html, css); } catch (e) { ok = false; }
+          return { ok: ok, label: c.label };
+        });
+      }
+    });
+
+    window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
+      var s = window.WEB_TASKS[i].solution;
+      $('htmlCode').value = s.html;
+      $('cssCode').value = s.css;
+      update();
+    };
+  });
+})();
+</script>
+</body>
+</html>

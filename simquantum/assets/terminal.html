@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Терминал Linux · тренажёр для IT-квантума</title>
+<meta name="description" content="Тренажёр терминала Linux в браузере: виртуальная файловая система, 25 задач с автопроверкой, без установки.">
+<style>/* ======================= Python-класс · IT-квантум ======================= */
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel2: #171d29;
+  --line: #242c3c;
+  --text: #e7ecf6;
+  --muted: #8b97ad;
+  --accent: #5aa9ff;
+  --green: #37d67a;
+  --red: #ff6b6b;
+  --yellow: #ffcc55;
+  --violet: #a78bfa;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+/* ------------------------------- шапка ------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #121722, #0d111a);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, #2f6df6, #7bd88f);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.logo small { display: block; font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.spacer { flex: 1; }
+.badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #0f141d;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.badge b { color: var(--green); font-weight: 600; }
+.badge.engine { cursor: help; }
+.progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.progress {
+  width: 120px; height: 6px; border-radius: 999px; background: #1b2231; overflow: hidden;
+}
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6df6, #37d67a); transition: width .35s ease; }
+.progress-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.progress-text b { color: var(--text); }
+
+/* ------------------------------- каркас ------------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ---------------------------- список задач ---------------------------- */
+.sidebar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 92px);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-head {
+  padding: 12px 14px 8px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
+.task-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.task-item:hover:not(.locked) { background: var(--panel2); }
+.task-item.active { background: #17233a; border-color: #2a4b7d; }
+.task-item.locked { color: #5d6879; cursor: not-allowed; }
+.task-item .num {
+  flex: 0 0 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: #1b2333; color: var(--muted);
+}
+.task-item.done .num { background: rgba(55,214,122,.16); color: var(--green); }
+.task-item.active .num { background: #2f6df6; color: #fff; }
+.task-item .t-main { min-width: 0; display: block; }
+.task-item .t-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.task-item .t-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.mini-btn {
+  background: #1a2130; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.mini-btn:hover { color: var(--text); border-color: #33405a; }
+
+/* ------------------------------- рабочая ------------------------------- */
+.work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.task-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.task-head h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.task-head .sub { color: var(--muted); font-size: 12.5px; }
+.task-body { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.prompt { font-size: 15px; }
+.theory {
+  background: #0f141d;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #c3ccdb;
+}
+.theory p { margin: 0 0 6px; }
+.theory p:last-child { margin-bottom: 0; }
+.theory code, .prompt code { background: #1b2433; border-radius: 5px; padding: 1px 5px; color: #dfe8ff; }
+.examples { display: flex; gap: 10px; flex-wrap: wrap; }
+.example {
+  background: #0f141d; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; font-family: var(--mono); font-size: 12.5px; min-width: 150px;
+}
+.example .lbl { color: var(--muted); font-family: var(--sans); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.example pre { margin: 2px 0 0; white-space: pre-wrap; color: #cfe0ff; }
+.example .arrow { color: var(--muted); font-family: var(--sans); font-size: 11px; margin-top: 6px; }
+.hint-box {
+  display: none;
+  background: rgba(255,204,85,.08);
+  border: 1px solid rgba(255,204,85,.3);
+  color: #ffe6a8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+.hint-box.show { display: block; }
+
+/* ------------------------------- редактор ------------------------------- */
+.editor-card { display: flex; flex-direction: column; }
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: #101620;
+}
+.btn {
+  border-radius: 9px; border: 1px solid var(--line);
+  background: #1a2130; color: var(--text);
+  padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: #3a4a68; }
+.btn.primary { background: linear-gradient(180deg, #2f6df6, #2559d6); border-color: #2b62e0; color: #fff; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ok { background: linear-gradient(180deg, #2fbd6c, #22a05a); border-color: #26a860; color: #06220f; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn kbd {
+  background: rgba(255,255,255,.16); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-weight: 700;
+}
+.editor-shell {
+  position: relative;
+  display: flex;
+  background: #0c1119;
+  min-height: 250px;
+  max-height: 52vh;
+}
+.gutter-nums {
+  flex: 0 0 auto;
+  white-space: pre;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  font: 14px/1.55 var(--mono);
+  color: #3f4a5e;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  background: #0a0f16;
+  border-right: 1px solid #1a2130;
+}
+.code-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+.code-hl, #code {
+  position: absolute; inset: 0;
+  margin: 0; padding: 12px 14px;
+  font: 14px/1.55 var(--mono);
+  white-space: pre; tab-size: 4;
+  border: 0; overflow: auto;
+}
+.code-hl { color: #cbd5e6; pointer-events: none; z-index: 1; }
+#code {
+  color: transparent; caret-color: #fff; background: transparent;
+  resize: none; outline: none; z-index: 2;
+}
+#code::selection { background: rgba(90,169,255,.32); }
+.tok-kw { color: #c792ea; }
+.tok-bi { color: #82aaff; }
+.tok-str { color: #a5e075; }
+.tok-num { color: #f78c6c; }
+.tok-com { color: #5a6779; font-style: italic; }
+.tok-def { color: #ffcb6b; }
+.editor-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--line); background: #101620;
+}
+.stdin-label { font-size: 12px; color: var(--muted); }
+#stdin {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px;
+  color: #cfe0ff; font: 13px/1.4 var(--mono); padding: 6px 9px; width: 190px; height: 32px; resize: vertical;
+}
+.hint-inline { font-size: 11.5px; color: #5f6b80; }
+
+/* ------------------------------- консоль ------------------------------- */
+.tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); background: #101620; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  color: var(--muted); padding: 7px 13px; font-size: 13px; border-radius: 9px 9px 0 0;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+.tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #38445a; }
+.tab.active .dot { background: var(--accent); }
+.tab .count { font-size: 11px; color: var(--muted); }
+.panel { padding: 12px 14px; min-height: 150px; max-height: 40vh; overflow: auto; }
+.panel[hidden] { display: none; }
+.out {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: #d7e2f2;
+}
+.out.empty { color: #55617a; font-style: italic; }
+.err {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  background: rgba(255,107,107,.07);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 9px; padding: 10px 12px; color: #ffb3b3; margin-top: 10px;
+}
+.err b { color: var(--red); }
+.test-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: #0f141d; margin-bottom: 7px; font-size: 12.5px;
+}
+.test-row.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.test-row.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.test-row .mark { font-weight: 800; width: 14px; flex: 0 0 14px; }
+.test-row.pass .mark { color: var(--green); }
+.test-row.fail .mark { color: var(--red); }
+.test-row .io { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+.test-row .io .k { color: var(--muted); }
+.test-row .io .bad { color: #ffb3b3; }
+.test-row .io .good { color: #a5e075; }
+.summary { font-size: 13.5px; margin-bottom: 10px; }
+.summary.good { color: var(--green); }
+.summary.bad { color: var(--yellow); }
+.celebrate {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(55,214,122,.08); border: 1px solid rgba(55,214,122,.35);
+  color: #a7f3c8; font-size: 13.5px;
+}
+.celebrate button { margin-top: 8px; }
+.solution {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #0c1119; border: 1px dashed #2f4364;
+}
+.solution .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.solution pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; color: #cfe0ff; }
+.trace-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 10px; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.trace-row:hover { background: #10192a; border-color: #22304a; }
+.trace-row.sel { background: #142441; border-color: #2c548f; }
+.trace-line { color: var(--muted); font: 12px/1.4 var(--mono); }
+.trace-body { font: 12px/1.45 var(--mono); min-width: 0; }
+.trace-code { color: #8fa3c4; white-space: pre-wrap; }
+.trace-vars { color: #a5e075; margin-top: 2px; white-space: pre-wrap; }
+.trace-vars .none { color: #55617a; }
+.foot-note { color: #4f5a6e; font-size: 11.5px; text-align: center; padding: 6px 0 22px; }
+
+/* ------------------------------- адаптив ------------------------------- */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .sidebar { position: static; max-height: none; }
+  .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
+  .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
+  .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
+  .editor-shell { min-height: 200px; max-height: 46vh; }
+  .topbar { padding: 8px 12px; }
+  .progress-wrap { order: 3; width: 100%; }
+  .progress { flex: 1; width: auto; }
+  .panel { max-height: 46vh; }
+  #stdin { width: 100%; }
+  .editing-foot { display: block; }
+}
+
+
+/* ===================== общий каркас для продуктов ===================== */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hub-card {
+  display: block; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; transition: transform .12s ease, border-color .12s ease;
+}
+.hub-card:hover { border-color: #35507e; }
+.hub-card h3 { margin: 0 0 4px; font-size: 16px; }
+.hub-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.hub-card .tag {
+  display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: #9dc0ff; border: 1px solid #2b4470; border-radius: 999px;
+  padding: 2px 9px;
+}
+.hub-card.soon { opacity: .55; }
+.workspace { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ws-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-label { font-size: 12px; color: var(--muted); }
+.ws-input {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px; color: #cfe0ff;
+  font: 13px/1.4 var(--mono); padding: 7px 10px;
+}
+.ws-input:focus { outline: none; border-color: #35507e; }
+.console {
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  font: 13px/1.5 var(--mono); padding: 12px 14px; min-height: 260px; max-height: 46vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.console .cmd { color: #7fd1ff; }
+.console .err { color: #ff9c9c; }
+.console .ok { color: #a5e075; }
+.console .dim { color: #5f6b80; }
+.prompt-line { display: flex; gap: 8px; align-items: center; }
+.prompt-line .ps1 { color: var(--green); font: 13px/1.4 var(--mono); white-space: nowrap; }
+.prompt-line input {
+  flex: 1; min-width: 0; background: #0a0e15; border: 1px solid var(--line); border-radius: 8px;
+  color: #e7ecf6; font: 13px/1.4 var(--mono); padding: 8px 10px;
+}
+.prompt-line input:focus { outline: none; border-color: #35507e; }
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #0f141d;
+}
+.check-item.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.check-item.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.check-item .mark { font-weight: 800; }
+.check-item.pass .mark { color: var(--green); }
+.check-item.fail .mark { color: var(--red); }
+.check-item .note { color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+.code-area {
+  width: 100%; min-height: 130px; background: #0c1119; border: 1px solid var(--line);
+  border-radius: 10px; color: #cfe0ff; font: 13px/1.5 var(--mono); padding: 10px 12px; resize: vertical;
+}
+.code-area:focus { outline: none; border-color: #35507e; }
+.data-table { width: 100%; border-collapse: collapse; font: 12.5px/1.4 var(--mono); }
+.data-table th, .data-table td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.data-table th { background: #131a26; color: #9dc0ff; font-weight: 600; }
+.data-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark">$_</span>
+    <span>Терминал Linux<small>25 задач · виртуальная файловая система в браузере</small></span>
+  </a>
+  <div class="spacer"></div>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn ok" id="btnCheck">✔ Проверить</button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        <button class="btn ghost" id="btnHelp">help</button>
+<button class="btn ghost" id="btnClearTerm">Очистить экран</button>
+<button class="btn ghost" id="btnResetFS">Вернуть файлы</button>
+
+      </div>
+      <div class="workspace">
+        <div class="two-col">
+  <div>
+    <div class="prompt-line">
+      <span class="ps1" id="ps1">~ $</span>
+      <input id="terminalInput" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="набери команду и нажми Enter" aria-label="Команда терминала">
+    </div>
+    <div class="console" id="terminalOut" style="margin-top:10px"></div>
+    <div class="ws-label" id="filesHere" style="margin-top:8px;font-family:var(--mono)"></div>
+  </div>
+  <div>
+    <div class="ws-label" style="margin-bottom:6px">Шпаргалка</div>
+    <div class="console" style="font-size:12.5px;min-height:0;max-height:none;color:#9fb0cc">
+pwd            где я
+ls -l          что лежит рядом
+cd папка       перейти
+mkdir -p a/b   создать папки
+echo "x" > f   записать в файл
+cat f          показать файл
+cp a b         копировать
+mv a b         переместить
+rm -r папка    удалить
+grep -r слово . поиск по тексту
+wc -l f        строк в файле
+chmod 600 f    права
+*              шаблон имён
+    </div>
+  </div>
+</div>
+
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs"><button class="tab active"><span class="dot"></span>Проверка</button></div>
+      <div class="panel" id="panel-check"><pre class="out empty">Выполни задание и нажми «Проверить».</pre></div>
+    </section>
+
+    <div class="foot-note">Работает без интернета и без установки · всё выполняется локально в браузере · прогресс хранится на этом устройстве</div>
+  </main>
+</div>
+
+<script>/* ==========================================================================
+   Shell — общий каркас тренажёров IT-квантума.
+   Даёт: список задач с прогрессом, карточку задания, кнопку проверки,
+   подсказку, разбор результатов и хранение прогресса в браузере.
+   Продукт подключает свои задачи и две функции: open(task) и check(task).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var cfg = null;
+  var st = { solved: {}, current: 0, showAll: false };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function save() {
+    try { localStorage.setItem(cfg.storageKey, JSON.stringify(st)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(cfg.storageKey);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      st.solved = d.solved || {};
+      st.showAll = !!d.showAll;
+    } catch (e) {}
+  }
+  function tasks() { return cfg.tasks; }
+  function task(i) { return cfg.tasks[i]; }
+  function unlocked(i) { return st.showAll || i === 0 || !!st.solved[cfg.tasks[i - 1].id]; }
+  function solvedCount() {
+    var n = 0;
+    cfg.tasks.forEach(function (t) { if (st.solved[t.id]) n++; });
+    return n;
+  }
+
+  function renderSidebar() {
+    var html = '';
+    cfg.tasks.forEach(function (t, i) {
+      var done = !!st.solved[t.id];
+      var lock = !unlocked(i);
+      html += '<button class="task-item' + (i === st.current ? ' active' : '') + (done ? ' done' : '') +
+        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
+        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+        '<span class="t-sub">' + esc(t.subtitle || '') + '</span></span></button>';
+    });
+    $('taskList').innerHTML = html;
+    Array.prototype.forEach.call($('taskList').querySelectorAll('.task-item'), function (b) {
+      b.addEventListener('click', function () {
+        var i = parseInt(b.getAttribute('data-i'), 10);
+        if (unlocked(i)) openTask(i);
+      });
+    });
+  }
+
+  function doneText(n) {
+    if (n === 1) return 'Готово: проверка пройдена.';
+    var word = (n % 10 >= 2 && n % 10 <= 4 && (n < 12 || n > 14)) ? 'проверки' : 'проверок';
+    return 'Готово: все ' + n + ' ' + word + ' пройдены.';
+  }
+
+  function renderProgress() {
+    var n = solvedCount();
+    $('progressBar').style.width = (n / cfg.tasks.length * 100) + '%';
+    $('progressText').innerHTML = '<b>' + n + '</b> из ' + cfg.tasks.length + ' задач';
+  }
+
+  function openTask(i) {
+    st.current = i;
+    var t = tasks()[i];
+    $('taskTitle').textContent = t.title;
+    $('taskSub').textContent = t.subtitle || '';
+    $('taskModule').textContent = cfg.productTitle || '';
+    var lvl = $('taskLevel');
+    if (t.level) {
+      lvl.textContent = t.level;
+      lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard');
+    } else { lvl.textContent = ''; lvl.className = 'chip'; }
+
+    $('theory').innerHTML = t.theory || '';
+    $('prompt').innerHTML = t.prompt || '';
+    var ex = '';
+    (t.examples || []).forEach(function (e) {
+      ex += '<div class="example"><div class="lbl">' + esc(e.label || 'пример') + '</div><pre>' + esc(e.text) + '</pre></div>';
+    });
+    $('examples').innerHTML = ex;
+    var hint = $('hintBox');
+    hint.textContent = t.hint || 'Подсказки нет — попробуй сам.';
+    hint.classList.remove('show');
+
+    $('panel-check').innerHTML = '<pre class="out empty">Пока пусто. Выполни задание в рабочей области и нажми «Проверить».</pre>';
+    if (cfg.open) cfg.open(t, st);
+    renderSidebar();
+    renderProgress();
+    save();
+  }
+
+  function runCheck() {
+    var t = tasks()[st.current];
+    var results;
+    try {
+      results = cfg.check(t, st) || [];
+    } catch (e) {
+      results = [{ ok: false, label: 'Ошибка проверки: ' + (e && e.message ? e.message : e) }];
+    }
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var allOk = results.length > 0 && passed === results.length;
+
+    var html = '';
+    html += allOk
+      ? '<div class="summary good">✔ ' + doneText(results.length) + '</div>'
+      : '<div class="summary bad">Пройдено ' + passed + ' из ' + results.length + ' проверок. Ниже видно, что именно не так.</div>';
+    html += '<div class="check-list">';
+    results.forEach(function (r) {
+      html += '<div class="check-item ' + (r.ok ? 'pass' : 'fail') + '">' +
+        '<span class="mark">' + (r.ok ? '✔' : '✕') + '</span><div>' + esc(r.label) +
+        (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</div></div>';
+    });
+    html += '</div>';
+
+    if (allOk) {
+      var first = !st.solved[t.id];
+      st.solved[t.id] = true;
+      save();
+      if (first) html += '<div class="celebrate">Задача закрыта — прогресс сохранён.</div>';
+      if (st.current + 1 < tasks().length) {
+        html += '<div class="celebrate"><button class="btn ok" id="goNext">Следующая задача →</button></div>';
+      } else {
+        html += '<div class="celebrate"><b>Это последняя задача продукта.</b> Возвращайся на главную и пробуй другой тренажёр.</div>';
+      }
+      renderSidebar();
+      renderProgress();
+    }
+    $('panel-check').innerHTML = html;
+    var next = $('goNext');
+    if (next) next.addEventListener('click', function () { openTask(st.current + 1); });
+    $('panel-check').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function init(config) {
+    cfg = config;
+    load();
+    if ($('productTitle')) $('productTitle').textContent = cfg.productTitle || '';
+    if ($('productSub')) $('productSub').textContent = cfg.productSubtitle || '';
+
+    $('btnCheck').addEventListener('click', runCheck);
+    $('btnHint').addEventListener('click', function () { $('hintBox').classList.toggle('show'); });
+    $('btnShowAll').addEventListener('click', function () {
+      st.showAll = !st.showAll;
+      save();
+      this.textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+      renderSidebar();
+    });
+    $('btnResetProgress').addEventListener('click', function () {
+      if (!confirm('Сбросить прогресс продукта?')) return;
+      st.solved = {};
+      st.showAll = false;
+      save();
+      $('btnShowAll').textContent = 'Открыть все задачи';
+      openTask(0);
+    });
+    $('btnShowAll').textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+
+    var start = 0;
+    for (var i = 0; i < tasks().length; i++) { if (!st.solved[tasks()[i].id]) { start = i; break; } }
+    openTask(unlocked(start) ? start : 0);
+    if (cfg.onReady) cfg.onReady(st);
+  }
+
+  global.Shell = {
+    init: init,
+    state: st,
+    openTask: openTask,
+    runCheck: runCheck,
+    unlocked: unlocked,
+    esc: esc,
+    save: save
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Терминал Linux — задачи и проверки.
+   Проверки смотрят на итоговое состояние файловой системы, а не на команды:
+   одну и ту же задачу можно решить по-разному.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  function api() { return global.TermAPI; }
+  function norm(s) { return String(s || '').replace(/\r/g, '').trim(); }
+
+  global.TERM_TASKS = [
+    {
+      id: 't1',
+      level: 'легко',
+      title: 'Первая заметка',
+      subtitle: 'echo, перенаправление >',
+      theory: '<p>Терминал — это диалог: слева приглашение, справа то, что ты вводишь. <code>pwd</code> показывает, ' +
+              'где ты находишься, <code>ls</code> — что лежит рядом.</p>' +
+              '<p><code>echo "текст" &gt; файл</code> создаёт файл и записывает в него строку. Если файл уже есть — ' +
+              'перезаписывает. Два знака <code>&gt;&gt;</code> дописывают в конец.</p>',
+      prompt: 'Создай в своей домашней папке файл <code>заметка.txt</code> с текстом <code>привет</code>.',
+      examples: [{ label: 'подсказка по командам', text: 'pwd · ls · echo "текст" > файл · cat файл' }],
+      hint: 'echo "привет" > заметка.txt — затем проверь: cat заметка.txt',
+      solution: ['echo "привет" > заметка.txt'],
+      checks: [
+        {
+          label: 'файл заметка.txt есть в домашней папке',
+          fn: function () { return !!api().lookup('~/заметка.txt'); }
+        },
+        {
+          label: 'в файле записан текст «привет»',
+          fn: function () { return norm(api().read('~/заметка.txt')).toLowerCase().indexOf('привет') >= 0; }
+        }
+      ]
+    },
+    {
+      id: 't2',
+      level: 'легко',
+      title: 'Структура папок',
+      subtitle: 'mkdir -p, вложенные каталоги',
+      theory: '<p><code>mkdir имя</code> создаёт папку. Если нужна вложенная структура, одной командой это делает ' +
+              'флаг <code>-p</code>: он создаёт все недостающие папки по пути.</p>' +
+              '<p>Проверить результат: <code>ls</code> и <code>cd</code> внутрь.</p>',
+      prompt: 'Создай структуру папок <code>проекты/2024</code> (папка <code>проекты</code>, внутри неё — <code>2024</code>).',
+      examples: [{ label: 'подсказка по командам', text: 'mkdir -p проекты/2024 · ls проекты' }],
+      hint: 'mkdir -p проекты/2024',
+      solution: ['mkdir -p проекты/2024'],
+      checks: [
+        { label: 'папка проекты создана', fn: function () { return !!api().lookup('~/проекты'); } },
+        { label: 'внутри неё есть папка 2024', fn: function () { return !!api().lookup('~/проекты/2024'); } }
+      ]
+    },
+    {
+      id: 't3',
+      level: 'легко',
+      title: 'Копия отчёта',
+      subtitle: 'cp, пути',
+      theory: '<p><code>cp откуда куда</code> — копирование. Второй аргумент может быть как именем нового файла, ' +
+              'так и папкой: тогда файл скопируется туда с прежним именем.</p>' +
+              '<p>Путь можно писать относительно текущей папки: <code>данные/отчёт.txt</code>.</p>',
+      prompt: 'Скопируй файл <code>данные/отчёт.txt</code> в папку <code>архив</code> под именем ' +
+              '<code>архив/отчёт_копия.txt</code>.',
+      examples: [{ label: 'подсказка по командам', text: 'cp данные/отчёт.txt архив/отчёт_копия.txt' }],
+      hint: 'cp источник цель — где цель это полный путь вместе с новым именем.',
+      solution: ['cp данные/отчёт.txt архив/отчёт_копия.txt'],
+      checks: [
+        { label: 'файл архив/отчёт_копия.txt существует', fn: function () { return !!api().lookup('~/архив/отчёт_копия.txt'); } },
+        {
+          label: 'содержимое копии совпадает с оригиналом',
+          fn: function () { return norm(api().read('~/архив/отчёт_копия.txt')) === norm(api().read('~/данные/отчёт.txt')); }
+        }
+      ]
+    },
+    {
+      id: 't4',
+      level: 'средне',
+      title: 'Поиск по содержимому',
+      subtitle: 'grep -r',
+      theory: '<p><code>grep слово файл</code> ищет строки с совпадением. Флаг <code>-r</code> (recursive) ' +
+              'заставляет искать по всем файлам внутри папки.</p>' +
+              '<p>Так находят «в каком же файле это написано» — одна из самых частых операций в работе.</p>',
+      prompt: 'В папке <code>данные</code> найди файл, в котором встречается слово <code>кванториум</code>, ' +
+              'и скопируй его в домашнюю папку под именем <code>найдено.txt</code>.',
+      examples: [{ label: 'подсказка по командам', text: 'grep -r кванториум данные · cp данные/отчёт.txt найдено.txt' }],
+      hint: 'Сначала grep -r, чтобы увидеть имя файла, потом cp этот файл в найдено.txt.',
+      solution: ['grep -r кванториум данные', 'cp данные/отчёт.txt найдено.txt'],
+      checks: [
+        { label: 'файл найдено.txt есть в домашней папке', fn: function () { return !!api().lookup('~/найдено.txt'); } },
+        {
+          label: 'в нём действительно есть слово «кванториум»',
+          fn: function () { return norm(api().read('~/найдено.txt')).toLowerCase().indexOf('кванториум') >= 0; }
+        }
+      ]
+    },
+    {
+      id: 't5',
+      level: 'средне',
+      title: 'Права доступа',
+      subtitle: 'chmod, режимы 600/644/755',
+      theory: '<p>У файла есть права: чтение (4), запись (2), выполнение (1) — отдельно для владельца, ' +
+              'группы и остальных. <code>chmod 600 файл</code> оставляет полный доступ только владельцу.</p>' +
+              '<p>Посмотреть права: <code>ls -l</code>.</p>',
+      prompt: 'Закрой файл <code>данные/секрет.txt</code> от посторонних: выставь ему права <code>600</code> ' +
+              '(чтение и запись только владельцу).',
+      examples: [{ label: 'подсказка по командам', text: 'chmod 600 данные/секрет.txt · ls -l данные' }],
+      hint: 'chmod 600 данные/секрет.txt',
+      solution: ['chmod 600 данные/секрет.txt'],
+      checks: [
+        { label: 'файл данные/секрет.txt на месте', fn: function () { return !!api().lookup('~/данные/секрет.txt'); } },
+        {
+          label: 'у файла права 600',
+          fn: function () { return api().mode('~/данные/секрет.txt') === '600'; },
+          note: 'проверь вывод ls -l: ожидается -rw-------'
+        }
+      ]
+    },
+    {
+      id: 't6',
+      level: 'средне',
+      title: 'Уборка мусора',
+      subtitle: 'rm и шаблоны *, важное не трогать',
+      theory: '<p><code>rm файл</code> удаляет файл без корзины — назад пути нет. <code>rm -r папка</code> удаляет папку ' +
+              'со всем содержимым.</p>' +
+              '<p>Шаблон <code>*</code> подставляет любые имена: <code>rm мусор/*.tmp</code> удалит только файлы ' +
+              'с расширением .tmp.</p>',
+      prompt: 'Удали в папке <code>мусор</code> все файлы <code>.tmp</code>. Файл <code>важное.txt</code> должен остаться.',
+      examples: [{ label: 'подсказка по командам', text: 'ls мусор · rm мусор/*.tmp · ls мусор' }],
+      hint: 'rm мусор/*.tmp — звёздочка подставит имена, оканчивающиеся на .tmp.',
+      solution: ['rm мусор/*.tmp'],
+      checks: [
+        {
+          label: 'в папке мусор не осталось файлов .tmp',
+          fn: function () {
+            var dir = api().lookup('~/мусор');
+            if (!dir || !dir.children) return false;
+            return Object.keys(dir.children).every(function (n) { return n.slice(-4) !== '.tmp'; });
+          }
+        },
+        { label: 'важное.txt сохранён', fn: function () { return !!api().lookup('~/мусор/важное.txt'); } }
+      ]
+    },
+    {
+      id: 't7',
+      level: 'средне',
+      title: 'Сколько строк в журнале',
+      subtitle: 'wc -l и запись результата в файл',
+      theory: '<p><code>wc -l файл</code> считает строки. Число из вывода можно записать в новый файл — ' +
+              'так результаты команд сохраняют.</p>' +
+              '<p>Иногда проще сначала посмотреть вывод, а потом записать нужное число вручную.</p>',
+      prompt: 'Посчитай, сколько строк в файле <code>данные/журнал.txt</code>, и запиши это число ' +
+              '(только цифры) в файл <code>строки.txt</code> в домашней папке.',
+      examples: [{ label: 'подсказка по командам', text: 'wc -l данные/журнал.txt · echo 7 > строки.txt' }],
+      hint: 'Сначала wc -l покажет число, затем echo <число> > строки.txt.',
+      solution: ['wc -l данные/журнал.txt', 'echo 7 > строки.txt'],
+      checks: [
+        { label: 'файл строки.txt создан', fn: function () { return !!api().lookup('~/строки.txt'); } },
+        {
+          label: 'в нём записано правильное число строк (7)',
+          fn: function () { return norm(api().read('~/строки.txt')) === '7'; },
+          note: 'в журнал.txt ровно 7 строк — проверь командой wc -l'
+        }
+      ]
+    },
+    {
+      id: 't8',
+      level: 'сложно',
+      title: 'Список файлов в отчёт',
+      subtitle: 'шаблоны и перенаправление вывода',
+      theory: '<p>Вывод любой команды можно перенаправить в файл: <code>ls данные/*.txt &gt; итог.txt</code>.</p>' +
+              '<p>Это основа автоматизации: результат одной команды становится входом другой.</p>',
+      prompt: 'Собери в файл <code>итог.txt</code> список всех файлов <code>.txt</code> из папки <code>данные</code> ' +
+              '(по одному имени в строке — как выводит <code>ls</code>).',
+      examples: [{ label: 'подсказка по командам', text: 'ls данные/*.txt > итог.txt · cat итог.txt' }],
+      hint: 'ls данные/*.txt > итог.txt — звёздочка развернётся в список файлов.',
+      solution: ['ls данные/*.txt > итог.txt'],
+      checks: [
+        { label: 'файл итог.txt создан', fn: function () { return !!api().lookup('~/итог.txt'); } },
+        {
+          label: 'в нём перечислены отчёт.txt, журнал.txt и секрет.txt',
+          fn: function () {
+            var txt = norm(api().read('~/итог.txt'));
+            return ['отчёт.txt', 'журнал.txt', 'секрет.txt'].every(function (n) { return txt.indexOf(n) >= 0; });
+          }
+        },
+        {
+          label: 'лишних файлов в списке нет',
+          fn: function () {
+            var txt = norm(api().read('~/итог.txt'));
+            return txt.indexOf('.tmp') < 0 && txt.indexOf('notes.md') < 0;
+          }
+        }
+      ]
+    }
+  ];
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ==========================================================================
+   Терминал Linux — банк задач: mv, cp с шаблонами, head/tail, grep, wc,
+   mkdir -p, chmod, rm -r, дописывание >>. Проверки смотрят на файлы,
+   а не на введённые команды: решить можно по-разному.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  function api() { return global.TermAPI; }
+  function norm(s) { return String(s || '').replace(/\r/g, '').trim(); }
+  function lower(s) { return norm(s).toLowerCase(); }
+  function has(p) { return !!api().lookup(p); }
+  function content(p) { return lower(api().read(p)); }
+  function mode(p) { return api().mode(p); }
+  function childNames(dir) {
+    var n = api().lookup(dir);
+    if (!n || n.type !== 'dir') return [];
+    return Object.keys(n.children || {});
+  }
+
+  var bank = [
+    {
+      id: 't9', level: 'легко',
+      title: 'Переместить файл',
+      subtitle: 'mv — двигает, а не копирует',
+      theory: '<p><code>mv</code> перемещает файл: в старом месте его больше нет. <code>cp</code>, наоборот, оставляет копию и создаёт вторую.</p>' +
+        '<p>Если второй аргумент — существующая папка, файл кладут внутрь неё с тем же именем. Если указать новое имя — это ещё и переименование.</p>',
+      prompt: 'Убери временный файл из рабочей папки: перемести <code>данные/старый.tmp</code> в <code>архив</code> (имя файла не меняй).',
+      examples: [{ label: 'подсказка по командам', text: 'mv откуда куда · ls данные · ls архив' }],
+      hint: 'mv данные/старый.tmp архив',
+      solution: ['mv данные/старый.tmp архив'],
+      checks: [
+        { label: 'файл лежит в архиве', fn: function () { return has('~/архив/старый.tmp'); } },
+        { label: 'из папки данные файл исчез', fn: function () { return !has('~/данные/старый.tmp'); } }
+      ]
+    },
+    {
+      id: 't10', level: 'легко',
+      title: 'Первые строки журнала',
+      subtitle: 'head -n и перенаправление',
+      theory: '<p><code>head -n 3 файл</code> показывает первые три строки, <code>tail -n 3</code> — последние три.</p>' +
+        '<p>Добавив <code>&gt; файл</code>, ты сохраняешь этот вывод в новый файл. Так делают короткие выжимки из больших логов.</p>',
+      prompt: 'Сохрани <b>первые три строки</b> файла <code>данные/журнал.txt</code> в файл <code>начало.txt</code> в домашней папке.',
+      examples: [{ label: 'подсказка', text: 'head -n 3 данные/журнал.txt > начало.txt' }],
+      hint: 'Сначала команда, потом >, потом имя файла.',
+      solution: ['head -n 3 данные/журнал.txt > начало.txt'],
+      checks: [
+        { label: 'файл начало.txt создан', fn: function () { return has('~/начало.txt'); } },
+        {
+          label: 'в нём ровно три строки журнала',
+          fn: function () {
+            var t = norm(api().read('~/начало.txt'));
+            return t.split('\n').length === 3 && t.indexOf('пн') >= 0 && t.indexOf('ср') >= 0 && t.indexOf('чт') < 0;
+          },
+          note: 'ожидаются строки пн, вт, ср — и ничего больше'
+        }
+      ]
+    },
+    {
+      id: 't11', level: 'легко',
+      title: 'Хвост журнала',
+      subtitle: 'tail -n',
+      theory: '<p><code>tail</code> удобнее всего для логов: самое свежее всегда в конце файла.</p>' +
+        '<p>Флаг можно писать по-разному: <code>tail -n 2 файл</code> и <code>tail -2 файл</code> работают одинаково.</p>',
+      prompt: 'Сохрани <b>последние две строки</b> <code>данные/журнал.txt</code> в файл <code>конец.txt</code>.',
+      examples: [{ label: 'подсказка', text: 'tail -n 2 данные/журнал.txt > конец.txt' }],
+      hint: 'tail берёт конец файла, а > записывает результат.',
+      solution: ['tail -n 2 данные/журнал.txt > конец.txt'],
+      checks: [
+        { label: 'файл конец.txt создан', fn: function () { return has('~/конец.txt'); } },
+        {
+          label: 'в нём две последние строки (сб и вс)',
+          fn: function () {
+            var t = norm(api().read('~/конец.txt'));
+            return t.split('\n').length === 2 && t.indexOf('сб') >= 0 && t.indexOf('вс') >= 0;
+          },
+          note: 'ожидаются строки про субботу и воскресенье'
+        }
+      ]
+    },
+    {
+      id: 't12', level: 'средне',
+      title: 'Выжимка по слову',
+      subtitle: 'grep и запись результата',
+      theory: '<p><code>grep слово файл</code> печатает только строки, где это слово встречается. Поиск нечувствителен к регистру.</p>' +
+        '<p>Результат можно сохранить: <code>grep слово файл &gt; выжимка.txt</code>. Так из большого файла получают маленький отчёт.</p>',
+      prompt: 'Найди в <code>данные/журнал.txt</code> строки со словом <code>проект</code> и сохрани их в файл <code>проекты.txt</code>.',
+      examples: [{ label: 'подсказка', text: 'grep проект данные/журнал.txt > проекты.txt' }],
+      hint: 'grep слово файл > куда.',
+      solution: ['grep проект данные/журнал.txt > проекты.txt'],
+      checks: [
+        { label: 'файл проекты.txt создан', fn: function () { return has('~/проекты.txt'); } },
+        {
+          label: 'в нём строка про проект и нет других строк',
+          fn: function () {
+            var t = norm(api().read('~/проекты.txt'));
+            return t.split('\n').length === 1 && t.toLowerCase().indexOf('проект') >= 0;
+          }
+        }
+      ]
+    },
+    {
+      id: 't13', level: 'средне',
+      title: 'Сводка из двух файлов',
+      subtitle: 'cat с несколькими аргументами',
+      theory: '<p><code>cat</code> умеет печатать сразу несколько файлов подряд — в том порядке, в котором ты их перечислил.</p>' +
+        '<p>Вместе с <code>&gt;</code> это простой способ склеить два текста в один. Порядок аргументов задаёт порядок частей.</p>',
+      prompt: 'Склей <code>данные/отчёт.txt</code> и <code>данные/журнал.txt</code> в один файл <code>сводка.txt</code> (сначала отчёт, потом журнал).',
+      examples: [{ label: 'подсказка', text: 'cat файл1 файл2 > сводка.txt' }],
+      hint: 'cat данные/отчёт.txt данные/журнал.txt > сводка.txt',
+      solution: ['cat данные/отчёт.txt данные/журнал.txt > сводка.txt'],
+      checks: [
+        { label: 'файл сводка.txt создан', fn: function () { return has('~/сводка.txt'); } },
+        {
+          label: 'в нём есть и отчёт, и журнал, отчёт выше',
+          fn: function () {
+            var t = norm(api().read('~/сводка.txt'));
+            var a = t.indexOf('отчёт за месяц');
+            var b = t.indexOf('пн: занятие');
+            return a >= 0 && b >= 0 && a < b;
+          }
+        }
+      ]
+    },
+    {
+      id: 't14', level: 'средне',
+      title: 'Собрать отчёты',
+      subtitle: 'cp с шаблоном',
+      theory: '<p>Шаблон <code>*</code> разворачивается в список подходящих имён. <code>cp данные/*.txt архив</code> скопирует все txt-файлы в папку архива.</p>' +
+        '<p>Одна команда вместо трёх — и никаких опечаток в именах.</p>',
+      prompt: 'Скопируй <b>все файлы .txt</b> из папки <code>данные</code> в папку <code>архив</code> (исходные файлы должны остаться на месте).',
+      examples: [{ label: 'подсказка', text: 'cp данные/*.txt архив' }],
+      hint: 'Шаблон пишется прямо в имени файла: данные/*.txt',
+      solution: ['cp данные/*.txt архив'],
+      checks: [
+        {
+          label: 'в архиве три txt-файла',
+          fn: function () {
+            var names = childNames('~/архив');
+            return ['отчёт.txt', 'журнал.txt', 'секрет.txt'].every(function (n) { return names.indexOf(n) >= 0; });
+          }
+        },
+        { label: 'исходные файлы остались в данных', fn: function () { return has('~/данные/отчёт.txt') && has('~/данные/журнал.txt'); } }
+      ]
+    },
+    {
+      id: 't15', level: 'легко',
+      title: 'Работа внутри папки',
+      subtitle: 'cd и относительные пути',
+      theory: '<p><code>cd папка</code> меняет текущий каталог. После этого относительные пути считаются от него, а не от домашней папки.</p>' +
+        '<p>Обратно домой возвращает <code>cd</code> без аргументов или <code>cd ~</code>.</p>',
+      prompt: 'Перейди в папку <code>данные</code> и создай там пустой файл <code>черновик.txt</code>.',
+      examples: [{ label: 'подсказка', text: 'cd данные · touch черновик.txt' }],
+      hint: 'Две команды: cd данные и touch черновик.txt.',
+      solution: ['cd данные', 'touch черновик.txt'],
+      checks: [
+        { label: 'файл появился внутри папки данные', fn: function () { return has('~/данные/черновик.txt'); } },
+        { label: 'в домашней папке такого файла нет', fn: function () { return !has('~/черновик.txt'); } }
+      ]
+    },
+    {
+      id: 't16', level: 'средне',
+      title: 'Личная папка',
+      subtitle: 'chmod 700',
+      theory: '<p>Режим <code>700</code> — полный доступ владельцу и никакого остальным. Для папки это значит: войти и посмотреть содержимое может только владелец.</p>' +
+        '<p>Режим <code>755</code> разрешает всем читать и входить — это удобно для общих папок, но не для личных файлов.</p>',
+      prompt: 'Создай папку <code>секреты</code> и закрой её от посторонних: права <code>700</code>.',
+      examples: [{ label: 'подсказка', text: 'mkdir секреты · chmod 700 секреты · ls -l' }],
+      hint: 'Сначала mkdir, потом chmod 700.',
+      solution: ['mkdir секреты', 'chmod 700 секреты'],
+      checks: [
+        { label: 'папка секреты создана', fn: function () { return has('~/секреты'); } },
+        { label: 'у папки права 700', fn: function () { return mode('~/секреты') === '700'; }, note: 'в ls -l должно быть drwx------' }
+      ]
+    },
+    {
+      id: 't17', level: 'средне',
+      title: 'Файл, который можно запускать',
+      subtitle: 'chmod 755',
+      theory: '<p>Скрипт — обычный текстовый файл. Чтобы его можно было запустить, нужен бит исполнения: <code>chmod 755</code>.</p>' +
+        '<p>Разложим 755: владелец — 7 (читать, писать, запускать), группа — 5 (читать, запускать), остальные — 5.</p>',
+      prompt: 'Создай файл <code>run.sh</code> и сделай его исполняемым: права <code>755</code>.',
+      examples: [{ label: 'подсказка', text: 'touch run.sh · chmod 755 run.sh · ls -l run.sh' }],
+      hint: 'touch создаёт файл, chmod 755 даёт права.',
+      solution: ['touch run.sh', 'chmod 755 run.sh'],
+      checks: [
+        { label: 'файл run.sh есть', fn: function () { return has('~/run.sh'); } },
+        { label: 'у него права 755', fn: function () { return mode('~/run.sh') === '755'; }, note: 'в ls -l ожидается -rwxr-xr-x' }
+      ]
+    },
+    {
+      id: 't18', level: 'легко',
+      title: 'Удалить папку целиком',
+      subtitle: 'rm -r',
+      theory: '<p><code>rm</code> не удаляет папки без флага <code>-r</code> (recursive — «со всем содержимым»).</p>' +
+        '<p>Корзины в терминале нет: удалённое не вернуть. Поэтому перед <code>rm -r</code> полезно сделать <code>ls</code> и убедиться, что путь верный.</p>',
+      prompt: 'Папка <code>архив</code> больше не нужна: удали её целиком вместе с содержимым.',
+      examples: [{ label: 'подсказка', text: 'ls архив · rm -r архив' }],
+      hint: 'rm -r архив',
+      solution: ['rm -r архив'],
+      checks: [
+        { label: 'папки архив больше нет', fn: function () { return !has('~/архив'); } },
+        { label: 'остальные папки на месте', fn: function () { return has('~/данные') && has('~/мусор'); } }
+      ]
+    },
+    {
+      id: 't19', level: 'средне',
+      title: 'Дописать в конец',
+      subtitle: '>>',
+      theory: '<p>Один знак <code>&gt;</code> перезаписывает файл, два — <code>&gt;&gt;</code> — дописывают в конец.</p>' +
+        '<p>Это различие спасает данные: случайный <code>&gt;</code> вместо <code>&gt;&gt;</code> стирает всё, что было в файле.</p>',
+      prompt: 'Допиши в файл <code>читай.txt</code> новую строку <code>это моя заметка</code>, сохранив то, что там уже есть.',
+      examples: [{ label: 'подсказка', text: 'echo "это моя заметка" >> читай.txt · cat читай.txt' }],
+      hint: 'Нужны два знака: >>',
+      solution: ['echo "это моя заметка" >> читай.txt'],
+      checks: [
+        {
+          label: 'новая строка появилась в файле',
+          fn: function () { return content('~/читай.txt').indexOf('это моя заметка') >= 0; }
+        },
+        {
+          label: 'старое содержимое сохранилось',
+          fn: function () { return content('~/читай.txt').indexOf('добро пожаловать') >= 0; },
+          note: 'если старый текст пропал — значит использован > вместо >>'
+        }
+      ]
+    },
+    {
+      id: 't20', level: 'средне',
+      title: 'План на две строки',
+      subtitle: 'создать и дописать',
+      theory: '<p>Файл из нескольких строк собирают так: первая строка через <code>&gt;</code>, остальные через <code>&gt;&gt;</code>.</p>' +
+        '<p>Так же работают с конфигами и списками задач — только в реальных проектах это делает скрипт.</p>',
+      prompt: 'Создай файл <code>план.txt</code> с двумя строками: <code>1. повторить команды</code> и <code>2. сдать задачу</code>.',
+      examples: [{ label: 'подсказка', text: 'echo "1. повторить команды" > план.txt · echo "2. сдать задачу" >> план.txt' }],
+      hint: 'Сначала > для первой строки, потом >> для второй.',
+      solution: ['echo "1. повторить команды" > план.txt', 'echo "2. сдать задачу" >> план.txt'],
+      checks: [
+        { label: 'файл план.txt создан', fn: function () { return has('~/план.txt'); } },
+        {
+          label: 'в нём ровно две нужные строки по порядку',
+          fn: function () {
+            var lines = norm(api().read('~/план.txt')).split('\n');
+            return lines.length === 2 && lines[0].indexOf('1.') === 0 && lines[1].indexOf('2.') === 0;
+          }
+        }
+      ]
+    },
+    {
+      id: 't21', level: 'средне',
+      title: 'Скрытый файл',
+      subtitle: 'точка в начале имени',
+      theory: '<p>Файлы, имя которых начинается с точки, считаются скрытыми: обычный <code>ls</code> их не показывает.</p>' +
+        '<p>Так хранят настройки. Список всех файлов, включая скрытые, даёт <code>ls -a</code> (в этом тренажёре флаг не реализован, но в настоящем Linux — да).</p>',
+      prompt: 'Переименуй <code>данные/секрет.txt</code> в <code>данные/.секрет.txt</code> — сделай файл скрытым.',
+      examples: [{ label: 'подсказка', text: 'mv данные/секрет.txt данные/.секрет.txt' }],
+      hint: 'Имя меняется командой mv: тот же путь, но с точкой в начале имени.',
+      solution: ['mv данные/секрет.txt данные/.секрет.txt'],
+      checks: [
+        { label: 'появился скрытый файл .секрет.txt', fn: function () { return has('~/данные/.секрет.txt'); } },
+        { label: 'старого имени больше нет', fn: function () { return !has('~/данные/секрет.txt'); } }
+      ]
+    },
+    {
+      id: 't22', level: 'средне',
+      title: 'Собрать временные файлы',
+      subtitle: 'cp с шаблоном *.tmp',
+      theory: '<p>Шаблон работает в любой команде, которая принимает имена файлов: в <code>ls</code>, <code>cp</code>, <code>rm</code>, <code>cat</code>.</p>' +
+        '<p>Проверить, что именно попадёт под шаблон, можно заранее: набери <code>ls мусор/*.tmp</code>.</p>',
+      prompt: 'Собери все временные файлы <code>.tmp</code> из папки <code>мусор</code> в папку <code>архив</code>. Файл <code>важное.txt</code> не копируй.',
+      examples: [{ label: 'подсказка', text: 'ls мусор/*.tmp · cp мусор/*.tmp архив' }],
+      hint: 'Шаблон *.tmp заденет только временные файлы.',
+      solution: ['cp мусор/*.tmp архив'],
+      checks: [
+        {
+          label: 'в архиве оба временных файла',
+          fn: function () {
+            var names = childNames('~/архив');
+            return names.indexOf('a.tmp') >= 0 && names.indexOf('b.tmp') >= 0;
+          }
+        },
+        { label: 'важное.txt в архив не попало', fn: function () { return childNames('~/архив').indexOf('важное.txt') < 0; } }
+      ]
+    },
+    {
+      id: 't23', level: 'сложно',
+      title: 'Уборка в двух папках',
+      subtitle: 'rm с шаблоном в разных местах',
+      theory: '<p>Шаблон срабатывает в пределах одного каталога. Чтобы убрать мусор в двух разных папках, нужны две команды — или одна команда с двумя шаблонами.</p>' +
+        '<p>Проверка «а не удалил ли лишнего» — обязательная привычка при работе с <code>rm</code>.</p>',
+      prompt: 'Удали все <code>.tmp</code> файлы и в папке <code>мусор</code>, и в папке <code>данные</code>. Файл <code>важное.txt</code> не трогай.',
+      examples: [{ label: 'подсказка', text: 'rm мусор/*.tmp данные/*.tmp · ls мусор данные' }],
+      hint: 'Одна команда rm может принять несколько шаблонов.',
+      solution: ['rm мусор/*.tmp данные/*.tmp'],
+      checks: [
+        {
+          label: 'во временных папках не осталось .tmp',
+          fn: function () {
+            var a = childNames('~/мусор'), b = childNames('~/данные');
+            return a.indexOf('a.tmp') < 0 && a.indexOf('b.tmp') < 0 && b.indexOf('старый.tmp') < 0;
+          }
+        },
+        { label: 'важное.txt и остальные файлы целы', fn: function () { return has('~/мусор/важное.txt') && has('~/данные/журнал.txt'); } }
+      ]
+    },
+    {
+      id: 't24', level: 'средне',
+      title: 'Паспорт рабочей папки',
+      subtitle: 'pwd и whoami в файл',
+      theory: '<p><code>pwd</code> печатает текущий путь, <code>whoami</code> — имя пользователя. Обе команды полезны в скриптах: результат можно записать в файл.</p>' +
+        '<p>Комбинация <code>&gt;</code> и <code>&gt;&gt;</code> собирает многострочный отчёт из нескольких команд.</p>',
+      prompt: 'Собери файл <code>инфо.txt</code>: первая строка — путь к текущей папке, вторая — имя пользователя.',
+      examples: [{ label: 'подсказка', text: 'pwd > инфо.txt · whoami >> инфо.txt' }],
+      hint: 'Две команды: сначала pwd с >, потом whoami с >>.',
+      solution: ['pwd > инфо.txt', 'whoami >> инфо.txt'],
+      checks: [
+        { label: 'файл инфо.txt создан', fn: function () { return has('~/инфо.txt'); } },
+        {
+          label: 'в нём путь /home/student и имя student',
+          fn: function () {
+            var t = content('~/инфо.txt');
+            return t.indexOf('/home/student') >= 0 && t.indexOf('student') >= 0 && t.split('\n').length === 2;
+          }
+        }
+      ]
+    },
+    {
+      id: 't25', level: 'сложно',
+      title: 'Поиск по всему дому',
+      subtitle: 'grep -r и отчёт',
+      theory: '<p><code>grep -r слово папка</code> ищет рекурсивно: заходит во все вложенные папки и показывает, где слово нашлось.</p>' +
+        '<p>Так ищут настройки в проектах: «в каком файле упоминается этот ключ». Результат удобно сохранить в файл-отчёт.</p>',
+      prompt: 'Найди во всей домашней папке строки со словом <code>занятие</code> и сохрани результат в <code>найдено.txt</code>.',
+      examples: [{ label: 'подсказка', text: 'grep -r занятие . > найдено.txt' }],
+      hint: 'Точка означает «текущая папка», флаг -r — «искать везде внутри».',
+      solution: ['grep -r занятие . > найдено.txt'],
+      checks: [
+        { label: 'файл найдено.txt создан', fn: function () { return has('~/найдено.txt'); } },
+        {
+          label: 'в нём не меньше пяти найденных строк',
+          fn: function () {
+            var t = norm(api().read('~/найдено.txt'));
+            return t.split('\n').filter(function (l) { return l.toLowerCase().indexOf('занятие') >= 0; }).length >= 5;
+          },
+          note: 'в журнале пять дней с занятиями'
+        }
+      ]
+    }
+  ];
+
+  global.TERM_TASKS = (global.TERM_TASKS || []).concat(bank);
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Терминал Linux в браузере: виртуальная файловая система и команды.
+   Ничего не установлено и не сломано — всё живёт в памяти вкладки.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var HOME = '/home/student';
+  var state = { fs: null, cwd: HOME, history: [], log: [] };
+
+  /* ---------------------------- файловая система ---------------------------- */
+  function file(content, mode) { return { type: 'file', content: content, mode: mode || '644' }; }
+  function dir(children, mode) { return { type: 'dir', children: children || {}, mode: mode || '755' }; }
+
+  function freshFS() {
+    return dir({
+      home: dir({
+        student: dir({
+          'читай.txt': file('Добро пожаловать в IT-квантум!\nЗдесь учатся работать в терминале.\n' +
+            'Если забыл команду — набери help и нажми Enter.\n'),
+          'данные': dir({
+            'отчёт.txt': file('кванториум: отчёт за месяц\nсделано: 12 проектов\nучастников: 24\n'),
+            'журнал.txt': file('пн: занятие\nвт: занятие\nср: занятие\nчт: занятие\nпт: занятие\nсб: проект\nвс: выходной\n'),
+            'старый.tmp': file('временный файл\n'),
+            'секрет.txt': file('ключ: 1234\n'),
+            'notes.md': file('# заметки\n- сделать проект\n- сдать задачу\n')
+          }),
+          'архив': dir({}),
+          'мусор': dir({
+            'a.tmp': file('x\n'),
+            'b.tmp': file('y\n'),
+            'важное.txt': file('не удалять!\n')
+          })
+        })
+      }),
+      etc: dir({ motd: file('IT-квантум · тренажёр терминала\n') }),
+      var: dir({ log: dir({}) })
+    });
+  }
+
+  function splitPath(p) {
+    return String(p).split('/').filter(function (s) { return s.length; });
+  }
+  function absPath(p, cwd) {
+    if (p === '~') p = HOME;
+    else if (p.indexOf('~/') === 0) p = HOME + p.slice(1);
+    if (p.charAt(0) !== '/') p = (cwd || state.cwd) + '/' + p;
+    var out = [];
+    splitPath(p).forEach(function (part) {
+      if (part === '.') return;
+      if (part === '..') { out.pop(); return; }
+      out.push(part);
+    });
+    return '/' + out.join('/');
+  }
+  function nodeAt(path) {
+    var parts = splitPath(absPath(path));
+    var cur = state.fs;
+    for (var i = 0; i < parts.length; i++) {
+      if (!cur || cur.type !== 'dir' || !cur.children[parts[i]]) return null;
+      cur = cur.children[parts[i]];
+    }
+    return cur;
+  }
+  function parentOf(path) {
+    var abs = absPath(path);
+    var parts = splitPath(abs);
+    var name = parts.pop();
+    return { parent: nodeAt('/' + parts.join('/')), name: name, dir: '/' + parts.join('/') };
+  }
+  function globExpand(pattern) {
+    var abs = absPath(pattern);
+    var parts = splitPath(abs);
+    if (parts.every(function (p) { return p.indexOf('*') < 0; })) return [abs];
+    var results = [''];
+    parts.forEach(function (part) {
+      var next = [];
+      results.forEach(function (prefix) {
+        if (part.indexOf('*') < 0) { next.push(prefix + '/' + part); return; }
+        var node = nodeAt(prefix || '/');
+        if (!node || node.type !== 'dir') return;
+        var re = new RegExp('^' + part.replace(/[.+^$[\]\\(){}|]/g, '\\$&').replace(/\*/g, '.*') + '$');
+        Object.keys(node.children).forEach(function (name) {
+          if (re.test(name)) next.push(prefix + '/' + name);
+        });
+      });
+      results = next;
+    });
+    return results;
+  }
+  function modeString(node) {
+    var m = node.mode || (node.type === 'dir' ? '755' : '644');
+    var s = node.type === 'dir' ? 'd' : '-';
+    [m.charAt(0), m.charAt(1), m.charAt(2)].forEach(function (d) {
+      var n = parseInt(d, 10);
+      s += (n & 4 ? 'r' : '-') + (n & 2 ? 'w' : '-') + (n & 1 ? 'x' : '-');
+    });
+    return s;
+  }
+  function displayName(p) { return splitPath(p).pop(); }
+  function isUnderHome(p) { return absPath(p) === HOME || absPath(p).indexOf(HOME + '/') === 0; }
+
+  /* -------------------------------- парсер -------------------------------- */
+  function tokenize(line) {
+    var out = [], cur = '', quote = null, has = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (quote) {
+        if (c === quote) quote = null; else cur += c;
+        has = true;
+        continue;
+      }
+      if (c === '"' || c === "'") { quote = c; has = true; continue; }
+      if (c === ' ' || c === '\t') {
+        if (cur.length || has) { out.push(cur); cur = ''; has = false; }
+        continue;
+      }
+      cur += c; has = true;
+    }
+    if (cur.length || has) out.push(cur);
+    return out;
+  }
+
+  /* ------------------------------- команды ------------------------------- */
+  var HELP = [
+    'Доступные команды:',
+    '  pwd                        — где я нахожусь',
+    '  ls [-l] [путь]             — что лежит в папке',
+    '  cd [путь]                  — перейти в папку (cd ~ — домой, cd .. — наверх)',
+    '  mkdir [-p] путь            — создать папку',
+    '  touch файл                 — создать пустой файл',
+    '  cat файл                   — показать содержимое',
+    '  echo "текст" [> файл]      — вывести текст или записать в файл (>> — дописать)',
+    '  cp откуда куда             — копировать',
+    '  mv откуда куда             — переместить или переименовать',
+    '  rm [-r] путь               — удалить (без корзины!)',
+    '  grep [-r] слово [путь]     — найти строки со словом',
+    '  wc [-l] файл               — посчитать строки',
+    '  head/tail [-n N] файл      — первые/последние строки',
+    '  chmod 600 файл             — выставить права',
+    '  whoami · date · history    — кто я, дата, история команд',
+    '  clear                      — очистить экран',
+    '',
+    'Шаблоны: * подставляет любые имена, например ls данные/*.txt'
+  ].join('\n');
+
+  // перенаправление вывода работает для любой команды: ls > файл, grep -r x . >> журнал
+  function run(line) {
+    var tokens = tokenize(String(line).trim());
+    if (!tokens.length) return { out: [], cwd: state.cwd };
+    var redirIdx = -1;
+    for (var ri = 0; ri < tokens.length; ri++) {
+      if (tokens[ri] === '>' || tokens[ri] === '>>') { redirIdx = ri; break; }
+    }
+    if (redirIdx < 0) return execTokens(tokens);
+
+    var mode = tokens[redirIdx];
+    var target = tokens[redirIdx + 1];
+    if (!target) return { out: ['ошибка: после ' + mode + ' нужно имя файла'], err: true, cwd: state.cwd };
+    var res = execTokens(tokens.slice(0, redirIdx));
+    var text = (res.out || []).join('\n');
+    if (text) text += '\n';
+    var absR = absPath(target);
+    var infoR = parentOf(absR);
+    if (!infoR.parent || infoR.parent.type !== 'dir') {
+      return { out: ['ошибка: нет папки для файла ' + target], err: true, cwd: res.cwd };
+    }
+    var existingR = infoR.parent.children[infoR.name];
+    if (existingR && existingR.type === 'dir') {
+      return { out: ['ошибка: ' + target + ' — это папка'], err: true, cwd: res.cwd };
+    }
+    if (mode === '>>' && existingR) text = (existingR.content || '') + text;
+    infoR.parent.children[infoR.name] = file(text, existingR ? existingR.mode : '644');
+    return { out: [], cwd: res.cwd, err: res.err };
+  }
+
+  function execTokens(tokens) {
+    var out = [];
+    var cmd = tokens.shift();
+    var flags = tokens.filter(function (t) { return t.charAt(0) === '-' && t.length > 1 && t !== '>' && t !== '>>'; });
+    var args = tokens.filter(function (t) { return !(t.charAt(0) === '-' && t.length > 1); });
+    function hasFlag(f) { return flags.indexOf('-' + f) >= 0 || flags.indexOf('-' + f) === 0 && false || flags.some(function (x) { return x.replace(/-/g, '').indexOf(f) >= 0; }); }
+
+    function fail(msg) { return { out: ['ошибка: ' + msg], err: true, cwd: state.cwd }; }
+
+    switch (cmd) {
+      case 'help': return { out: HELP.split('\n'), cwd: state.cwd };
+      case 'clear': return { out: [], clear: true, cwd: state.cwd };
+      case 'pwd': return { out: [state.cwd], cwd: state.cwd };
+      case 'whoami': return { out: ['student'], cwd: state.cwd };
+      case 'date': return { out: [new Date().toLocaleString('ru-RU')], cwd: state.cwd };
+      case 'history':
+        return { out: state.history.map(function (h, i) { return '  ' + (i + 1) + '  ' + h; }), cwd: state.cwd };
+
+      case 'ls': {
+        var targets = args.length ? args : ['.'];
+        var lines = [];
+        targets.forEach(function (t) {
+          globExpand(t).forEach(function (p) {
+            var node = nodeAt(p);
+            if (!node) { lines.push('ls: нет такого файла или папки: ' + t); return; }
+            if (node.type === 'file') { lines.push(hasFlag('l') ? modeString(node) + '  ' + displayName(p) : displayName(p)); return; }
+            var names = Object.keys(node.children).sort();
+            if (targets.length > 1) lines.push(displayName(p) + ':');
+            names.forEach(function (n) {
+              var child = node.children[n];
+              if (hasFlag('l')) {
+                var size = child.type === 'file' ? String((child.content || '').length) : '4096';
+                lines.push(modeString(child) + '  ' + size.padStart(6) + '  ' + n + (child.type === 'dir' ? '/' : ''));
+              } else {
+                lines.push(n + (child.type === 'dir' ? '/' : ''));
+              }
+            });
+            if (!names.length) lines.push('(пусто)');
+          });
+        });
+        return { out: lines, cwd: state.cwd };
+      }
+
+      case 'cd': {
+        var target = args[0] || HOME;
+        var node = nodeAt(target);
+        if (!node) return fail('нет такой папки: ' + target);
+        if (node.type !== 'dir') return fail('это файл, а не папка: ' + target);
+        return { out: [], cwd: absPath(target) };
+      }
+
+      case 'mkdir': {
+        if (!args.length) return fail('укажи имя папки');
+        var made = [];
+        args.forEach(function (a) {
+          var abs = absPath(a);
+          if (hasFlag('p')) {
+            var parts = splitPath(abs);
+            var cur = state.fs;
+            parts.forEach(function (part) {
+              if (!cur.children[part]) cur.children[part] = dir({});
+              cur = cur.children[part];
+            });
+            made.push(abs);
+          } else {
+            var info = parentOf(abs);
+            if (!info.parent || info.parent.type !== 'dir') return made.push('ошибка: нет папки ' + info.dir);
+            if (info.parent.children[info.name]) return made.push('ошибка: «' + info.name + '» уже существует');
+            info.parent.children[info.name] = dir({});
+            made.push(abs);
+          }
+        });
+        var errs = made.filter(function (m) { return m.indexOf('ошибка') === 0; });
+        return { out: errs, err: errs.length > 0, cwd: state.cwd };
+      }
+
+      case 'touch': {
+        if (!args.length) return fail('укажи имя файла');
+        args.forEach(function (a) {
+          var abs = absPath(a);
+          if (nodeAt(abs)) return;
+          var info = parentOf(abs);
+          if (info.parent && info.parent.type === 'dir') info.parent.children[info.name] = file('');
+        });
+        return { out: [], cwd: state.cwd };
+      }
+
+      case 'cat': {
+        if (!args.length) return fail('укажи файл');
+        var lines2 = [];
+        args.forEach(function (a) {
+          var files = globExpand(a);
+          files.forEach(function (p) {
+            var node = nodeAt(p);
+            if (!node) lines2.push('cat: нет файла ' + a);
+            else if (node.type === 'dir') lines2.push('cat: «' + displayName(p) + '» — это папка');
+            else String(node.content || '').replace(/\n$/, '').split('\n').forEach(function (l) { lines2.push(l); });
+          });
+        });
+        return { out: lines2, cwd: state.cwd };
+      }
+
+      case 'echo': {
+        var redirIdx = tokens.findIndex(function (t) { return t === '>' || t === '>>'; });
+        if (redirIdx >= 0) {
+          var text = tokens.slice(0, redirIdx).join(' ');
+          var mode = tokens[redirIdx];
+          var targetPath = tokens[redirIdx + 1];
+          if (!targetPath) return fail('после ' + mode + ' нужно имя файла');
+          var abs2 = absPath(targetPath);
+          var info2 = parentOf(abs2);
+          if (!info2.parent || info2.parent.type !== 'dir') return fail('нет папки для файла ' + targetPath);
+          var existing = info2.parent.children[info2.name];
+          if (existing && existing.type === 'dir') return fail(targetPath + ' — это папка');
+          var newContent = text + '\n';
+          if (mode === '>>' && existing) newContent = (existing.content || '') + text + '\n';
+          info2.parent.children[info2.name] = file(newContent, existing ? existing.mode : '644');
+          return { out: [], cwd: state.cwd };
+        }
+        return { out: [tokens.join(' ')], cwd: state.cwd };
+      }
+
+      case 'cp': case 'mv': {
+        if (args.length < 2) return fail('нужно два аргумента: откуда и куда');
+        var srcs = globExpand(args[0]);
+        var dstAbs = absPath(args[1]);
+        var dstNode = nodeAt(dstAbs);
+        if (!srcs.length) return fail('нет файла ' + args[0]);
+        srcs.forEach(function (src) {
+          var node = nodeAt(src);
+          if (!node) return;
+          var targetPath;
+          if (dstNode && dstNode.type === 'dir') targetPath = dstAbs + '/' + displayName(src);
+          else targetPath = dstAbs;
+          var ti = parentOf(targetPath);
+          if (!ti.parent || ti.parent.type !== 'dir') return;
+          ti.parent.children[ti.name] = JSON.parse(JSON.stringify(node));
+          if (cmd === 'mv') {
+            var si = parentOf(src);
+            if (si.parent) delete si.parent.children[si.name];
+          }
+        });
+        return { out: [], cwd: state.cwd };
+      }
+
+      case 'rm': {
+        if (!args.length) return fail('укажи, что удалить');
+        var problems = [];
+        args.forEach(function (a) {
+          globExpand(a).forEach(function (p) {
+            var node = nodeAt(p);
+            if (!node) { problems.push('rm: нет файла ' + a); return; }
+            if (node.type === 'dir' && !hasFlag('r')) { problems.push('rm: «' + displayName(p) + '» — папка, нужен флаг -r'); return; }
+            var info3 = parentOf(p);
+            if (info3.parent) delete info3.parent.children[info3.name];
+          });
+        });
+        return { out: problems, err: problems.length > 0, cwd: state.cwd };
+      }
+
+      case 'grep': {
+        var pattern = args.shift();
+        if (!pattern) return fail('укажи слово для поиска');
+        var roots = args.length ? args : ['.'];
+        var lines3 = [];
+        function scan(p, nameForOutput) {
+          var node = nodeAt(p);
+          if (!node) return;
+          if (node.type === 'file') {
+            String(node.content || '').split('\n').forEach(function (l) {
+              if (l.toLowerCase().indexOf(String(pattern).toLowerCase()) >= 0) {
+                lines3.push((nameForOutput || p) + ': ' + l);
+              }
+            });
+            return;
+          }
+          if (!hasFlag('r') && p !== '.' && roots.indexOf('.') < 0) return;
+          Object.keys(node.children).sort().forEach(function (n) {
+            scan(p + '/' + n, nameForOutput);
+          });
+        }
+        roots.forEach(function (r) {
+          globExpand(r).forEach(function (p) {
+            scan(p, absPath(p).replace(HOME + '/', ''));
+          });
+        });
+        return { out: lines3, cwd: state.cwd };
+      }
+
+      case 'wc': {
+        if (!args.length) return fail('укажи файл');
+        var lines4 = [];
+        args.forEach(function (a) {
+          globExpand(a).forEach(function (p) {
+            var node = nodeAt(p);
+            if (!node || node.type !== 'file') { lines4.push('wc: нет файла ' + a); return; }
+            var text = String(node.content || '');
+            if (hasFlag('l')) {
+              var n = text.length ? text.replace(/\n$/, '').split('\n').length : 0;
+              lines4.push(n + ' ' + displayName(p));
+            } else {
+              var nl = text.length ? text.replace(/\n$/, '').split('\n').length : 0;
+              lines4.push(nl + ' ' + text.split(/\s+/).filter(Boolean).length + ' ' + text.length + ' ' + displayName(p));
+            }
+          });
+        });
+        return { out: lines4, cwd: state.cwd };
+      }
+
+      case 'head': case 'tail': {
+        var count = 10;
+        var nIdx = flags.findIndex(function (f) { return /^-\d+$/.test(f); });
+        if (nIdx >= 0) count = parseInt(flags[nIdx].slice(1), 10);
+        var nFlag = flags.indexOf('-n');
+        if (nFlag >= 0 && args.length && /^\d+$/.test(args[0])) count = parseInt(args.shift(), 10);
+        var filesT = args.length ? args : [];
+        var lines5 = [];
+        filesT.forEach(function (a) {
+          var node = nodeAt(a);
+          if (!node || node.type !== 'file') { lines5.push('нет файла ' + a); return; }
+          var ls = String(node.content || '').replace(/\n$/, '').split('\n');
+          (cmd === 'head' ? ls.slice(0, count) : ls.slice(-count)).forEach(function (l) { lines5.push(l); });
+        });
+        return { out: lines5, cwd: state.cwd };
+      }
+
+      case 'chmod': {
+        var mode2 = args.shift();
+        if (!mode2 || !/^[0-7]{3}$/.test(mode2)) return fail('режим должен быть из трёх цифр, например 600');
+        if (!args.length) return fail('укажи файл');
+        var errs2 = [];
+        args.forEach(function (a) {
+          globExpand(a).forEach(function (p) {
+            var node = nodeAt(p);
+            if (!node) { errs2.push('chmod: нет файла ' + a); return; }
+            node.mode = mode2;
+          });
+        });
+        return { out: errs2, err: errs2.length > 0, cwd: state.cwd };
+      }
+
+      default:
+        return { out: ['команда не найдена: ' + cmd + '   (help — список команд)'], err: true, cwd: state.cwd };
+    }
+  }
+
+  /* -------------------------------- интерфейс -------------------------------- */
+  var consoleEl, inputEl, promptEl, filesEl;
+
+  function printLine(text, cls) {
+    var div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = text;
+    consoleEl.appendChild(div);
+  }
+  function printBlock(text, cls) {
+    String(text).split('\n').forEach(function (l) { printLine(l, cls); });
+  }
+  function refreshFiles() {
+    var node = nodeAt(state.cwd);
+    var names = node && node.children ? Object.keys(node.children).sort() : [];
+    filesEl.textContent = state.cwd + '  →  ' + (names.length ? names.join('   ') : '(пусто)');
+    promptEl.textContent = state.cwd.replace(HOME, '~') + ' $';
+  }
+
+  function execute(line) {
+    if (!line.trim()) return;
+    printLine((state.cwd.replace(HOME, '~')) + ' $ ' + line, 'cmd');
+    state.history.push(line);
+    var res = run(line);
+    if (res.clear) { consoleEl.innerHTML = ''; return; }
+    if (res.out && res.out.length) printBlock(res.out.join('\n'), res.err ? 'err' : null);
+    state.cwd = res.cwd;
+    refreshFiles();
+  }
+
+  function resetFS() {
+    state.fs = freshFS();
+    state.cwd = HOME;
+    state.history = [];
+    consoleEl.innerHTML = '';
+    printBlock('Виртуальный терминал IT-квантума. Всё в памяти браузера — сломать настоящую систему нельзя.\n' +
+      'Набери help и нажми Enter, чтобы увидеть команды.', 'dim');
+    refreshFiles();
+  }
+
+  /* ------------------------------ публичный API ------------------------------ */
+  window.TermAPI = {
+    lookup: function (p) { return nodeAt(p); },
+    read: function (p) {
+      var n = nodeAt(p);
+      return n && n.type === 'file' ? String(n.content || '') : '';
+    },
+    mode: function (p) {
+      var n = nodeAt(p);
+      return n ? n.mode : null;
+    },
+    cwd: function () { return state.cwd; },
+    exec: execute
+  };
+
+  /* --------------------------------- запуск --------------------------------- */
+  document.addEventListener('DOMContentLoaded', function () {
+    consoleEl = document.getElementById('terminalOut');
+    inputEl = document.getElementById('terminalInput');
+    promptEl = document.getElementById('ps1');
+    filesEl = document.getElementById('filesHere');
+
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var line = inputEl.value;
+      inputEl.value = '';
+      execute(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    });
+
+    document.getElementById('btnClearTerm').addEventListener('click', function () {
+      consoleEl.innerHTML = '';
+    });
+    document.getElementById('btnResetFS').addEventListener('click', function () {
+      if (confirm('Вернуть файлы в исходное состояние?')) resetFS();
+    });
+    document.getElementById('btnHelp').addEventListener('click', function () {
+      execute('help');
+    });
+
+    window.Shell.init({
+      storageKey: 'term.v1',
+      productTitle: 'Тренажёр терминала Linux',
+      productSubtitle: 'виртуальная файловая система в браузере',
+      tasks: window.TERM_TASKS,
+      open: function () { resetFS(); inputEl.focus(); },
+      check: function (task) {
+        return task.checks.map(function (c) {
+          var ok = false;
+          try { ok = !!c.fn(); } catch (e) { ok = false; }
+          return { ok: ok, label: c.label, note: ok ? '' : (c.note || '') };
+        });
+      }
+    });
+
+    // для автотестов
+    window.__term = {
+      exec: execute,
+      solve: function (i) {
+        window.TERM_TASKS[i].solution.forEach(function (cmd) { execute(cmd); });
+        return window.TERM_TASKS[i].checks.map(function (c) { return { label: c.label, ok: !!c.fn() }; });
+      },
+      state: state
+    };
+    window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
+      return window.TERM_TASKS[i].solution.forEach(function (cmd) { execute(cmd); });
+    };
+  });
+})();
+</script>
+</body>
+</html>

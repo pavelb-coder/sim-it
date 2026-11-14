@@ -1,0 +1,41 @@
+/* Стили страницы элемента курса «Тренажёр IT-квантума». */
+
+.simquantum-frame {
+    position: relative;
+    width: 100%;
+    margin: 1rem 0 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d1117;
+}
+
+.simquantum-iframe {
+    display: block;
+    width: 100%;
+    min-height: 400px;
+    border: 0;
+    background: #0d1117;
+}
+
+.simquantum-actions {
+    margin: 0 0 1.5rem;
+}
+
+.simquantum-intro {
+    max-width: 900px;
+}
+
+.simquantum-cmlink {
+    margin-left: 0.5rem;
+}
+
+@media (max-width: 767px) {
+    .simquantum-frame {
+        border-radius: 6px;
+    }
+
+    .simquantum-iframe {
+        min-height: 480px;
+    }
+}

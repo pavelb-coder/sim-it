@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Симулятор сети · тренажёр для IT-квантума</title>
+<meta name="description" content="Симулятор сети в браузере: 22 задачи на топологии, IP-адресацию, маски, статическую маршрутизацию и ping по шагам.">
+<style>/* ======================= Python-класс · IT-квантум ======================= */
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel2: #171d29;
+  --line: #242c3c;
+  --text: #e7ecf6;
+  --muted: #8b97ad;
+  --accent: #5aa9ff;
+  --green: #37d67a;
+  --red: #ff6b6b;
+  --yellow: #ffcc55;
+  --violet: #a78bfa;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+/* ------------------------------- шапка ------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #121722, #0d111a);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, #2f6df6, #7bd88f);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.logo small { display: block; font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.spacer { flex: 1; }
+.badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #0f141d;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.badge b { color: var(--green); font-weight: 600; }
+.badge.engine { cursor: help; }
+.progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.progress {
+  width: 120px; height: 6px; border-radius: 999px; background: #1b2231; overflow: hidden;
+}
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6df6, #37d67a); transition: width .35s ease; }
+.progress-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.progress-text b { color: var(--text); }
+
+/* ------------------------------- каркас ------------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ---------------------------- список задач ---------------------------- */
+.sidebar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 92px);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-head {
+  padding: 12px 14px 8px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
+.task-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.task-item:hover:not(.locked) { background: var(--panel2); }
+.task-item.active { background: #17233a; border-color: #2a4b7d; }
+.task-item.locked { color: #5d6879; cursor: not-allowed; }
+.task-item .num {
+  flex: 0 0 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: #1b2333; color: var(--muted);
+}
+.task-item.done .num { background: rgba(55,214,122,.16); color: var(--green); }
+.task-item.active .num { background: #2f6df6; color: #fff; }
+.task-item .t-main { min-width: 0; display: block; }
+.task-item .t-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.task-item .t-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.mini-btn {
+  background: #1a2130; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.mini-btn:hover { color: var(--text); border-color: #33405a; }
+
+/* ------------------------------- рабочая ------------------------------- */
+.work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.task-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.task-head h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.task-head .sub { color: var(--muted); font-size: 12.5px; }
+.task-body { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.prompt { font-size: 15px; }
+.theory {
+  background: #0f141d;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #c3ccdb;
+}
+.theory p { margin: 0 0 6px; }
+.theory p:last-child { margin-bottom: 0; }
+.theory code, .prompt code { background: #1b2433; border-radius: 5px; padding: 1px 5px; color: #dfe8ff; }
+.examples { display: flex; gap: 10px; flex-wrap: wrap; }
+.example {
+  background: #0f141d; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; font-family: var(--mono); font-size: 12.5px; min-width: 150px;
+}
+.example .lbl { color: var(--muted); font-family: var(--sans); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.example pre { margin: 2px 0 0; white-space: pre-wrap; color: #cfe0ff; }
+.example .arrow { color: var(--muted); font-family: var(--sans); font-size: 11px; margin-top: 6px; }
+.hint-box {
+  display: none;
+  background: rgba(255,204,85,.08);
+  border: 1px solid rgba(255,204,85,.3);
+  color: #ffe6a8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+.hint-box.show { display: block; }
+
+/* ------------------------------- редактор ------------------------------- */
+.editor-card { display: flex; flex-direction: column; }
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: #101620;
+}
+.btn {
+  border-radius: 9px; border: 1px solid var(--line);
+  background: #1a2130; color: var(--text);
+  padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: #3a4a68; }
+.btn.primary { background: linear-gradient(180deg, #2f6df6, #2559d6); border-color: #2b62e0; color: #fff; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ok { background: linear-gradient(180deg, #2fbd6c, #22a05a); border-color: #26a860; color: #06220f; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn kbd {
+  background: rgba(255,255,255,.16); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-weight: 700;
+}
+.editor-shell {
+  position: relative;
+  display: flex;
+  background: #0c1119;
+  min-height: 250px;
+  max-height: 52vh;
+}
+.gutter-nums {
+  flex: 0 0 auto;
+  white-space: pre;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  font: 14px/1.55 var(--mono);
+  color: #3f4a5e;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  background: #0a0f16;
+  border-right: 1px solid #1a2130;
+}
+.code-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+.code-hl, #code {
+  position: absolute; inset: 0;
+  margin: 0; padding: 12px 14px;
+  font: 14px/1.55 var(--mono);
+  white-space: pre; tab-size: 4;
+  border: 0; overflow: auto;
+}
+.code-hl { color: #cbd5e6; pointer-events: none; z-index: 1; }
+#code {
+  color: transparent; caret-color: #fff; background: transparent;
+  resize: none; outline: none; z-index: 2;
+}
+#code::selection { background: rgba(90,169,255,.32); }
+.tok-kw { color: #c792ea; }
+.tok-bi { color: #82aaff; }
+.tok-str { color: #a5e075; }
+.tok-num { color: #f78c6c; }
+.tok-com { color: #5a6779; font-style: italic; }
+.tok-def { color: #ffcb6b; }
+.editor-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--line); background: #101620;
+}
+.stdin-label { font-size: 12px; color: var(--muted); }
+#stdin {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px;
+  color: #cfe0ff; font: 13px/1.4 var(--mono); padding: 6px 9px; width: 190px; height: 32px; resize: vertical;
+}
+.hint-inline { font-size: 11.5px; color: #5f6b80; }
+
+/* ------------------------------- консоль ------------------------------- */
+.tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); background: #101620; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  color: var(--muted); padding: 7px 13px; font-size: 13px; border-radius: 9px 9px 0 0;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+.tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #38445a; }
+.tab.active .dot { background: var(--accent); }
+.tab .count { font-size: 11px; color: var(--muted); }
+.panel { padding: 12px 14px; min-height: 150px; max-height: 40vh; overflow: auto; }
+.panel[hidden] { display: none; }
+.out {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: #d7e2f2;
+}
+.out.empty { color: #55617a; font-style: italic; }
+.err {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  background: rgba(255,107,107,.07);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 9px; padding: 10px 12px; color: #ffb3b3; margin-top: 10px;
+}
+.err b { color: var(--red); }
+.test-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: #0f141d; margin-bottom: 7px; font-size: 12.5px;
+}
+.test-row.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.test-row.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.test-row .mark { font-weight: 800; width: 14px; flex: 0 0 14px; }
+.test-row.pass .mark { color: var(--green); }
+.test-row.fail .mark { color: var(--red); }
+.test-row .io { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+.test-row .io .k { color: var(--muted); }
+.test-row .io .bad { color: #ffb3b3; }
+.test-row .io .good { color: #a5e075; }
+.summary { font-size: 13.5px; margin-bottom: 10px; }
+.summary.good { color: var(--green); }
+.summary.bad { color: var(--yellow); }
+.celebrate {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(55,214,122,.08); border: 1px solid rgba(55,214,122,.35);
+  color: #a7f3c8; font-size: 13.5px;
+}
+.celebrate button { margin-top: 8px; }
+.solution {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #0c1119; border: 1px dashed #2f4364;
+}
+.solution .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.solution pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; color: #cfe0ff; }
+.trace-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 10px; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.trace-row:hover { background: #10192a; border-color: #22304a; }
+.trace-row.sel { background: #142441; border-color: #2c548f; }
+.trace-line { color: var(--muted); font: 12px/1.4 var(--mono); }
+.trace-body { font: 12px/1.45 var(--mono); min-width: 0; }
+.trace-code { color: #8fa3c4; white-space: pre-wrap; }
+.trace-vars { color: #a5e075; margin-top: 2px; white-space: pre-wrap; }
+.trace-vars .none { color: #55617a; }
+.foot-note { color: #4f5a6e; font-size: 11.5px; text-align: center; padding: 6px 0 22px; }
+
+/* ------------------------------- адаптив ------------------------------- */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .sidebar { position: static; max-height: none; }
+  .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
+  .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
+  .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
+  .editor-shell { min-height: 200px; max-height: 46vh; }
+  .topbar { padding: 8px 12px; }
+  .progress-wrap { order: 3; width: 100%; }
+  .progress { flex: 1; width: auto; }
+  .panel { max-height: 46vh; }
+  #stdin { width: 100%; }
+  .editing-foot { display: block; }
+}
+
+
+/* ===================== общий каркас для продуктов ===================== */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hub-card {
+  display: block; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; transition: transform .12s ease, border-color .12s ease;
+}
+.hub-card:hover { border-color: #35507e; }
+.hub-card h3 { margin: 0 0 4px; font-size: 16px; }
+.hub-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.hub-card .tag {
+  display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: #9dc0ff; border: 1px solid #2b4470; border-radius: 999px;
+  padding: 2px 9px;
+}
+.hub-card.soon { opacity: .55; }
+.workspace { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ws-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-label { font-size: 12px; color: var(--muted); }
+.ws-input {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px; color: #cfe0ff;
+  font: 13px/1.4 var(--mono); padding: 7px 10px;
+}
+.ws-input:focus { outline: none; border-color: #35507e; }
+.console {
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  font: 13px/1.5 var(--mono); padding: 12px 14px; min-height: 260px; max-height: 46vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.console .cmd { color: #7fd1ff; }
+.console .err { color: #ff9c9c; }
+.console .ok { color: #a5e075; }
+.console .dim { color: #5f6b80; }
+.prompt-line { display: flex; gap: 8px; align-items: center; }
+.prompt-line .ps1 { color: var(--green); font: 13px/1.4 var(--mono); white-space: nowrap; }
+.prompt-line input {
+  flex: 1; min-width: 0; background: #0a0e15; border: 1px solid var(--line); border-radius: 8px;
+  color: #e7ecf6; font: 13px/1.4 var(--mono); padding: 8px 10px;
+}
+.prompt-line input:focus { outline: none; border-color: #35507e; }
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #0f141d;
+}
+.check-item.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.check-item.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.check-item .mark { font-weight: 800; }
+.check-item.pass .mark { color: var(--green); }
+.check-item.fail .mark { color: var(--red); }
+.check-item .note { color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+.code-area {
+  width: 100%; min-height: 130px; background: #0c1119; border: 1px solid var(--line);
+  border-radius: 10px; color: #cfe0ff; font: 13px/1.5 var(--mono); padding: 10px 12px; resize: vertical;
+}
+.code-area:focus { outline: none; border-color: #35507e; }
+.data-table { width: 100%; border-collapse: collapse; font: 12.5px/1.4 var(--mono); }
+.data-table th, .data-table td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.data-table th { background: #131a26; color: #9dc0ff; font-weight: 600; }
+.data-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+.net-grid { display: flex; flex-direction: column; gap: 8px; max-height: 52vh; overflow: auto; }
+.net-dev { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: #0f141d; }
+.net-dev.router { border-color: #3a4f7a; background: #101827; }
+.net-dev.switch { opacity: .85; }
+.net-dev-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.net-dev-head b { font-size: 14px; }
+.net-dev-head .chip { font-size: 10px; }
+.net-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin: 3px 0; }
+.net-field input { flex: 1; min-width: 0; padding: 4px 8px; }
+.net-field select { padding: 4px 6px; }
+.net-iface { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+.net-iface-name { font: 11.5px/1.4 var(--mono); color: #7fd1ff; width: 42px; flex: 0 0 42px; }
+.net-iface input { flex: 1; min-width: 0; padding: 4px 8px; }
+.net-iface select { padding: 4px 6px; }
+.net-routes { margin-top: 6px; }
+.net-route { display: flex; gap: 5px; margin: 3px 0; }
+.net-route input { min-width: 0; padding: 4px 6px; font-size: 12px; }
+.net-route input:nth-child(1) { flex: 1.2; }
+.net-route input:nth-child(3) { flex: 1.4; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark">⇄</span>
+    <span>Симулятор сети<small>22 задачи · IP, маски, маршрутизация и ping по шагам</small></span>
+  </a>
+  <div class="spacer"></div>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn ok" id="btnCheck">✔ Проверить</button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        
+      </div>
+      <div class="workspace">
+        <div class="ws-toolbar" style="margin-bottom:10px">
+  <span class="ws-label">Ping:</span>
+  <select class="ws-input" id="pingSrc"></select>
+  <span class="ws-label">→</span>
+  <select class="ws-input" id="pingDst"></select>
+  <button class="btn primary" id="btnPing">Пинговать</button>
+  <button class="btn ghost" id="btnPingReverse">⇄ наоборот</button>
+  <span class="ws-label" id="linksLine"></span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="ws-label" style="margin-bottom:6px">Устройства — адреса можно менять</div>
+    <div class="net-grid" id="topoList"></div>
+  </div>
+  <div>
+    <div class="ws-label" style="margin-bottom:6px">Что происходит с пакетом</div>
+    <div class="console" id="pingLog" style="max-height:52vh;min-height:200px"></div>
+  </div>
+</div>
+
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs"><button class="tab active"><span class="dot"></span>Проверка</button></div>
+      <div class="panel" id="panel-check"><pre class="out empty">Выполни задание и нажми «Проверить».</pre></div>
+    </section>
+
+    <div class="foot-note">Работает без интернета и без установки · всё выполняется локально в браузере · прогресс хранится на этом устройстве</div>
+  </main>
+</div>
+
+<script>/* ==========================================================================
+   Shell — общий каркас тренажёров IT-квантума.
+   Даёт: список задач с прогрессом, карточку задания, кнопку проверки,
+   подсказку, разбор результатов и хранение прогресса в браузере.
+   Продукт подключает свои задачи и две функции: open(task) и check(task).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var cfg = null;
+  var st = { solved: {}, current: 0, showAll: false };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function save() {
+    try { localStorage.setItem(cfg.storageKey, JSON.stringify(st)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(cfg.storageKey);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      st.solved = d.solved || {};
+      st.showAll = !!d.showAll;
+    } catch (e) {}
+  }
+  function tasks() { return cfg.tasks; }
+  function task(i) { return cfg.tasks[i]; }
+  function unlocked(i) { return st.showAll || i === 0 || !!st.solved[cfg.tasks[i - 1].id]; }
+  function solvedCount() {
+    var n = 0;
+    cfg.tasks.forEach(function (t) { if (st.solved[t.id]) n++; });
+    return n;
+  }
+
+  function renderSidebar() {
+    var html = '';
+    cfg.tasks.forEach(function (t, i) {
+      var done = !!st.solved[t.id];
+      var lock = !unlocked(i);
+      html += '<button class="task-item' + (i === st.current ? ' active' : '') + (done ? ' done' : '') +
+        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
+        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+        '<span class="t-sub">' + esc(t.subtitle || '') + '</span></span></button>';
+    });
+    $('taskList').innerHTML = html;
+    Array.prototype.forEach.call($('taskList').querySelectorAll('.task-item'), function (b) {
+      b.addEventListener('click', function () {
+        var i = parseInt(b.getAttribute('data-i'), 10);
+        if (unlocked(i)) openTask(i);
+      });
+    });
+  }
+
+  function doneText(n) {
+    if (n === 1) return 'Готово: проверка пройдена.';
+    var word = (n % 10 >= 2 && n % 10 <= 4 && (n < 12 || n > 14)) ? 'проверки' : 'проверок';
+    return 'Готово: все ' + n + ' ' + word + ' пройдены.';
+  }
+
+  function renderProgress() {
+    var n = solvedCount();
+    $('progressBar').style.width = (n / cfg.tasks.length * 100) + '%';
+    $('progressText').innerHTML = '<b>' + n + '</b> из ' + cfg.tasks.length + ' задач';
+  }
+
+  function openTask(i) {
+    st.current = i;
+    var t = tasks()[i];
+    $('taskTitle').textContent = t.title;
+    $('taskSub').textContent = t.subtitle || '';
+    $('taskModule').textContent = cfg.productTitle || '';
+    var lvl = $('taskLevel');
+    if (t.level) {
+      lvl.textContent = t.level;
+      lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard');
+    } else { lvl.textContent = ''; lvl.className = 'chip'; }
+
+    $('theory').innerHTML = t.theory || '';
+    $('prompt').innerHTML = t.prompt || '';
+    var ex = '';
+    (t.examples || []).forEach(function (e) {
+      ex += '<div class="example"><div class="lbl">' + esc(e.label || 'пример') + '</div><pre>' + esc(e.text) + '</pre></div>';
+    });
+    $('examples').innerHTML = ex;
+    var hint = $('hintBox');
+    hint.textContent = t.hint || 'Подсказки нет — попробуй сам.';
+    hint.classList.remove('show');
+
+    $('panel-check').innerHTML = '<pre class="out empty">Пока пусто. Выполни задание в рабочей области и нажми «Проверить».</pre>';
+    if (cfg.open) cfg.open(t, st);
+    renderSidebar();
+    renderProgress();
+    save();
+  }
+
+  function runCheck() {
+    var t = tasks()[st.current];
+    var results;
+    try {
+      results = cfg.check(t, st) || [];
+    } catch (e) {
+      results = [{ ok: false, label: 'Ошибка проверки: ' + (e && e.message ? e.message : e) }];
+    }
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var allOk = results.length > 0 && passed === results.length;
+
+    var html = '';
+    html += allOk
+      ? '<div class="summary good">✔ ' + doneText(results.length) + '</div>'
+      : '<div class="summary bad">Пройдено ' + passed + ' из ' + results.length + ' проверок. Ниже видно, что именно не так.</div>';
+    html += '<div class="check-list">';
+    results.forEach(function (r) {
+      html += '<div class="check-item ' + (r.ok ? 'pass' : 'fail') + '">' +
+        '<span class="mark">' + (r.ok ? '✔' : '✕') + '</span><div>' + esc(r.label) +
+        (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</div></div>';
+    });
+    html += '</div>';
+
+    if (allOk) {
+      var first = !st.solved[t.id];
+      st.solved[t.id] = true;
+      save();
+      if (first) html += '<div class="celebrate">Задача закрыта — прогресс сохранён.</div>';
+      if (st.current + 1 < tasks().length) {
+        html += '<div class="celebrate"><button class="btn ok" id="goNext">Следующая задача →</button></div>';
+      } else {
+        html += '<div class="celebrate"><b>Это последняя задача продукта.</b> Возвращайся на главную и пробуй другой тренажёр.</div>';
+      }
+      renderSidebar();
+      renderProgress();
+    }
+    $('panel-check').innerHTML = html;
+    var next = $('goNext');
+    if (next) next.addEventListener('click', function () { openTask(st.current + 1); });
+    $('panel-check').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function init(config) {
+    cfg = config;
+    load();
+    if ($('productTitle')) $('productTitle').textContent = cfg.productTitle || '';
+    if ($('productSub')) $('productSub').textContent = cfg.productSubtitle || '';
+
+    $('btnCheck').addEventListener('click', runCheck);
+    $('btnHint').addEventListener('click', function () { $('hintBox').classList.toggle('show'); });
+    $('btnShowAll').addEventListener('click', function () {
+      st.showAll = !st.showAll;
+      save();
+      this.textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+      renderSidebar();
+    });
+    $('btnResetProgress').addEventListener('click', function () {
+      if (!confirm('Сбросить прогресс продукта?')) return;
+      st.solved = {};
+      st.showAll = false;
+      save();
+      $('btnShowAll').textContent = 'Открыть все задачи';
+      openTask(0);
+    });
+    $('btnShowAll').textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+
+    var start = 0;
+    for (var i = 0; i < tasks().length; i++) { if (!st.solved[tasks()[i].id]) { start = i; break; } }
+    openTask(unlocked(start) ? start : 0);
+    if (cfg.onReady) cfg.onReady(st);
+  }
+
+  global.Shell = {
+    init: init,
+    state: st,
+    openTask: openTask,
+    runCheck: runCheck,
+    unlocked: unlocked,
+    esc: esc,
+    save: save
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Симулятор сети — задачи. Проверки запускают настоящий ping по модели.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  function pc(id, name, ip, mask, gw) {
+    return { id: id, name: name, type: 'pc', ip: ip || '', mask: mask || '/24', gw: gw || '' };
+  }
+  function sw(id, name) { return { id: id, name: name, type: 'switch' }; }
+  function router(id, name, ifaces, routes) {
+    return { id: id, name: name, type: 'router', ifaces: ifaces || [], routes: routes || [] };
+  }
+  function topo(devices, links) { return { devices: devices, links: links }; }
+
+  global.NET_TASKS = [
+    {
+      id: 'n1',
+      level: 'легко',
+      title: 'Соседи по коммутатору',
+      subtitle: 'адресация в одной подсети',
+      theory: '<p>Два компьютера, соединённые коммутатором, — это <b>один L2-сегмент</b>. Чтобы они видели друг друга, ' +
+              'их адреса должны быть в одной подсети, то есть совпадать по первым 24 битам при маске /24.</p>' +
+              '<p>Адрес сети 192.168.10.0/24 — значит подходят адреса 192.168.10.1 … 192.168.10.254.</p>',
+      prompt: 'Задай PC1 и PC2 адреса из сети <code>192.168.10.0/24</code> так, чтобы <code>ping</code> между ними прошёл. ' +
+              'Шлюз здесь не нужен — сеть одна.',
+      examples: [{ label: 'как проверить', text: 'выбери PC1 → PC2 и нажми «Пинговать»' }],
+      hint: 'Например PC1 — 192.168.10.1, PC2 — 192.168.10.2, маска у обоих /24.',
+      topology: topo([pc('pc1', 'PC1'), sw('sw1', 'SW1'), pc('pc2', 'PC2')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (topo) {
+        topo.devices[0].ip = '192.168.10.1';
+        topo.devices[2].ip = '192.168.10.2';
+      },
+      checks: [
+        {
+          label: 'у PC1 адрес из сети 192.168.10.0/24',
+          fn: function (api) {
+            var f = api.iface('PC1');
+            return !!f && api.sameSubnet(f.ip, '192.168.10.1', '/24') && f.mask === '/24';
+          }
+        },
+        {
+          label: 'у PC2 адрес из сети 192.168.10.0/24',
+          fn: function (api) {
+            var f = api.iface('PC2');
+            return !!f && api.sameSubnet(f.ip, '192.168.10.1', '/24') && f.mask === '/24';
+          }
+        },
+        { label: 'ping PC1 → PC2 проходит', fn: function (api) { return api.ping('PC1', 'PC2').ok; } },
+        { label: 'ping PC2 → PC1 проходит', fn: function (api) { return api.ping('PC2', 'PC1').ok; } }
+      ]
+    },
+    {
+      id: 'n2',
+      level: 'легко',
+      title: 'Маска решает',
+      subtitle: 'адреса выглядят похоже, но подсети разные',
+      theory: '<p>Адрес 192.168.5.10 и 192.168.6.10 отличаются в третьем октете. При маске <code>/24</code> это ' +
+              '<b>разные сети</b>: 192.168.5.0/24 и 192.168.6.0/24.</p>' +
+              '<p>Чтобы объединить их без маршрутизатора, нужен адрес из той же сети. Маска /16 объединила бы обе, ' +
+              'но в школьной практике почти всегда приводят адреса к одной /24.</p>',
+      prompt: 'Компьютеры подключены к одному коммутатору, но ping не проходит. Разберись почему и исправь адресацию: ' +
+              'приведи оба адреса к сети <code>192.168.5.0/24</code>.',
+      examples: [{ label: 'сейчас', text: 'PC1 192.168.5.10/24 · PC2 192.168.6.10/24' }],
+      hint: 'Поменяй у PC2 третий октет: 192.168.6.10 → 192.168.5.11 (главное — не занять адрес PC1).',
+      topology: topo([pc('pc1', 'PC1', '192.168.5.10', '/24'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '192.168.6.10', '/24')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (topo) { topo.devices[2].ip = '192.168.5.11'; },
+      checks: [
+        {
+          label: 'PC2 в сети 192.168.5.0/24',
+          fn: function (api) {
+            var f = api.iface('PC2');
+            return !!f && api.sameSubnet(f.ip, '192.168.5.10', '/24');
+          }
+        },
+        { label: 'адреса PC1 и PC2 не совпадают', fn: function (api) { return api.iface('PC1').ip !== api.iface('PC2').ip; } },
+        { label: 'ping PC1 → PC2 проходит', fn: function (api) { return api.ping('PC1', 'PC2').ok; } }
+      ]
+    },
+    {
+      id: 'n3',
+      level: 'средне',
+      title: 'Шлюз по умолчанию',
+      subtitle: 'выход из своей подсети',
+      theory: '<p>Если адрес цели в другой подсети, компьютер не может отправить пакет напрямую: он отдаёт его ' +
+              '<b>шлюзу по умолчанию</b> — ближайшему интерфейсу маршрутизатора.</p>' +
+              '<p>Шлюз обязан быть в <b>своей</b> подсети, иначе до него не добраться.</p>',
+      prompt: 'PC1 и PC2 в разных подсетях, между ними маршрутизатор R1. Задай PC1 и PC2 шлюзы так, ' +
+              'чтобы ping прошёл в обе стороны.',
+      examples: [{ label: 'топология', text: 'PC1 10.0.0.10/24 — R1 (10.0.0.1/24, 192.168.1.1/24) — PC2 192.168.1.20/24' }],
+      hint: 'Шлюз PC1 — 10.0.0.1, шлюз PC2 — 192.168.1.1.',
+      topology: topo([
+        pc('pc1', 'PC1', '10.0.0.10', '/24'),
+        sw('sw1', 'SW1'),
+        router('r1', 'R1', [{ name: 'G0/0', ip: '10.0.0.1', mask: '/24' }, { name: 'G0/1', ip: '192.168.1.1', mask: '/24' }]),
+        sw('sw2', 'SW2'),
+        pc('pc2', 'PC2', '192.168.1.20', '/24')
+      ], [['pc1', 'sw1'], ['sw1', 'r1'], ['r1', 'sw2'], ['sw2', 'pc2']]),
+      apply: function (topo) {
+        topo.devices[0].gw = '10.0.0.1';
+        topo.devices[4].gw = '192.168.1.1';
+      },
+      checks: [
+        { label: 'у PC1 шлюз 10.0.0.1', fn: function (api) { return api.dev('PC1').gw === '10.0.0.1'; } },
+        { label: 'у PC2 шлюз 192.168.1.1', fn: function (api) { return api.dev('PC2').gw === '192.168.1.1'; } },
+        { label: 'ping PC1 → PC2 проходит', fn: function (api) { return api.ping('PC1', 'PC2').ok; } },
+        { label: 'ping PC2 → PC1 проходит', fn: function (api) { return api.ping('PC2', 'PC1').ok; } }
+      ]
+    },
+    {
+      id: 'n4',
+      level: 'сложно',
+      title: 'Два маршрутизатора',
+      subtitle: 'статические маршруты в обе стороны',
+      theory: '<p>Когда между сетями два маршрутизатора, каждому нужно знать про «чужую» сеть. ' +
+              'Запись <code>сеть/маска через адрес</code> — это статический маршрут.</p>' +
+              '<p>Маршрут нужен <b>в обе стороны</b>: иначе ответ не вернётся, и ping будет «теряться».</p>',
+      prompt: 'Два маршрутизатора соединены между собой. Настрой R1 и R2 так, чтобы PC1 (10.0.0.10) видел PC2 (192.168.1.10). ' +
+              'Нужны два статических маршрута — по одному на каждом роутере.',
+      examples: [{ label: 'топология', text: 'PC1 — R1 (10.0.0.1 | 172.16.0.1) — R2 (172.16.0.2 | 192.168.1.1) — PC2' }],
+      hint: 'На R1: маршрут 192.168.1.0/24 через 172.16.0.2. На R2: 10.0.0.0/24 через 172.16.0.1.',
+      topology: topo([
+        pc('pc1', 'PC1', '10.0.0.10', '/24', '10.0.0.1'),
+        sw('sw1', 'SW1'),
+        router('r1', 'R1', [{ name: 'G0/0', ip: '10.0.0.1', mask: '/24' }, { name: 'G0/1', ip: '172.16.0.1', mask: '/24' }],
+          [{ dest: '', mask: '/24', via: '' }]),
+        router('r2', 'R2', [{ name: 'G0/0', ip: '172.16.0.2', mask: '/24' }, { name: 'G0/1', ip: '192.168.1.1', mask: '/24' }],
+          [{ dest: '', mask: '/24', via: '' }]),
+        sw('sw2', 'SW2'),
+        pc('pc2', 'PC2', '192.168.1.10', '/24', '192.168.1.1')
+      ], [['pc1', 'sw1'], ['sw1', 'r1'], ['r1', 'r2'], ['r2', 'sw2'], ['sw2', 'pc2']]),
+      apply: function (topo) {
+        topo.devices[2].routes = [{ dest: '192.168.1.0', mask: '/24', via: '172.16.0.2' }];
+        topo.devices[3].routes = [{ dest: '10.0.0.0', mask: '/24', via: '172.16.0.1' }];
+      },
+      checks: [
+        {
+          label: 'у R1 есть маршрут до 192.168.1.0/24 через 172.16.0.2',
+          fn: function (api) {
+            return api.routes('R1').some(function (r) {
+              return r.dest === '192.168.1.0' && r.mask === '/24' && r.via === '172.16.0.2';
+            });
+          }
+        },
+        {
+          label: 'у R2 есть маршрут до 10.0.0.0/24 через 172.16.0.1',
+          fn: function (api) {
+            return api.routes('R2').some(function (r) {
+              return r.dest === '10.0.0.0' && r.mask === '/24' && r.via === '172.16.0.1';
+            });
+          }
+        },
+        { label: 'ping PC1 → PC2 проходит', fn: function (api) { return api.ping('PC1', 'PC2').ok; } },
+        { label: 'ping PC2 → PC1 проходит', fn: function (api) { return api.ping('PC2', 'PC1').ok; } }
+      ]
+    },
+    {
+      id: 'n5',
+      level: 'средне',
+      title: 'Шлюз из чужой сети',
+      subtitle: 'типичная ошибка настройки',
+      theory: '<p>Частая поломка: адрес шлюза указан правильно, но он не входит в подсеть компьютера. ' +
+              'Например, PC 10.0.0.10/24 со шлюзом 10.0.1.1 — до такого шлюза пакет физически не дойдёт.</p>' +
+              '<p>Диагностика: сравнить адрес компьютера и адрес шлюза по маске.</p>',
+      prompt: 'Ping не проходит. Найди ошибку и исправь её: компьютер должен выходить в соседнюю сеть через R1.',
+      examples: [{ label: 'сейчас', text: 'PC1 10.0.0.10/24, шлюз 10.0.1.1 · R1: 10.0.0.1/24 и 192.168.1.1/24' }],
+      hint: 'Шлюз должен быть из сети 10.0.0.0/24 — это адрес 10.0.0.1.',
+      topology: topo([
+        pc('pc1', 'PC1', '10.0.0.10', '/24', '10.0.1.1'),
+        sw('sw1', 'SW1'),
+        router('r1', 'R1', [{ name: 'G0/0', ip: '10.0.0.1', mask: '/24' }, { name: 'G0/1', ip: '192.168.1.1', mask: '/24' }]),
+        sw('sw2', 'SW2'),
+        pc('pc2', 'PC2', '192.168.1.20', '/24', '192.168.1.1')
+      ], [['pc1', 'sw1'], ['sw1', 'r1'], ['r1', 'sw2'], ['sw2', 'pc2']]),
+      apply: function (topo) { topo.devices[0].gw = '10.0.0.1'; },
+      checks: [
+        {
+          label: 'шлюз PC1 находится в его подсети',
+          fn: function (api) {
+            var d = api.dev('PC1');
+            return api.sameSubnet(d.ip, d.gw, d.mask);
+          }
+        },
+        { label: 'ping PC1 → PC2 проходит', fn: function (api) { return api.ping('PC1', 'PC2').ok; } },
+        { label: 'ping PC2 → PC1 проходит', fn: function (api) { return api.ping('PC2', 'PC1').ok; } }
+      ]
+    },
+    {
+      id: 'n6',
+      level: 'сложно',
+      title: 'Три сети, один роутер',
+      subtitle: 'несколько интерфейсов и адрес сети',
+      theory: '<p>У маршрутизатора может быть много интерфейсов — по одному на каждую сеть. Сети, подключённые ' +
+              'напрямую, в маршрутах не нуждаются: роутер про них и так знает.</p>' +
+              '<p>Проверь, что адреса не пересекаются и что каждый шлюз из своей подсети.</p>',
+      prompt: 'К R1 подключены три сети. Задай адрес третьему интерфейсу (сеть <code>172.20.0.0/24</code>) и шлюзы ' +
+              'PC1 и PC3, чтобы все три компьютера видели друг друга.',
+      examples: [{ label: 'топология', text: 'PC1 10.1.0.10 — R1 (10.1.0.1, 192.168.50.1, ?/24) — PC2 192.168.50.10, PC3 172.20.0.30' }],
+      hint: 'Интерфейсу — 172.20.0.1/24, шлюз PC1 — 10.1.0.1, шлюз PC3 — 172.20.0.1.',
+      topology: topo([
+        pc('pc1', 'PC1', '10.1.0.10', '/24', ''),
+        sw('sw1', 'SW1'),
+        pc('pc2', 'PC2', '192.168.50.10', '/24', ''),
+        sw('sw2', 'SW2'),
+        pc('pc3', 'PC3', '172.20.0.30', '/24', ''),
+        sw('sw3', 'SW3'),
+        router('r1', 'R1', [
+          { name: 'G0/0', ip: '10.1.0.1', mask: '/24' },
+          { name: 'G0/1', ip: '192.168.50.1', mask: '/24' },
+          { name: 'G0/2', ip: '', mask: '/24' }
+        ])
+      ], [['pc1', 'sw1'], ['sw1', 'r1'], ['pc2', 'sw2'], ['sw2', 'r1'], ['pc3', 'sw3'], ['sw3', 'r1']]),
+      apply: function (topo) {
+        topo.devices[6].ifaces[2].ip = '172.20.0.1';
+        topo.devices[0].gw = '10.1.0.1';
+        topo.devices[2].gw = '192.168.50.1';
+        topo.devices[4].gw = '172.20.0.1';
+      },
+      checks: [
+        {
+          label: 'третий интерфейс R1 — 172.20.0.1/24',
+          fn: function (api) {
+            var f = api.iface('R1', 2);
+            return !!f && f.ip === '172.20.0.1' && f.mask === '/24';
+          }
+        },
+        { label: 'шлюзы PC1, PC2 и PC3 заданы верно', fn: function (api) {
+            return api.dev('PC1').gw === '10.1.0.1' && api.dev('PC2').gw === '192.168.50.1' && api.dev('PC3').gw === '172.20.0.1';
+          } },
+        { label: 'ping PC1 → PC2 проходит', fn: function (api) { return api.ping('PC1', 'PC2').ok; } },
+        { label: 'ping PC1 → PC3 проходит', fn: function (api) { return api.ping('PC1', 'PC3').ok; } },
+        { label: 'ping PC2 → PC3 проходит', fn: function (api) { return api.ping('PC2', 'PC3').ok; } }
+      ]
+    }
+  ];
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ==========================================================================
+   Симулятор сети — банк задач: маски /16 /25 /30, шлюзы, статические
+   маршруты в обе стороны, маршрутизатор с тремя интерфейсами.
+   Проверки запускают настоящий ping по модели.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  function pc(id, name, ip, mask, gw) {
+    return { id: id, name: name, type: 'pc', ip: ip || '', mask: mask || '/24', gw: gw || '' };
+  }
+  function sw(id, name) { return { id: id, name: name, type: 'switch' }; }
+  function router(id, name, ifaces, routes) {
+    return { id: id, name: name, type: 'router', ifaces: ifaces || [], routes: routes || [] };
+  }
+  function topo(devices, links) { return { devices: devices, links: links }; }
+  function pingOk(a, b) {
+    return function (api) { return !!api.ping(a, b).ok; };
+  }
+  function ipIs(name, ip, mask) {
+    return function (api) {
+      var f = api.iface(name);
+      return !!f && f.ip === ip && (!mask || f.mask === mask);
+    };
+  }
+
+  var bank = [
+    {
+      id: 'n7', level: 2,
+      title: 'Большая сеть /16',
+      subtitle: 'маска задаёт размер',
+      theory: '<p>Маска <code>/16</code> означает: первые 16 бит — номер сети, остальные 16 — номера компьютеров. В такой сети 65 534 адреса.</p>' +
+        '<p>Значит <code>172.16.5.7</code> и <code>172.16.9.3</code> — <b>одна</b> сеть 172.16.0.0/16, хотя третья цифра разная. При маске /24 это были бы разные сети.</p>',
+      prompt: 'Два компьютера соединены коммутатором. Дай PC1 адрес <code>172.16.5.7</code>, PC2 — <code>172.16.9.3</code>, маска у обоих <code>/16</code>. Добейся успешного ping.',
+      examples: [{ label: 'как проверить', text: 'PC1 → PC2, кнопка «Пинговать»' }],
+      hint: 'Маска уже выставлена — осталось только вписать адреса.',
+      topology: topo([pc('pc1', 'PC1', '', '/16'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '', '/16')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (t) {
+        t.devices[0].ip = '172.16.5.7';
+        t.devices[2].ip = '172.16.9.3';
+      },
+      checks: [
+        { label: 'у PC1 адрес 172.16.5.7 и маска /16', fn: ipIs('PC1', '172.16.5.7', '/16') },
+        { label: 'у PC2 адрес 172.16.9.3 и маска /16', fn: ipIs('PC2', '172.16.9.3', '/16') },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n8', level: 1,
+      title: 'Три компьютера в одной сети',
+      subtitle: 'один сегмент — много адресов',
+      theory: '<p>Коммутатор не ограничивает число устройств: все, кто подключён к нему (или к цепочке коммутаторов), находятся в одном L2-сегменте.</p>' +
+        '<p>Чтобы они «видели» друг друга, каждому нужен адрес из общей сети и одинаковая маска. Шлюз при этом не требуется.</p>',
+      prompt: 'Три компьютера соединены с одним коммутатором. Дай им адреса из сети <code>10.10.0.0/24</code> так, чтобы ping прошёл между <b>всеми парами</b>.',
+      examples: [{ label: 'адреса', text: 'например .11, .12, .13' }],
+      hint: 'Любые три разных адреса из 10.10.0.1 … 10.10.0.254 с маской /24.',
+      topology: topo([pc('pc1', 'PC1', '', '/24'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '', '/24'), pc('pc3', 'PC3', '', '/24')],
+        [['pc1', 'sw1'], ['sw1', 'pc2'], ['sw1', 'pc3']]),
+      apply: function (t) {
+        t.devices[0].ip = '10.10.0.11';
+        t.devices[2].ip = '10.10.0.12';
+        t.devices[3].ip = '10.10.0.13';
+      },
+      checks: [
+        {
+          label: 'у трёх компьютеров адреса в сети 10.10.0.0/24',
+          fn: function (api) {
+            return ['PC1', 'PC2', 'PC3'].every(function (n) {
+              var f = api.iface(n);
+              return !!f && f.mask === '/24' && api.sameSubnet(f.ip, '10.10.0.1', '/24');
+            });
+          }
+        },
+        { label: 'ping PC1 → PC2', fn: pingOk('PC1', 'PC2') },
+        { label: 'ping PC2 → PC3', fn: pingOk('PC2', 'PC3') },
+        { label: 'ping PC3 → PC1', fn: pingOk('PC3', 'PC1') }
+      ]
+    },
+    {
+      id: 'n9', level: 3,
+      title: 'Половина сети: маска /25',
+      subtitle: 'две подсети из одной',
+      theory: '<p>Маска <code>/25</code> делит сеть /24 на две половины: 0–127 и 128–255. Адрес <code>192.168.1.10/25</code> и <code>192.168.1.200/25</code> — уже <b>разные</b> сети.</p>' +
+        '<p>Это стандартный приём: одну сеть на 254 адреса режут на две по 126, чтобы разделить, например, учеников и оборудование.</p>',
+      prompt: 'Оставь у обоих компьютеров маску <code>/25</code>, но подбери адреса в сети <code>192.168.1.0/25</code>, чтобы ping прошёл. Первый адрес — <code>192.168.1.10</code>.',
+      examples: [{ label: 'диапазон /25', text: '192.168.1.1 … 192.168.1.126' }],
+      hint: 'Второму компьютеру нужен адрес до .126 включительно, например .20.',
+      topology: topo([pc('pc1', 'PC1', '192.168.1.10', '/25'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '192.168.1.200', '/25')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (t) {
+        t.devices[0].ip = '192.168.1.10';
+        t.devices[0].mask = '/25';
+        t.devices[2].ip = '192.168.1.20';
+        t.devices[2].mask = '/25';
+      },
+      checks: [
+        { label: 'у обоих маска /25', fn: function (api) { return api.iface('PC1').mask === '/25' && api.iface('PC2').mask === '/25'; } },
+        {
+          label: 'оба адреса в сети 192.168.1.0/25',
+          fn: function (api) {
+            return api.sameSubnet(api.iface('PC1').ip, '192.168.1.1', '/25') &&
+                   api.sameSubnet(api.iface('PC2').ip, '192.168.1.1', '/25');
+          }
+        },
+        { label: 'ping проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n10', level: 3,
+      title: 'Шлюз на роутере',
+      subtitle: 'первый шаг к маршрутизации',
+      theory: '<p>Роутер — это устройство с несколькими интерфейсами, у каждого свой адрес. Компьютер отправляет пакет «чужой» сети на <b>шлюз</b> — адрес роутера в своей сети.</p>' +
+        '<p>Адрес шлюза обязан быть в подсети компьютера, иначе отправлять пакет некуда.</p>',
+      prompt: 'PC1 и PC2 в разных сетях, между ними роутер R1. Задай адрес интерфейсу R1 в сети PC1 (<code>192.168.1.0/24</code>, свободен <code>.1</code>) и пропиши PC1 этот шлюз, чтобы ping прошёл.',
+      examples: [{ label: 'сети', text: 'PC1: 192.168.1.0/24 · PC2: 192.168.2.0/24' }],
+      hint: 'R1: интерфейс eth1 → 192.168.1.1/24, у PC1 шлюз 192.168.1.1.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.1.10', '/24', ''), router('r1', 'R1', [
+          { name: 'eth1', ip: '', mask: '/24' },
+          { name: 'eth2', ip: '192.168.2.1', mask: '/24' }
+        ], []), pc('pc2', 'PC2', '192.168.2.10', '/24', '')],
+        [['pc1', 'r1'], ['r1', 'pc2']]),
+      apply: function (t) {
+        t.devices[1].ifaces[0].ip = '192.168.1.1';
+        t.devices[0].gw = '192.168.1.1';
+      },
+      checks: [
+        { label: 'у R1 eth1 адрес 192.168.1.1/24', fn: function (api) { var f = api.iface('R1', 0); return !!f && f.ip === '192.168.1.1' && f.mask === '/24'; } },
+        { label: 'у PC1 шлюз 192.168.1.1', fn: function (api) { return api.dev('PC1').gw === '192.168.1.1'; } },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n11', level: 3,
+      title: 'Статический маршрут',
+      subtitle: 'dest + mask + via',
+      theory: '<p>Маршрут — это запись «сеть <b>dest/mask</b> доступна через <b>via</b>». Роутер сверяет адрес цели со своей таблицей и выбирает подходящую строку.</p>' +
+        '<p>Если несколько маршрутов подходят, выбирают самый точный — с самой длинной маской (длиннейший префикс).</p>',
+      prompt: 'Сеть <code>192.168.3.0/24</code> стоит за роутером R2. Добавь на R1 маршрут к ней через <code>192.168.2.2</code> и настрой PC1 шлюз, чтобы ping до PC3 прошёл.',
+      examples: [{ label: 'маршрут', text: 'dest 192.168.3.0 · mask /24 · via 192.168.2.2' }],
+      hint: 'Заполни поля маршрута R1 и не забудь шлюз у PC1 — 192.168.1.1.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.1.10', '/24', ''),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '192.168.1.1', mask: '/24' },
+           { name: 'eth2', ip: '192.168.2.1', mask: '/24' }
+         ], [{ dest: '', mask: '/24', via: '' }]),
+         router('r2', 'R2', [
+           { name: 'eth1', ip: '192.168.2.2', mask: '/24' },
+           { name: 'eth2', ip: '192.168.3.1', mask: '/24' }
+         ], []),
+         pc('pc3', 'PC3', '192.168.3.10', '/24', '')],
+        [['pc1', 'r1'], ['r1', 'r2'], ['r2', 'pc3']]),
+      apply: function (t) {
+        t.devices[0].gw = '192.168.1.1';
+        t.devices[1].routes[0].dest = '192.168.3.0';
+        t.devices[1].routes[0].mask = '/24';
+        t.devices[1].routes[0].via = '192.168.2.2';
+      },
+      checks: [
+        {
+          label: 'на R1 есть маршрут 192.168.3.0/24 через 192.168.2.2',
+          fn: function (api) {
+            return api.routes('R1').some(function (r) {
+              return r.dest === '192.168.3.0' && r.mask === '/24' && r.via === '192.168.2.2';
+            });
+          }
+        },
+        { label: 'ping PC1 → PC3 проходит', fn: pingOk('PC1', 'PC3') }
+      ]
+    },
+    {
+      id: 'n12', level: 4,
+      title: 'Обратный маршрут',
+      subtitle: 'маршрутизация симметрична',
+      theory: '<p>Ping идёт туда и обратно. Если обратного маршрута нет, ответ не дойдёт — и это типичная ошибка настройки: «туда пингуется, обратно нет».</p>' +
+        '<p>Поэтому маршруты прописывают с двух сторон. Хорошая привычка: проверять ping в обе стороны.</p>',
+      prompt: 'Маршрут к <code>192.168.3.0/24</code> на R1 уже есть. Добавь на R2 обратный маршрут к <code>192.168.1.0/24</code> через <code>192.168.2.1</code> и проверь ping PC3 → PC1.',
+      examples: [{ label: 'порядок', text: 'у PC3 тоже нужен шлюз 192.168.3.1' }],
+      hint: 'R2: dest 192.168.1.0, mask /24, via 192.168.2.1. Плюс шлюз у PC3.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.1.10', '/24', '192.168.1.1'),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '192.168.1.1', mask: '/24' },
+           { name: 'eth2', ip: '192.168.2.1', mask: '/24' }
+         ], [{ dest: '192.168.3.0', mask: '/24', via: '192.168.2.2' }]),
+         router('r2', 'R2', [
+           { name: 'eth1', ip: '192.168.2.2', mask: '/24' },
+           { name: 'eth2', ip: '192.168.3.1', mask: '/24' }
+         ], [{ dest: '', mask: '/24', via: '' }]),
+         pc('pc3', 'PC3', '192.168.3.10', '/24', '')],
+        [['pc1', 'r1'], ['r1', 'r2'], ['r2', 'pc3']]),
+      apply: function (t) {
+        t.devices[2].routes[0].dest = '192.168.1.0';
+        t.devices[2].routes[0].mask = '/24';
+        t.devices[2].routes[0].via = '192.168.2.1';
+        t.devices[3].gw = '192.168.3.1';
+      },
+      checks: [
+        {
+          label: 'на R2 есть маршрут 192.168.1.0/24 через 192.168.2.1',
+          fn: function (api) {
+            return api.routes('R2').some(function (r) {
+              return r.dest === '192.168.1.0' && r.mask === '/24' && r.via === '192.168.2.1';
+            });
+          }
+        },
+        { label: 'ping PC1 → PC3 проходит', fn: pingOk('PC1', 'PC3') },
+        { label: 'ping PC3 → PC1 проходит', fn: pingOk('PC3', 'PC1') }
+      ]
+    },
+    {
+      id: 'n13', level: 3,
+      title: 'Адрес цели в чужой сети',
+      subtitle: 'диагностика настройки',
+      theory: '<p>Адрес компьютера должен лежать в той сети, где он физически стоит. Если PC2 стоит в сети 192.168.2.0/24, а адрес у него из 192.168.3.0/24 — пакеты до него не найдут.</p>' +
+        '<p>Модель честно скажет: «нет маршрута до адреса». Лечение — исправить адрес, а не добавлять маршруты наугад.</p>',
+      prompt: 'PC2 стоит в сети <code>192.168.2.0/24</code> (там же интерфейс роутера <code>192.168.2.1</code>), но адрес у него из чужой сети. Исправь адрес PC2 на <code>192.168.2.20</code> и проверь ping PC1 → PC2.',
+      examples: [{ label: 'сети', text: 'PC1 192.168.1.10/24 · PC2 должен быть в 192.168.2.0/24' }],
+      hint: 'Поменяй только IP у PC2: шлюз 192.168.2.1 уже правильный.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.1.10', '/24', '192.168.1.1'),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '192.168.1.1', mask: '/24' },
+           { name: 'eth2', ip: '192.168.2.1', mask: '/24' }
+         ], []),
+         pc('pc2', 'PC2', '192.168.3.20', '/24', '192.168.2.1')],
+        [['pc1', 'r1'], ['r1', 'pc2']]),
+      apply: function (t) { t.devices[2].ip = '192.168.2.20'; },
+      checks: [
+        { label: 'у PC2 адрес 192.168.2.20/24', fn: ipIs('PC2', '192.168.2.20', '/24') },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') },
+        { label: 'ping PC2 → PC1 тоже проходит', fn: pingOk('PC2', 'PC1') }
+      ]
+    },
+    {
+      id: 'n14', level: 3,
+      title: 'Маска вместо роутера',
+      subtitle: 'когда шлюз не нужен',
+      theory: '<p>Если два компьютера в одной сети и соединены коммутатором, шлюз им не нужен вообще. Иногда «пропиши шлюз» — неверное решение, а правильное — исправить маску.</p>' +
+        '<p>Маска <code>/25</code> у одного и <code>/24</code> у другого — тоже ошибка: сравнение сетей идёт по маске отправителя.</p>',
+      prompt: 'Два компьютера с адресами <code>192.168.5.10</code> и <code>192.168.5.200</code> не пингуют друг друга, хотя шлюза нет и он не нужен. Найди причину: выставь обоим маску <code>/24</code> и проверь ping.',
+      examples: [{ label: 'подсказка', text: '192.168.5.10/24 и 192.168.5.200/24 — одна сеть' }],
+      hint: 'Сейчас маски разные: /25 и /24. Сделай их одинаковыми.',
+      topology: topo([pc('pc1', 'PC1', '192.168.5.10', '/25'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '192.168.5.200', '/24')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (t) {
+        t.devices[0].mask = '/24';
+        t.devices[2].mask = '/24';
+      },
+      checks: [
+        { label: 'у обоих маска /24', fn: function (api) { return api.iface('PC1').mask === '/24' && api.iface('PC2').mask === '/24'; } },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n15', level: 4,
+      title: 'Сеть 10.0.0.0/8',
+      subtitle: 'адреса «через полмира»',
+      theory: '<p>Маска <code>/8</code> — самая большая из тех, что бывают в частных сетях: 16 миллионов адресов. Внутри неё <code>10.1.2.3</code> и <code>10.200.7.9</code> — соседи по сети.</p>' +
+        '<p>Такой адрес выдавали в больших корпоративных сетях, где нумерация идёт по отделам.</p>',
+      prompt: 'Дай PC1 адрес <code>10.1.2.3</code>, PC2 — <code>10.200.7.9</code>, маска <code>/8</code>. Ping должен пройти без шлюза.',
+      examples: [{ label: 'сеть', text: '10.0.0.0/8' }],
+      hint: 'Оба адреса уже в сети 10.0.0.0/8 — просто впиши их.',
+      topology: topo([pc('pc1', 'PC1', '', '/8'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '', '/8')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (t) {
+        t.devices[0].ip = '10.1.2.3';
+        t.devices[2].ip = '10.200.7.9';
+      },
+      checks: [
+        { label: 'адреса заданы как в условии', fn: function (api) { return api.iface('PC1').ip === '10.1.2.3' && api.iface('PC2').ip === '10.200.7.9'; } },
+        { label: 'оба адреса в сети 10.0.0.0/8', fn: function (api) { return api.sameSubnet('10.1.2.3', '10.200.7.9', '/8'); } },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n16', level: 3,
+      title: 'Малая сеть /30',
+      subtitle: 'четыре адреса',
+      theory: '<p><code>/30</code> — сеть на 4 адреса: адрес сети, два адреса для устройств и широковещательный. Такую маску используют для линков между роутерами.</p>' +
+        '<p>В сети <code>192.168.7.0/30</code> годятся только <code>.1</code> и <code>.2</code>.</p>',
+      prompt: 'Компьютеры соединены напрямую. Дай им адреса <code>192.168.7.1</code> и <code>192.168.7.2</code> с маской <code>/30</code>.',
+      examples: [{ label: 'сеть', text: '192.168.7.0/30 → адреса .1 и .2' }],
+      hint: 'Маска /30 уже выбрана — впиши два адреса.',
+      topology: topo([pc('pc1', 'PC1', '', '/30'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '', '/30')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (t) {
+        t.devices[0].ip = '192.168.7.1';
+        t.devices[2].ip = '192.168.7.2';
+      },
+      checks: [
+        { label: 'адреса .1 и .2 с маской /30', fn: function (api) { return api.iface('PC1').ip === '192.168.7.1' && api.iface('PC2').ip === '192.168.7.2' && api.iface('PC1').mask === '/30'; } },
+        { label: 'ping проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n17', level: 4,
+      title: 'Полный путь через два роутера',
+      subtitle: 'адреса, шлюзы, маршруты',
+      theory: '<p>Реальный путь пакета: компьютер → свой шлюз → маршрутизатор → (по маршруту) следующий роутер → сеть цели.</p>' +
+        '<p>Ошибка в любом звене ломает всю цепочку. Поэтому настраивают по порядку: адреса, шлюзы, маршруты, проверка ping.</p>',
+      prompt: 'Настрой путь PC1 → PC2: дай R1 интерфейсу <code>eth1</code> адрес <code>192.168.1.1/24</code>, PC1 — шлюз <code>192.168.1.1</code>, а на R1 добавь маршрут к <code>192.168.3.0/24</code> через <code>192.168.2.2</code>. На R2 обратный маршрут уже есть.',
+      examples: [{ label: 'сети', text: '1.0/24 — 2.0/24 — 3.0/24' }],
+      hint: 'Три правки: адрес интерфейса, шлюз PC1, маршрут R1.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.1.10', '/24', ''),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '', mask: '/24' },
+           { name: 'eth2', ip: '192.168.2.1', mask: '/24' }
+         ], [{ dest: '', mask: '/24', via: '' }]),
+         router('r2', 'R2', [
+           { name: 'eth1', ip: '192.168.2.2', mask: '/24' },
+           { name: 'eth2', ip: '192.168.3.1', mask: '/24' }
+         ], [{ dest: '192.168.1.0', mask: '/24', via: '192.168.2.1' }]),
+         pc('pc2', 'PC2', '192.168.3.20', '/24', '192.168.3.1')],
+        [['pc1', 'r1'], ['r1', 'r2'], ['r2', 'pc2']]),
+      apply: function (t) {
+        t.devices[1].ifaces[0].ip = '192.168.1.1';
+        t.devices[0].gw = '192.168.1.1';
+        t.devices[1].routes[0].dest = '192.168.3.0';
+        t.devices[1].routes[0].mask = '/24';
+        t.devices[1].routes[0].via = '192.168.2.2';
+      },
+      checks: [
+        { label: 'у R1 eth1 адрес 192.168.1.1/24', fn: function (api) { var f = api.iface('R1', 0); return !!f && f.ip === '192.168.1.1' && f.mask === '/24'; } },
+        { label: 'у PC1 шлюз 192.168.1.1', fn: function (api) { return api.dev('PC1').gw === '192.168.1.1'; } },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') },
+        { label: 'ping PC2 → PC1 проходит', fn: pingOk('PC2', 'PC1') }
+      ]
+    },
+    {
+      id: 'n18', level: 4,
+      title: 'Роутер на три сети',
+      subtitle: 'три интерфейса',
+      theory: '<p>У роутера может быть много интерфейсов: каждый смотрит в свою сеть. Сети, подключённые напрямую, он знает без маршрутов.</p>' +
+        '<p>Так выглядит школьная сеть: отдельно классы, отдельно серверная, отдельно гостевой Wi-Fi.</p>',
+      prompt: 'У R1 три интерфейса, но у третьего нет адреса. Дай <code>eth3</code> адрес <code>192.168.30.1/24</code>, а PC3 — адрес <code>192.168.30.10</code> и шлюз <code>192.168.30.1</code>. Проверь ping PC1 → PC3.',
+      examples: [{ label: 'сети', text: '10.0.0.0/24 · 20.0.0.0/24 · 30.0.0.0/24 (192.168.30.0)' }],
+      hint: 'Заполни интерфейс R1, адрес и шлюз PC3.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.10.10', '/24', '192.168.10.1'),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '192.168.10.1', mask: '/24' },
+           { name: 'eth2', ip: '192.168.20.1', mask: '/24' },
+           { name: 'eth3', ip: '', mask: '/24' }
+         ], []),
+         pc('pc2', 'PC2', '192.168.20.10', '/24', '192.168.20.1'),
+         pc('pc3', 'PC3', '192.168.30.10', '/24', '')],
+        [['pc1', 'r1'], ['r1', 'pc2'], ['r1', 'pc3']]),
+      apply: function (t) {
+        t.devices[1].ifaces[2].ip = '192.168.30.1';
+        t.devices[3].ip = '192.168.30.10';
+        t.devices[3].gw = '192.168.30.1';
+      },
+      checks: [
+        { label: 'у R1 eth3 адрес 192.168.30.1/24', fn: function (api) { var f = api.iface('R1', 2); return !!f && f.ip === '192.168.30.1' && f.mask === '/24'; } },
+        { label: 'у PC3 шлюз 192.168.30.1', fn: function (api) { return api.dev('PC3').gw === '192.168.30.1'; } },
+        { label: 'ping PC1 → PC3 проходит', fn: pingOk('PC1', 'PC3') },
+        { label: 'ping PC2 → PC3 проходит', fn: pingOk('PC2', 'PC3') }
+      ]
+    },
+    {
+      id: 'n19', level: 4,
+      title: 'Маршрут к дальней сети /16',
+      subtitle: 'dest с маской /16',
+      theory: '<p>Маршрут может описывать большую сеть: <code>172.20.0.0/16</code> покрывает все адреса 172.20.x.x.</p>' +
+        '<p>Чем крупнее сеть в маршруте, тем меньше строк в таблице. Именно поэтому в интернете таблицы маршрутов не раздуваются до миллионов строк.</p>',
+      prompt: 'Сеть <code>172.20.0.0/16</code> находится за R2. Добавь на R1 маршрут к ней через <code>192.168.2.2</code>, а PC1 дай шлюз <code>192.168.1.1</code>. Ping PC1 → PC2 (адрес 172.20.5.5) должен пройти.',
+      examples: [{ label: 'маршрут', text: 'dest 172.20.0.0 · mask /16 · via 192.168.2.2' }],
+      hint: 'Маску маршрута поменяй на /16 — иначе он не совпадёт с адресом 172.20.5.5.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.1.10', '/24', ''),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '192.168.1.1', mask: '/24' },
+           { name: 'eth2', ip: '192.168.2.1', mask: '/24' }
+         ], [{ dest: '', mask: '/24', via: '' }]),
+         router('r2', 'R2', [
+           { name: 'eth1', ip: '192.168.2.2', mask: '/24' },
+           { name: 'eth2', ip: '172.20.0.1', mask: '/16' }
+         ], [{ dest: '192.168.1.0', mask: '/24', via: '192.168.2.1' }]),
+         pc('pc2', 'PC2', '172.20.5.5', '/16', '172.20.0.1')],
+        [['pc1', 'r1'], ['r1', 'r2'], ['r2', 'pc2']]),
+      apply: function (t) {
+        t.devices[0].gw = '192.168.1.1';
+        t.devices[1].routes[0].dest = '172.20.0.0';
+        t.devices[1].routes[0].mask = '/16';
+        t.devices[1].routes[0].via = '192.168.2.2';
+      },
+      checks: [
+        {
+          label: 'на R1 есть маршрут 172.20.0.0/16 через 192.168.2.2',
+          fn: function (api) {
+            return api.routes('R1').some(function (r) {
+              return r.dest === '172.20.0.0' && r.mask === '/16' && r.via === '192.168.2.2';
+            });
+          }
+        },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') }
+      ]
+    },
+    {
+      id: 'n20', level: 3,
+      title: 'Шлюз для второй сети',
+      subtitle: 'два компьютера, два шлюза',
+      theory: '<p>В одной сети может быть несколько устройств, но шлюз у компьютера один — адрес того роутера, который ведёт «наружу».</p>' +
+        '<p>Если у PC2 шлюз не задан, он не сможет отправить пакет в чужую сеть, хотя физически подключён к роутеру.</p>',
+      prompt: 'PC1 и PC2 в разных сетях одного роутера. У PC1 всё настроено, а у PC2 нет шлюза. Пропиши PC2 шлюз <code>192.168.20.1</code> и проверь ping PC2 → PC1.',
+      examples: [{ label: 'сети', text: 'PC1 192.168.10.0/24 · PC2 192.168.20.0/24' }],
+      hint: 'Шлюз — это адрес роутера в сети самого PC2.',
+      topology: topo(
+        [pc('pc1', 'PC1', '192.168.10.10', '/24', '192.168.10.1'),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '192.168.10.1', mask: '/24' },
+           { name: 'eth2', ip: '192.168.20.1', mask: '/24' }
+         ], []),
+         pc('pc2', 'PC2', '192.168.20.10', '/24', '')],
+        [['pc1', 'r1'], ['r1', 'pc2']]),
+      apply: function (t) { t.devices[2].gw = '192.168.20.1'; },
+      checks: [
+        { label: 'у PC2 шлюз 192.168.20.1', fn: function (api) { return api.dev('PC2').gw === '192.168.20.1'; } },
+        { label: 'ping PC2 → PC1 проходит', fn: pingOk('PC2', 'PC1') }
+      ]
+    },
+    {
+      id: 'n21', level: 3,
+      title: 'Один сегмент, две маски',
+      subtitle: 'сравнение по маске отправителя',
+      theory: '<p>Модель сравнивает адреса по маске <b>отправителя</b>. Если у PC1 маска /24, а у PC2 /16, оба могут считать по-разному, и связь ломается в одну сторону.</p>' +
+        '<p>Правило простое: в одном сегменте у всех должна быть одна маска и одна сеть.</p>',
+      prompt: 'В одном сегменте у PC1 маска <code>/24</code>, у PC2 — <code>/16</code>. Приведи маски к <code>/24</code> (адреса уже в сети 192.168.9.0/24) и проверь ping в обе стороны.',
+      examples: [{ label: 'адреса', text: '192.168.9.10 и 192.168.9.20' }],
+      hint: 'Поменяй маску у PC2 на /24 — и всё заработает.',
+      topology: topo([pc('pc1', 'PC1', '192.168.9.10', '/24'), sw('sw1', 'SW1'), pc('pc2', 'PC2', '192.168.9.20', '/16')],
+        [['pc1', 'sw1'], ['sw1', 'pc2']]),
+      apply: function (t) { t.devices[2].mask = '/24'; },
+      checks: [
+        { label: 'у обоих маска /24', fn: function (api) { return api.iface('PC1').mask === '/24' && api.iface('PC2').mask === '/24'; } },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') },
+        { label: 'ping PC2 → PC1 проходит', fn: pingOk('PC2', 'PC1') }
+      ]
+    },
+    {
+      id: 'n22', level: 4,
+      title: 'Две сети за одним роутером',
+      subtitle: 'комплексная настройка',
+      theory: '<p>Итоговая задача темы: два компьютера в разных сетях, роутер между ними, шлюзы с двух сторон.</p>' +
+        '<p>Проверяй себя так: адреса (в своих сетях?) → шлюзы (в своей подсети?) → ping в обе стороны.</p>',
+      prompt: 'Настрой всё сам: у R1 интерфейс <code>eth1</code> должен получить <code>10.5.0.1/24</code>, PC1 — адрес <code>10.5.0.10</code> и шлюз <code>10.5.0.1</code>, PC2 — адрес <code>10.6.0.10</code> и шлюз <code>10.6.0.1</code>. Ping должен проходить в обе стороны.',
+      examples: [{ label: 'сети', text: '10.5.0.0/24 и 10.6.0.0/24' }],
+      hint: 'Четыре правки: интерфейс R1, адрес и шлюз PC1, адрес и шлюз PC2.',
+      topology: topo(
+        [pc('pc1', 'PC1', '', '/24', ''),
+         router('r1', 'R1', [
+           { name: 'eth1', ip: '', mask: '/24' },
+           { name: 'eth2', ip: '10.6.0.1', mask: '/24' }
+         ], []),
+         pc('pc2', 'PC2', '', '/24', '')],
+        [['pc1', 'r1'], ['r1', 'pc2']]),
+      apply: function (t) {
+        t.devices[1].ifaces[0].ip = '10.5.0.1';
+        t.devices[0].ip = '10.5.0.10';
+        t.devices[0].gw = '10.5.0.1';
+        t.devices[2].ip = '10.6.0.10';
+        t.devices[2].gw = '10.6.0.1';
+      },
+      checks: [
+        { label: 'у R1 eth1 адрес 10.5.0.1/24', fn: function (api) { var f = api.iface('R1', 0); return !!f && f.ip === '10.5.0.1' && f.mask === '/24'; } },
+        {
+          label: 'у PC1 и PC2 правильные адреса и шлюзы',
+          fn: function (api) {
+            return api.iface('PC1').ip === '10.5.0.10' && api.dev('PC1').gw === '10.5.0.1' &&
+                   api.iface('PC2').ip === '10.6.0.10' && api.dev('PC2').gw === '10.6.0.1';
+          }
+        },
+        { label: 'ping PC1 → PC2 проходит', fn: pingOk('PC1', 'PC2') },
+        { label: 'ping PC2 → PC1 проходит', fn: pingOk('PC2', 'PC1') }
+      ]
+    }
+  ];
+
+  global.NET_TASKS = (global.NET_TASKS || []).concat(bank);
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* ==========================================================================
+   Симулятор сети: IPv4-адресация, маски, L2-сегменты, статическая маршрутизация.
+   Ping считается по-настоящему: подсеть → шлюз → таблица маршрутов → L2-доставка.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var state = { topo: null, lastPing: null };
+
+  /* ------------------------------- IPv4 ------------------------------- */
+  function ipToInt(ip) {
+    var p = String(ip || '').trim().split('.');
+    if (p.length !== 4) return null;
+    var n = 0;
+    for (var i = 0; i < 4; i++) {
+      var v = parseInt(p[i], 10);
+      if (!(v >= 0 && v <= 255) || String(v) !== p[i].replace(/^0+(?=\d)/, '')) return null;
+      n = n * 256 + v;
+    }
+    return n;
+  }
+  function intToIp(n) {
+    return [Math.floor(n / 16777216) % 256, Math.floor(n / 65536) % 256, Math.floor(n / 256) % 256, n % 256].join('.');
+  }
+  function prefixOf(mask) {
+    var p = parseInt(String(mask || '').replace('/', ''), 10);
+    return (p >= 0 && p <= 32) ? p : null;
+  }
+  function maskToInt(prefix) {
+    if (prefix === 0) return 0;
+    return (0xFFFFFFFF << (32 - prefix)) >>> 0;
+  }
+  function network(ipInt, prefix) {
+    return (ipInt & maskToInt(prefix)) >>> 0;
+  }
+  function sameSubnet(ipA, ipB, mask) {
+    var a = ipToInt(ipA), b = ipToInt(ipB), p = prefixOf(mask);
+    if (a === null || b === null || p === null) return false;
+    return network(a, p) === network(b, p);
+  }
+
+  /* ------------------------------ топология ------------------------------ */
+  function dev(id) {
+    for (var i = 0; i < state.topo.devices.length; i++) {
+      if (state.topo.devices[i].id === id) return state.topo.devices[i];
+    }
+    return null;
+  }
+  function devByName(name) {
+    for (var i = 0; i < state.topo.devices.length; i++) {
+      if (state.topo.devices[i].name === name) return state.topo.devices[i];
+    }
+    return null;
+  }
+  function interfacesOf(d) {
+    if (!d) return [];
+    if (d.type === 'router') return (d.ifaces || []).map(function (f) { return { name: f.name, ip: f.ip, mask: f.mask }; });
+    if (d.type === 'pc') return d.ip ? [{ name: 'eth0', ip: d.ip, mask: d.mask }] : [];
+    return [];
+  }
+  function neighborList(id) {
+    var out = [];
+    state.topo.links.forEach(function (l) {
+      if (l[0] === id) out.push(l[1]);
+      if (l[1] === id) out.push(l[0]);
+    });
+    return out;
+  }
+
+  // L2-домен: устройства, связанные через коммутаторы. Маршрутизатор входит в сегмент
+  // своим интерфейсом, но кадры через него не проходят — он разрывает домен.
+  function l2Domain(id) {
+    var seen = {}, queue = [id];
+    seen[id] = true;
+    while (queue.length) {
+      var cur = queue.shift();
+      neighborList(cur).forEach(function (n) {
+        if (seen[n]) return;
+        var nd = dev(n);
+        if (!nd) return;
+        seen[n] = true;
+        if (nd.type === 'switch') queue.push(n);   // только коммутатор продолжает сегмент
+      });
+    }
+    return seen;
+  }
+  function l2Reachable(a, b) {
+    if (a === b) return true;
+    return !!l2Domain(a)[b];
+  }
+
+  function ownerOfIp(ip) {
+    for (var i = 0; i < state.topo.devices.length; i++) {
+      var f = interfacesOf(state.topo.devices[i]);
+      for (var j = 0; j < f.length; j++) {
+        if (f[j].ip === ip) return state.topo.devices[i];
+      }
+    }
+    return null;
+  }
+
+  /* -------------------------------- ping -------------------------------- */
+  function simulatePing(srcName, dstName) {
+    var src = devByName(srcName), dst = devByName(dstName);
+    var log = [];
+    function line(text, cls) { log.push({ text: text, cls: cls || '' }); }
+    function fail(text) { line('✕ ' + text, 'err'); return { ok: false, log: log }; }
+    function ok(text) { line('✔ ' + text, 'ok'); return { ok: true, log: log }; }
+
+    if (!src || !dst) return fail('не выбраны устройства');
+    var srcIf = interfacesOf(src)[0], dstIf = interfacesOf(dst)[0];
+    if (!srcIf || !srcIf.ip) return fail(src.name + ': не задан IP-адрес');
+    if (!dstIf || !dstIf.ip) return fail(dst.name + ': не задан IP-адрес');
+    if (!prefixOf(srcIf.mask)) return fail(src.name + ': неверная маска ' + srcIf.mask);
+
+    line('[ ' + src.name + ' ] ' + srcIf.ip + srcIf.mask + ' → ' + dst.name + ' ' + dstIf.ip + dstIf.mask);
+
+    if (src === dst) return ok('это тот же адрес, ping не нужен');
+
+    // 1. Цель в моей подсети?
+    if (sameSubnet(srcIf.ip, dstIf.ip, srcIf.mask)) {
+      line('[ ' + src.name + ' ] ' + dstIf.ip + ' в моей подсети ' + intToIp(network(ipToInt(srcIf.ip), prefixOf(srcIf.mask))) + srcIf.mask);
+      if (l2Reachable(src.id, dst.id)) return ok('доставлено напрямую на канальном уровне (через коммутатор)');
+      return fail('адрес в одной подсети, но канальной связи нет: устройства в разных L2-сегментах. ' +
+        'Объедини их коммутатором или разнеси подсети и добавь маршрутизатор.');
+    }
+
+    // 2. Нужен шлюз
+    if (!src.gw) return fail(src.name + ': цель в другой подсети, а шлюз не задан');
+    if (!sameSubnet(srcIf.ip, src.gw, srcIf.mask)) {
+      return fail(src.name + ': шлюз ' + src.gw + ' не входит в мою подсеть ' + srcIf.mask + ' — пакет уйдёт в никуда');
+    }
+    var hop = ownerOfIp(src.gw);
+    if (!hop) return fail('шлюз ' + src.gw + ' не найден ни у одного устройства');
+    if (!l2Reachable(src.id, hop.id)) return fail('до шлюза ' + src.gw + ' нет канальной связи');
+    line('[ ' + src.name + ' ] отправляю шлюзу ' + src.gw + ' (' + hop.name + ')');
+
+    // 3. Идём по маршрутизаторам
+    var cur = hop, ttl = 4;
+    while (ttl-- > 0) {
+      if (cur.type !== 'router') {
+        var curIf = interfacesOf(cur)[0];
+        if (curIf && sameSubnet(curIf.ip, dstIf.ip, curIf.mask) && l2Reachable(cur.id, dst.id)) {
+          return ok('пакет доставлен через ' + cur.name);
+        }
+        return fail(cur.name + ' не маршрутизатор и не знает, куда отдать пакет для ' + dstIf.ip);
+      }
+      line('[ ' + cur.name + ' ] пакет для ' + dstIf.ip + ', смотрю таблицу маршрутов');
+      var chosen = null, chosenWhy = '';
+      // подключённые сети
+      interfacesOf(cur).forEach(function (f) {
+        if (!f.ip || !prefixOf(f.mask)) return;
+        if (sameSubnet(f.ip, dstIf.ip, f.mask) && !chosen) {
+          chosen = { via: '', iface: f.name, net: intToIp(network(ipToInt(f.ip), prefixOf(f.mask))) + f.mask };
+          chosenWhy = 'сеть присоединена напрямую';
+        }
+      });
+      // статические маршруты (длиннейший префикс)
+      var bestLen = -1;
+      (cur.routes || []).forEach(function (r) {
+        if (!r.dest || !prefixOf(r.mask)) return;
+        var d = ipToInt(r.dest);
+        if (d === null) return;
+        var p = prefixOf(r.mask);
+        if (network(ipToInt(dstIf.ip), p) === network(d, p) && p > bestLen) {
+          bestLen = p;
+          chosen = { via: r.via, iface: r.iface || '', net: r.dest + r.mask };
+          chosenWhy = r.via ? ('маршрут ' + r.dest + r.mask + ' через ' + r.via) : ('маршрут ' + r.dest + r.mask + ' напрямую');
+        }
+      });
+      if (!chosen) {
+        return fail(cur.name + ': нет маршрута до ' + dstIf.ip + '. Добавь статический маршрут или подключи сеть.');
+      }
+      line('[ ' + cur.name + ' ] выбран ' + chosenWhy);
+
+      var nextIp = chosen.via || dstIf.ip;
+      var nextDev = ownerOfIp(nextIp);
+      if (!nextDev) return fail(cur.name + ': следующий адрес ' + nextIp + ' не принадлежит ни одному устройству');
+      if (!l2Reachable(cur.id, nextDev.id)) return fail(cur.name + ': до ' + nextDev.name + ' нет канальной связи');
+      if (nextDev.id === dst.id) return ok('пакет доставлен в ' + dst.name + ' через ' + cur.name);
+      cur = nextDev;
+    }
+    return fail('слишком много переходов — похоже на петлю маршрутизации');
+  }
+
+  /* ------------------------------- отрисовка ------------------------------- */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderTopology() {
+    var host = $('topoList');
+    var html = '';
+    state.topo.devices.forEach(function (d) {
+      html += '<div class="net-dev ' + d.type + '">';
+      html += '<div class="net-dev-head"><b>' + esc(d.name) + '</b><span class="chip">' + d.type + '</span></div>';
+      if (d.type === 'pc') {
+        html += '<label class="net-field">IP <input class="ws-input" data-dev="' + d.id + '" data-field="ip" value="' + esc(d.ip || '') + '" placeholder="192.168.1.10"></label>';
+        html += '<label class="net-field">маска <select class="ws-input" data-dev="' + d.id + '" data-field="mask">' +
+          maskOptions(d.mask) + '</select></label>';
+        html += '<label class="net-field">шлюз <input class="ws-input" data-dev="' + d.id + '" data-field="gw" value="' + esc(d.gw || '') + '" placeholder="не задан"></label>';
+      } else if (d.type === 'router') {
+        (d.ifaces || []).forEach(function (f, i) {
+          html += '<div class="net-iface"><span class="net-iface-name">' + esc(f.name) + '</span>' +
+            '<input class="ws-input" data-dev="' + d.id + '" data-iface="' + i + '" data-field="ip" value="' + esc(f.ip || '') + '" placeholder="10.0.0.1">' +
+            '<select class="ws-input" data-dev="' + d.id + '" data-iface="' + i + '" data-field="mask">' + maskOptions(f.mask) + '</select></div>';
+        });
+        html += '<div class="net-routes"><div class="ws-label">маршруты</div>';
+        (d.routes || []).forEach(function (r, i) {
+          html += '<div class="net-route">' +
+            '<input class="ws-input" data-dev="' + d.id + '" data-route="' + i + '" data-field="dest" value="' + esc(r.dest || '') + '" placeholder="192.168.2.0">' +
+            '<select class="ws-input" data-dev="' + d.id + '" data-route="' + i + '" data-field="mask">' + maskOptions(r.mask) + '</select>' +
+            '<input class="ws-input" data-dev="' + d.id + '" data-route="' + i + '" data-field="via" value="' + esc(r.via || '') + '" placeholder="через (пусто = напрямую)">' +
+            '</div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="ws-label">коммутатор: пересылает кадры внутри сегмента</div>';
+      }
+      html += '</div>';
+    });
+    host.innerHTML = html;
+
+    Array.prototype.forEach.call(host.querySelectorAll('input, select'), function (el) {
+      el.addEventListener('input', applyField);
+      el.addEventListener('change', applyField);
+    });
+
+    // связи
+    var links = state.topo.links.map(function (l) {
+      var a = dev(l[0]), b = dev(l[1]);
+      return (a ? a.name : l[0]) + ' — ' + (b ? b.name : l[1]);
+    });
+    $('linksLine').textContent = 'Связи: ' + links.join(' · ');
+
+    // селекты ping
+    var options = state.topo.devices.filter(function (d) { return d.type !== 'switch'; })
+      .map(function (d) { return '<option value="' + esc(d.name) + '">' + esc(d.name) + '</option>'; }).join('');
+    ['pingSrc', 'pingDst'].forEach(function (id, idx) {
+      var sel = $(id), prev = sel.value;
+      sel.innerHTML = options;
+      if (prev) sel.value = prev;
+      if (!sel.value && sel.options.length) sel.selectedIndex = idx === 0 ? 0 : Math.min(1, sel.options.length - 1);
+    });
+  }
+
+  function maskOptions(current) {
+    var out = '';
+    for (var p = 32; p >= 8; p--) {
+      out += '<option value="/' + p + '"' + (String(current) === '/' + p ? ' selected' : '') + '>/' + p + '</option>';
+    }
+    return out;
+  }
+
+  function applyField(e) {
+    var el = e.target;
+    var d = dev(el.getAttribute('data-dev'));
+    if (!d) return;
+    var field = el.getAttribute('data-field');
+    var iface = el.getAttribute('data-iface');
+    var route = el.getAttribute('data-route');
+    var value = el.value.trim();
+    if (iface !== null && iface !== undefined) d.ifaces[parseInt(iface, 10)][field] = value;
+    else if (route !== null && route !== undefined) d.routes[parseInt(route, 10)][field] = value;
+    else d[field] = value;
+  }
+
+  function renderPing(res) {
+    var out = $('pingLog');
+    if (!res) { out.innerHTML = '<span class="dim">Выбери источник и цель, затем нажми «Пинговать».</span>'; return; }
+    out.innerHTML = res.log.map(function (l) {
+      return '<div class="' + l.cls + '">' + esc(l.text) + '</div>';
+    }).join('');
+  }
+
+  /* --------------------------------- API --------------------------------- */
+  window.NetAPI = {
+    ping: function (srcName, dstName) { return simulatePing(srcName, dstName); },
+    dev: devByName,
+    iface: function (name, i) {
+      var d = devByName(name);
+      var f = interfacesOf(d);
+      return f[i || 0] || null;
+    },
+    routes: function (name) {
+      var d = devByName(name);
+      return d && d.routes ? d.routes : [];
+    },
+    topo: function () { return state.topo; },
+    sameSubnet: sameSubnet
+  };
+
+  /* -------------------------------- запуск -------------------------------- */
+  document.addEventListener('DOMContentLoaded', function () {
+    $('btnPing').addEventListener('click', function () {
+      var res = simulatePing($('pingSrc').value, $('pingDst').value);
+      state.lastPing = res;
+      renderPing(res);
+    });
+    $('btnPingReverse').addEventListener('click', function () {
+      var a = $('pingSrc').value;
+      $('pingSrc').value = $('pingDst').value;
+      $('pingDst').value = a;
+      var res = simulatePing($('pingSrc').value, $('pingDst').value);
+      state.lastPing = res;
+      renderPing(res);
+    });
+
+    window.Shell.init({
+      storageKey: 'net.v1',
+      productTitle: 'Симулятор сети',
+      productSubtitle: 'IP, маски и маршрутизация',
+      tasks: window.NET_TASKS,
+      open: function (task) {
+        state.topo = JSON.parse(JSON.stringify(task.topology));
+        state.lastPing = null;
+        renderTopology();
+        renderPing(null);
+      },
+      check: function (task) {
+        return task.checks.map(function (c) {
+          var ok = false, note = '';
+          try {
+            var r = c.fn(window.NetAPI);
+            ok = !!(r && r.ok !== undefined ? r.ok : r);
+            note = (r && r.note) || '';
+          } catch (e) { ok = false; note = String(e.message || e); }
+          return { ok: ok, label: c.label, note: ok ? '' : (note || c.note || '') };
+        });
+      }
+    });
+
+    window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
+      var t = window.NET_TASKS[i];
+      if (t.apply) t.apply(state.topo, window.NetAPI);
+      renderTopology();
+      renderPing(null);
+    };
+    window.__net = { state: state, api: window.NetAPI };
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+</body>
+</html>
