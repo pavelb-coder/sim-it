@@ -117,6 +117,27 @@ a { color: var(--accent); }
   border-bottom: 1px solid var(--line);
 }
 .task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
 .task-item {
   display: flex;
   gap: 10px;
@@ -352,6 +373,7 @@ a { color: var(--accent); }
   .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
   .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
   .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
   .editor-shell { min-height: 200px; max-height: 46vh; }
   .topbar { padding: 8px 12px; }
   .progress-wrap { order: 3; width: 100%; }
@@ -367,9 +389,10 @@ a { color: var(--accent); }
 <header class="topbar">
   <div class="logo">
     <span class="logo-mark">Py</span>
-    <span>Python-класс<small>тренажёр IT-квантума · модуль 1 «Основы»</small></span>
+    <span>Python-класс<small>тренажёр IT-квантума · курс Python: 6 модулей</small></span>
   </div>
   <div class="spacer"></div>
+  <span class="badge" id="modulesBadge"></span>
   <span class="badge engine" id="engineBadge" title="Код выполняется прямо в браузере: ни сервера, ни установки, ни интернета.">движок: встроенный</span>
   <div class="progress-wrap">
     <div class="progress"><i id="progressBar"></i></div>
@@ -379,7 +402,7 @@ a { color: var(--accent); }
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-head">Задачи модуля</div>
+    <div class="sidebar-head">Курс Python</div>
     <div class="task-list" id="taskList"></div>
     <div class="sidebar-foot">
       <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
@@ -390,6 +413,7 @@ a { color: var(--accent); }
   <main class="work">
     <section class="card">
       <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
         <h1 id="taskTitle"></h1>
         <div class="sub" id="taskSub"></div>
       </div>
@@ -463,6 +487,29 @@ a { color: var(--accent); }
   function F(v) { this.v = v; }                 // float-обёртка: отличает 2.0 от 2
   function isF(v) { return v instanceof F; }
   function isNum(v) { return typeof v === 'number' || v instanceof F; }
+  function S(items) {                    // множество: Map «значение -> true»
+    this.m = new Map();
+    var self = this;
+    (items || []).forEach(function (v) { self.add(v); });
+  }
+  S.prototype.add = function (v) {
+    var k = hashKey(v);
+    this.m.set(k, v);
+    return this;
+  };
+  S.prototype.has = function (v) { return this.m.has(hashKey(v)); };
+  S.prototype.delete = function (v) { return this.m.delete(hashKey(v)); };
+  S.prototype.size = function () { return this.m.size; };
+  S.prototype.values = function () { var r = []; this.m.forEach(function (v) { r.push(v); }); return r; };
+  function hashKey(v) {
+    if (Array.isArray(v) || v instanceof Map || v instanceof S) {
+      throw pyErr('список нельзя положить в множество (unhashable)', null, 'TypeError');
+    }
+    if (isNum(v)) return 'n:' + num(v);
+    if (typeof v === 'string') return 's:' + v;
+    if (typeof v === 'boolean') return 'n:' + (v ? 1 : 0);
+    return 'x:' + String(v);
+  }
   function num(v) { return v instanceof F ? v.v : v; }
   function mkNum(n, asFloat) { return asFloat ? new F(n) : n; }
   function pyRound(x) {
@@ -479,6 +526,7 @@ a { color: var(--accent); }
   function typeName(v) {
     if (v === null || v === undefined) return 'None';
     if (v instanceof F) return 'float';
+    if (v instanceof S) return 'set';
     if (typeof v === 'boolean') return 'bool';
     if (typeof v === 'number') return Number.isInteger(v) ? 'int' : 'float';
     if (typeof v === 'string') return 'str';
@@ -925,18 +973,38 @@ a { color: var(--accent); }
     return this.parseComparison();
   };
 
-  Parser.prototype.parseComparison = function () {
+  Parser.prototype.parseBitOr = function () {
+    var line = this.peek().line;
+    var left = this.parseBitAnd();
+    while (this.atOp('|')) {
+      this.next();
+      left = { type: 'Bin', op: '|', l: left, r: this.parseBitAnd(), line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseBitAnd = function () {
     var line = this.peek().line;
     var left = this.parseArith();
+    while (this.atOp('&')) {
+      this.next();
+      left = { type: 'Bin', op: '&', l: left, r: this.parseArith(), line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseComparison = function () {
+    var line = this.peek().line;
+    var left = this.parseBitOr();
     var ops = [], operands = [left];
     for (;;) {
       var t = this.peek();
       if (t.type === 'OP' && ['==','!=','<','>','<=','>='].indexOf(t.value) >= 0) {
-        this.next(); ops.push(t.value); operands.push(this.parseArith());
+        this.next(); ops.push(t.value); operands.push(this.parseBitOr());
       } else if (this.atKw('in')) {
-        this.next(); ops.push('in'); operands.push(this.parseArith());
+        this.next(); ops.push('in'); operands.push(this.parseBitOr());
       } else if (this.atKw('not') && this.peek(1).type === 'NAME' && this.peek(1).value === 'in') {
-        this.next(); this.next(); ops.push('not in'); operands.push(this.parseArith());
+        this.next(); this.next(); ops.push('not in'); operands.push(this.parseBitOr());
       } else break;
     }
     if (!ops.length) return left;
@@ -994,7 +1062,9 @@ a { color: var(--accent); }
             this.next();
             kwargs.push({ name: kwName, value: this.parseExpr() });
           } else {
-            args.push(this.parseExpr());
+            var argExpr = this.parseExpr();
+            if (this.atKw('for')) argExpr = this.parseCompClauses(argExpr, node.line);
+            args.push(argExpr);
           }
           if (!this.atOp(')')) this.expect('OP', ',');
         }
@@ -1086,33 +1156,51 @@ a { color: var(--accent); }
     }
     if (t.type === 'OP' && t.value === '{') {
       this.next();
-      var keys = [], vals = [];
-      while (!this.atOp('}')) {
-        keys.push(this.parseExpr());
-        this.expect('OP', ':', 'в словаре нужно «:» после ключа');
+      if (this.atOp('}')) { this.next(); return { type: 'Dict', keys: [], values: [], line: t.line }; }
+      var firstKey = this.parseExpr();
+      if (this.atOp(':')) {
+        var keys = [firstKey], vals = [];
+        this.next();
         vals.push(this.parseExpr());
-        if (!this.atOp('}')) this.expect('OP', ',');
+        while (this.eat('OP', ',')) {
+          if (this.atOp('}')) break;
+          keys.push(this.parseExpr());
+          this.expect('OP', ':', 'в словаре нужно «:» после ключа');
+          vals.push(this.parseExpr());
+        }
+        this.expect('OP', '}');
+        return { type: 'Dict', keys: keys, values: vals, line: t.line };
+      }
+      var setItems = [firstKey];
+      while (this.eat('OP', ',')) {
+        if (this.atOp('}')) break;
+        setItems.push(this.parseExpr());
       }
       this.expect('OP', '}');
-      return { type: 'Dict', keys: keys, values: vals, line: t.line };
+      return { type: 'SetLit', items: setItems, line: t.line };
     }
     throw pyErr('неожидаемый символ «' + (t.value || t.type) + '»', t.line, 'SyntaxError');
   };
 
-  Parser.prototype.parseComp = function (elt, line) {
+  Parser.prototype.parseCompClauses = function (elt, line) {
     var clauses = [];
     while (this.atKw('for')) {
       this.next();
       var target = this.parseForTarget();
-      if (!this.atKw('in')) throw pyErr('в генераторе списка ожидается «in»', line, 'SyntaxError');
+      if (!this.atKw('in')) throw pyErr('в генераторе ожидается «in»', line, 'SyntaxError');
       this.next();
       var iter = this.parseOr();
       var conds = [];
       while (this.atKw('if')) { this.next(); conds.push(this.parseOr()); }
       clauses.push({ target: target, iter: iter, conds: conds });
     }
-    this.expect('OP', ']', 'не закрыта квадратная скобка в генераторе списка');
     return { type: 'Comp', elt: elt, clauses: clauses, line: line };
+  };
+
+  Parser.prototype.parseComp = function (elt, line) {
+    var node = this.parseCompClauses(elt, line);
+    this.expect('OP', ']', 'не закрыта квадратная скобка в генераторе списка');
+    return node;
   };
 
   Parser.prototype.parseFString = function (raw, line) {
@@ -1161,6 +1249,7 @@ a { color: var(--accent); }
   function truthy(v) {
     if (v === null || v === undefined) return false;
     if (v instanceof F) return v.v !== 0;
+    if (v instanceof S) return v.size() > 0;
     if (typeof v === 'boolean') return v;
     if (typeof v === 'number') return v !== 0;
     if (typeof v === 'string') return v.length > 0;
@@ -1183,6 +1272,11 @@ a { color: var(--accent); }
     if (typeof v === 'number') return fmtNum(v);
     if (typeof v === 'string') return v;
     if (Array.isArray(v)) return '[' + v.map(pyRepr).join(', ') + ']';
+    if (v instanceof S) {
+      var items = v.values();
+      if (!items.length) return 'set()';
+      return '{' + items.map(pyRepr).join(', ') + '}';
+    }
     if (v instanceof Map) {
       var s = '{', first = true;
       v.forEach(function (val, key) {
@@ -1205,6 +1299,7 @@ a { color: var(--accent); }
   function toList(v, line) {
     if (Array.isArray(v)) return v;
     if (typeof v === 'string') return v.split('');
+    if (v instanceof S) return v.values();
     if (v instanceof Map) { var ks = []; v.forEach(function (_, k) { ks.push(k); }); return ks; }
     throw pyErr('объект ' + typeName(v) + ' не перебирается в цикле', line, 'TypeError');
   }
@@ -1218,6 +1313,12 @@ a { color: var(--accent); }
       if (a.length !== b.length) return false;
       for (var i = 0; i < a.length; i++) if (!pyEq(a[i], b[i])) return false;
       return true;
+    }
+    if (a instanceof S && b instanceof S) {
+      if (a.size() !== b.size()) return false;
+      var same = true;
+      a.m.forEach(function (_, k) { if (!b.m.has(k)) same = false; });
+      return same;
     }
     if (a instanceof Map && b instanceof Map) {
       if (a.size !== b.size) return false;
@@ -1250,6 +1351,7 @@ a { color: var(--accent); }
       for (var i = 0; i < haystack.length; i++) if (pyEq(haystack[i], needle)) return true;
       return false;
     }
+    if (haystack instanceof S) return haystack.has(needle);
     if (haystack instanceof Map) return haystack.has(needle);
     throw pyErr('операция «in» не работает с ' + typeName(haystack), line, 'TypeError');
   }
@@ -1290,6 +1392,11 @@ a { color: var(--accent); }
         for (var j = 0; j < Math.floor(num(l)); j++) out2 = out2.concat(r);
         return out2;
       }
+    }
+    if (l instanceof S && r instanceof S) {
+      if (op === '|') { var u = new S(l.values()); r.m.forEach(function (v) { u.add(v); }); return u; }
+      if (op === '&') { var it = new S(); l.m.forEach(function (v, k) { if (r.m.has(k)) it.add(v); }); return it; }
+      if (op === '-') { var df = new S(); l.m.forEach(function (v, k) { if (!r.m.has(k)) df.add(v); }); return df; }
     }
     throw typeErr(op, l, r, line);
   }
@@ -1545,6 +1652,11 @@ a { color: var(--accent); }
         for (var j = 0; j < n.items.length; j++) tarr.push(this.eval(n.items[j], scope));
         return tarr;
       }
+      case 'SetLit': {
+        var setItems = new S();
+        for (var si = 0; si < n.items.length; si++) setItems.add(this.eval(n.items[si], scope));
+        return setItems;
+      }
       case 'Dict': {
         var m = new Map();
         for (var d = 0; d < n.keys.length; d++) m.set(this.eval(n.keys[d], scope), this.eval(n.values[d], scope));
@@ -1701,7 +1813,11 @@ a { color: var(--accent); }
       var strMethods = {
         upper: function () { return obj.toUpperCase(); },
         lower: function () { return obj.toLowerCase(); },
-        title: function () { return obj.replace(/\w\S*/g, function (w) { return w[0].toUpperCase() + w.slice(1).toLowerCase(); }); },
+        title: function () {
+          return obj.replace(/[\p{L}\p{N}_']+/gu, function (w) {
+            return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+          });
+        },
         capitalize: function () { return obj.charAt(0).toUpperCase() + obj.slice(1).toLowerCase(); },
         strip: function (args) { return stripChars(obj, args[0], true, true); },
         lstrip: function (args) { return stripChars(obj, args[0], true, false); },
@@ -1759,13 +1875,40 @@ a { color: var(--accent); }
           throw pyErr('значения ' + pyRepr(args[0]) + ' нет в списке', line, 'ValueError');
         },
         count: function (args) { var c = 0; for (var i = 0; i < obj.length; i++) if (pyEq(obj[i], args[0])) c++; return c; },
-        sort: function () { obj.sort(function (a, b) { return pyCmp(a, b, line); }); return null; },
+        sort: function (args, kwargs) {
+          var rev = false;
+          (kwargs || []).forEach(function (kw) {
+            if (kw.name === 'reverse') rev = truthy(kw.value);
+            else if (kw.name === 'key') throw pyErr('key= в тренажёре не поддерживается: отсортируй по правилу вручную', line, 'NotSupported');
+          });
+          obj.sort(function (a, b) { return pyCmp(a, b, line); });
+          if (rev) obj.reverse();
+          return null;
+        },
         reverse: function () { obj.reverse(); return null; },
         copy: function () { return obj.slice(); },
         clear: function () { obj.length = 0; return null; }
       };
       if (listMethods[name]) return wrapMethod(listMethods[name], name);
       throw pyErr('у списка нет метода «' + name + '»', line, 'AttributeError');
+    }
+
+    if (obj instanceof S) {
+      var n0 = obj;
+      var setMethods = {
+        add: function (args) { n0.add(args[0]); return null; },
+        discard: function (args) { n0.delete(args[0]); return null; },
+        remove: function (args) {
+          if (!n0.has(args[0])) throw pyErr('элемента ' + pyRepr(args[0]) + ' нет в множестве', line, 'KeyError');
+          n0.delete(args[0]); return null;
+        },
+        union: function (args) { var u = new S(n0.values()); toList(args[0], line).forEach(function (v) { u.add(v); }); return u; },
+        intersection: function (args) { var o = toList(args[0], line); var r = new S(); r.m.forEach; n0.values().forEach(function (v) { if (o.some(function (x) { return pyEq(x, v); })) r.add(v); }); return r; },
+        copy: function () { return new S(n0.values()); },
+        clear: function () { n0.m.clear(); return null; }
+      };
+      if (setMethods[name]) return wrapMethod(setMethods[name], name);
+      throw pyErr('у множества нет метода «' + name + '»', line, 'AttributeError');
     }
 
     if (obj instanceof Map) {
@@ -1894,6 +2037,7 @@ a { color: var(--accent); }
         var v = args[0];
         if (typeof v === 'string') return v.length;
         if (Array.isArray(v)) return v.length;
+        if (v instanceof S) return v.size();
         if (v instanceof Map) return v.size;
         throw pyErr('у объекта ' + typeName(v) + ' нет длины', line, 'TypeError');
       }, 'len');
@@ -1953,7 +2097,10 @@ a { color: var(--accent); }
       case 'sorted': return wrapMethod(function (args, kwargs) {
         var items = toList(args[0], line).slice();
         var rev = false;
-        for (var i = 0; i < (kwargs || []).length; i++) if (kwargs[i].name === 'reverse') rev = truthy(kwargs[i].value);
+        for (var i = 0; i < (kwargs || []).length; i++) {
+          if (kwargs[i].name === 'reverse') rev = truthy(kwargs[i].value);
+          else if (kwargs[i].name === 'key') throw pyErr('key= в тренажёре не поддерживается: отсортируй по правилу вручную', line, 'NotSupported');
+        }
         items.sort(function (a, b) { return pyCmp(a, b, line); });
         if (rev) items.reverse();
         return items;
@@ -1986,6 +2133,9 @@ a { color: var(--accent); }
         for (var i = 0; i < n; i++) out.push(lists.map(function (l) { return l[i]; }));
         return out;
       }, 'zip');
+      case 'set': case 'frozenset': return wrapMethod(function (args) {
+        return new S(args.length ? toList(args[0], line) : []);
+      }, name);
       case 'dict': return wrapMethod(function (args) {
         var m = new Map();
         if (args.length && args[0] instanceof Map) args[0].forEach(function (v, k) { m.set(k, v); });
@@ -2032,209 +2182,905 @@ a { color: var(--accent); }
   if (typeof module !== 'undefined' && module.exports) module.exports = global.PyTrainer;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
-<script>/* ==========================================================================
-   Задачи модуля 1 «Основы Python» для IT-квантума.
-   Формат: stdin → stdout. У каждой задачи — скрытые тесты и эталонное решение.
+<script>/* ===== m1-osnovy.js ===== */
+/* ==========================================================================
+   Модуль 1 «Основы» — ввод-вывод, условия, циклы, списки, словари.
+   Формат задачи — в python-class/README.md.
    ========================================================================== */
 (function (global) {
   'use strict';
+  global.PYMODULES = global.PYMODULES || [];
+  global.PYMODULES.push({
+    id: 'm1',
+    title: 'Модуль 1. Основы',
+    subtitle: 'ввод-вывод, условия, циклы, списки, словари, функции',
+    tasks: [
+  {
+    id: 't1',
+    title: 'Число и его степени',
+    subtitle: 'ввод, int(), арифметика',
+    theory: '<p><code>input()</code> читает строку. Чтобы работать с числом, оберни: <code>n = int(input())</code>.</p>' +
+            '<p>Степень в Python — двойная звёздочка: <code>n ** 2</code>, <code>n ** 3</code>.</p>' +
+            '<p><code>print()</code> выводит каждое значение с новой строки, если вызвать его отдельно.</p>',
+    prompt: 'Считай одно целое число. Выведи на отдельных строках его квадрат и его куб.',
+    examples: [{ inp: '3', out: '9\n27' }],
+    starter: '# считай число\nn = int(input())\n\n# выведи квадрат и куб\n',
+    tests: [
+      { stdin: '3', expected: '9\n27' },
+      { stdin: '10', expected: '100\n1000' },
+      { stdin: '1', expected: '1\n1' },
+      { stdin: '0', expected: '0\n0' }
+    ],
+    hint: 'Квадрат — это n ** 2. Куб — n ** 3. Каждое значение выводи своим print().',
+    solution: 'n = int(input())\nprint(n ** 2)\nprint(n ** 3)'
+  },
+  {
+    id: 't2',
+    title: 'Сумма двух чисел',
+    subtitle: 'несколько input(), порядок строк',
+    theory: '<p>Каждый вызов <code>input()</code> забирает <b>одну строку</b> ввода. Первый вызов — первая строка, второй — вторая.</p>' +
+            '<p>Результат нужно именно вычислить, а не вывести заранее: тесты подставляют разные числа.</p>',
+    prompt: 'Ввод: два целых числа, каждое на своей строке. Выведи их сумму.',
+    examples: [{ inp: '2\n3', out: '5' }],
+    starter: 'a = int(input())\nb = int(input())\n\n# выведи сумму\n',
+    tests: [
+      { stdin: '2\n3', expected: '5' },
+      { stdin: '-4\n10', expected: '6' },
+      { stdin: '0\n0', expected: '0' },
+      { stdin: '1000000\n2000000', expected: '3000000' }
+    ],
+    hint: 'Сумма двух переменных — это a + b внутри print().',
+    solution: 'a = int(input())\nb = int(input())\nprint(a + b)'
+  },
+  {
+    id: 't3',
+    title: 'Чётное или нечётное',
+    subtitle: 'if / else, остаток %',
+    theory: '<p>Остаток от деления — <code>%</code>. Если <code>n % 2 == 0</code>, число чётное.</p>' +
+            '<p>После условия обязательно двоеточие, а тело — с отступом в 4 пробела.</p>',
+    prompt: 'Считай целое число. Выведи ровно одно слово: <code>чётное</code> или <code>нечётное</code>.',
+    examples: [{ inp: '4', out: 'чётное' }, { inp: '7', out: 'нечётное' }],
+    starter: 'n = int(input())\n\nif n % 2 == 0:\n    print("чётное")\nelse:\n    print("нечётное")\n',
+    tests: [
+      { stdin: '4', expected: 'чётное' },
+      { stdin: '7', expected: 'нечётное' },
+      { stdin: '0', expected: 'чётное' },
+      { stdin: '-3', expected: 'нечётное' }
+    ],
+    hint: 'В Python остаток от деления отрицательного числа тоже не равен нулю, так что -3 % 2 == 1 — условие сработает верно.',
+    solution: 'n = int(input())\nif n % 2 == 0:\n    print("чётное")\nelse:\n    print("нечётное")'
+  },
+  {
+    id: 't4',
+    title: 'Оценка по баллам',
+    subtitle: 'elif, вложенные условия',
+    theory: '<p>Цепочка <code>if / elif / else</code> проверяет условия сверху вниз и выполняет только первую подходящую ветку.</p>' +
+            '<p>Порядок важен: если сначала проверить <code>&gt;= 40</code>, то 90 баллов тоже туда попадёт.</p>',
+    prompt: 'Считай баллы (0–100). Выведи оценку: <code>80</code> и больше → <code>5</code>; <code>60</code> и больше → <code>4</code>; ' +
+            '<code>40</code> и больше → <code>3</code>; меньше <code>40</code> → <code>2</code>.',
+    examples: [{ inp: '85', out: '5' }, { inp: '61', out: '4' }, { inp: '10', out: '2' }],
+    starter: 'ball = int(input())\n\nif ball >= 80:\n    print(5)\nelif ball >= 60:\n    print(4)\n# продолжи цепочку\n',
+    tests: [
+      { stdin: '100', expected: '5' },
+      { stdin: '80', expected: '5' },
+      { stdin: '79', expected: '4' },
+      { stdin: '60', expected: '4' },
+      { stdin: '40', expected: '3' },
+      { stdin: '39', expected: '2' },
+      { stdin: '0', expected: '2' }
+    ],
+    hint: 'Добавь elif ball >= 40: и последний else: для двойки.',
+    solution: 'ball = int(input())\nif ball >= 80:\n    print(5)\nelif ball >= 60:\n    print(4)\nelif ball >= 40:\n    print(3)\nelse:\n    print(2)'
+  },
+  {
+    id: 't5',
+    title: 'Сумма от 1 до N',
+    subtitle: 'for, range, накопитель',
+    theory: '<p><code>range(1, n + 1)</code> даёт числа от 1 до n включительно: правая граница не входит.</p>' +
+            '<p>Накопитель заводится до цикла: <code>total = 0</code>, и увеличивается внутри: <code>total += i</code>.</p>',
+    prompt: 'Считай N (натуральное число). Выведи сумму всех чисел от 1 до N включительно.',
+    examples: [{ inp: '5', out: '15' }],
+    starter: 'n = int(input())\ntotal = 0\n\n# цикл от 1 до n\n\nprint(total)\n',
+    tests: [
+      { stdin: '5', expected: '15' },
+      { stdin: '1', expected: '1' },
+      { stdin: '100', expected: '5050' },
+      { stdin: '1000', expected: '500500' }
+    ],
+    hint: 'for i in range(1, n + 1):  и внутри total += i.',
+    solution: 'n = int(input())\ntotal = 0\nfor i in range(1, n + 1):\n    total += i\nprint(total)'
+  },
+  {
+    id: 't6',
+    title: 'Сумма цифр числа',
+    subtitle: 'while, // и %',
+    theory: '<p>Цифры числа достаются справа налево: последняя цифра — <code>n % 10</code>, остальное — <code>n // 10</code>.</p>' +
+            '<p><code>while n &gt; 0:</code> повторяет, пока в числе остались цифры.</p>',
+    prompt: 'Считай натуральное число. Выведи сумму его цифр.',
+    examples: [{ inp: '123', out: '6' }],
+    starter: 'n = int(input())\ntotal = 0\n\nwhile n > 0:\n    # добавь последнюю цифру и отбрось её\n    pass\n\nprint(total)\n',
+    tests: [
+      { stdin: '123', expected: '6' },
+      { stdin: '9', expected: '9' },
+      { stdin: '1000', expected: '1' },
+      { stdin: '987654321', expected: '45' }
+    ],
+    hint: 'Внутри цикла: total += n % 10, затем n = n // 10. Порядок важен — сначала забери цифру.',
+    solution: 'n = int(input())\ntotal = 0\nwhile n > 0:\n    total += n % 10\n    n = n // 10\nprint(total)'
+  },
+  {
+    id: 't7',
+    title: 'Палиндром',
+    subtitle: 'строки, срезы, ==',
+    theory: '<p>Срез <code>s[::-1]</code> переворачивает строку: шаг −1 идёт с конца.</p>' +
+            '<p>Строки сравниваются через <code>==</code> — посимвольно, с учётом регистра.</p>',
+    prompt: 'Считай слово (одна строка). Выведи <code>да</code>, если оно читается одинаково в обе стороны, иначе <code>нет</code>.',
+    examples: [{ inp: 'шалаш', out: 'да' }, { inp: 'привет', out: 'нет' }],
+    starter: 'word = input()\n\n# переверни строку и сравни\n',
+    tests: [
+      { stdin: 'шалаш', expected: 'да' },
+      { stdin: 'привет', expected: 'нет' },
+      { stdin: 'а', expected: 'да' },
+      { stdin: 'abba', expected: 'да' },
+      { stdin: 'Abc', expected: 'нет' }
+    ],
+    hint: 'if word == word[::-1]: print("да") else: print("нет").',
+    solution: 'word = input()\nif word == word[::-1]:\n    print("да")\nelse:\n    print("нет")'
+  },
+  {
+    id: 't8',
+    title: 'Средний балл',
+    subtitle: 'split(), списки, float, f-строка',
+    theory: '<p><code>input()</code> вернёт всю строку целиком. <code>s.split()</code> разрежет её по пробелам в список строк.</p>' +
+            '<p>Превратить весь список в числа: <code>[int(x) for x in s.split()]</code> — это генератор списка.</p>' +
+            '<p>Один знак после запятой: <code>f"{value:.1f}"</code>. Деление <code>/</code> всегда даёт float.</p>',
+    prompt: 'Первая строка — количество чисел N. Вторая строка — N оценок через пробел. ' +
+            'Выведи среднее арифметическое с одним знаком после запятой.',
+    examples: [{ inp: '3\n4 5 6', out: '5.0' }],
+    starter: 'n = int(input())\nmarks = [int(x) for x in input().split()]\n\n# посчитай среднее\n',
+    tests: [
+      { stdin: '3\n4 5 6', expected: '5.0' },
+      { stdin: '4\n3 3 4 4', expected: '3.5' },
+      { stdin: '1\n5', expected: '5.0' },
+      { stdin: '5\n2 2 2 2 3', expected: '2.2' }
+    ],
+    hint: 'Среднее — sum(marks) / len(marks). Вывести: print(f"{avg:.1f}").',
+    solution: 'n = int(input())\nmarks = [int(x) for x in input().split()]\navg = sum(marks) / len(marks)\nprint(f"{avg:.1f}")'
+  },
+  {
+    id: 't9',
+    title: 'Простое число',
+    subtitle: 'def, return, break',
+    theory: '<p>Функция объявляется через <code>def имя(параметры):</code> и возвращает значение через <code>return</code>.</p>' +
+            '<p>Число простое, если делится только на 1 и на себя. Достаточно проверить делители до корня — но для школьных чисел хватит и полного перебора.</p>',
+    prompt: 'Считай целое число (больше 1). Выведи <code>простое</code> или <code>составное</code>. ' +
+            'Обязательное условие: проверка должна быть внутри функции <code>is_prime(n)</code>, которая возвращает True или False.',
+    examples: [{ inp: '7', out: 'простое' }, { inp: '9', out: 'составное' }],
+    starter: 'def is_prime(n):\n    # верни True, если n простое\n    return True\n\n\nn = int(input())\nif is_prime(n):\n    print("простое")\nelse:\n    print("составное")\n',
+    tests: [
+      { stdin: '7', expected: 'простое' },
+      { stdin: '9', expected: 'составное' },
+      { stdin: '2', expected: 'простое' },
+      { stdin: '97', expected: 'простое' },
+      { stdin: '100', expected: 'составное' }
+    ],
+    hint: 'Перебери d от 2 до n - 1: если n % d == 0 — сразу return False. Если цикл закончился, return True.',
+    solution: 'def is_prime(n):\n    d = 2\n    while d < n:\n        if n % d == 0:\n            return False\n        d += 1\n    return True\n\n\nn = int(input())\nif is_prime(n):\n    print("простое")\nelse:\n    print("составное")'
+  },
+  {
+    id: 't10',
+    title: 'Частота слов',
+    subtitle: 'словари, get(), sorted()',
+    theory: '<p>Словарь хранит пары «ключ → значение»: <code>counts[word] = counts.get(word, 0) + 1</code> — так считают частоты без проверки на существование.</p>' +
+            '<p><code>sorted(counts)</code> сортирует ключи по алфавиту. Порядок вывода должен быть предсказуемым — сортировка как раз для этого.</p>',
+    prompt: 'Считай строку из слов, разделённых пробелами. Для каждого уникального слова выведи строку <code>слово: количество</code>. ' +
+            'Слова выводи в алфавитном порядке.',
+    examples: [{ inp: 'кот пёс кот', out: 'кот: 2\nпёс: 1' }],
+    starter: 'words = input().split()\ncounts = {}\n\n# посчитай частоты\n\n# выведи в алфавитном порядке\n',
+    tests: [
+      { stdin: 'кот пёс кот', expected: 'кот: 2\nпёс: 1' },
+      { stdin: 'a b c', expected: 'a: 1\nb: 1\nc: 1' },
+      { stdin: 'раз раз раз', expected: 'раз: 3' },
+      { stdin: 'я мы ты мы я я', expected: 'мы: 2\nты: 1\nя: 3' }
+    ],
+    hint: 'После подсчёта: for word in sorted(counts): print(f"{word}: {counts[word]}").',
+    solution: 'words = input().split()\ncounts = {}\nfor w in words:\n    counts[w] = counts.get(w, 0) + 1\nfor w in sorted(counts):\n    print(f"{w}: {counts[w]}")'
+  }
+]
+  });
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.PYMODULES;
+})(typeof window !== 'undefined' ? window : globalThis);
 
-  var TASKS = [
-    {
-      id: 't1',
-      title: 'Число и его степени',
-      subtitle: 'ввод, int(), арифметика',
-      theory: '<p><code>input()</code> читает строку. Чтобы работать с числом, оберни: <code>n = int(input())</code>.</p>' +
-              '<p>Степень в Python — двойная звёздочка: <code>n ** 2</code>, <code>n ** 3</code>.</p>' +
-              '<p><code>print()</code> выводит каждое значение с новой строки, если вызвать его отдельно.</p>',
-      prompt: 'Считай одно целое число. Выведи на отдельных строках его квадрат и его куб.',
-      examples: [{ inp: '3', out: '9\n27' }],
-      starter: '# считай число\nn = int(input())\n\n# выведи квадрат и куб\n',
-      tests: [
-        { stdin: '3', expected: '9\n27' },
-        { stdin: '10', expected: '100\n1000' },
-        { stdin: '1', expected: '1\n1' },
-        { stdin: '0', expected: '0\n0' }
-      ],
-      hint: 'Квадрат — это n ** 2. Куб — n ** 3. Каждое значение выводи своим print().',
-      solution: 'n = int(input())\nprint(n ** 2)\nprint(n ** 3)'
-    },
-    {
-      id: 't2',
-      title: 'Сумма двух чисел',
-      subtitle: 'несколько input(), порядок строк',
-      theory: '<p>Каждый вызов <code>input()</code> забирает <b>одну строку</b> ввода. Первый вызов — первая строка, второй — вторая.</p>' +
-              '<p>Результат нужно именно вычислить, а не вывести заранее: тесты подставляют разные числа.</p>',
-      prompt: 'Ввод: два целых числа, каждое на своей строке. Выведи их сумму.',
-      examples: [{ inp: '2\n3', out: '5' }],
-      starter: 'a = int(input())\nb = int(input())\n\n# выведи сумму\n',
-      tests: [
-        { stdin: '2\n3', expected: '5' },
-        { stdin: '-4\n10', expected: '6' },
-        { stdin: '0\n0', expected: '0' },
-        { stdin: '1000000\n2000000', expected: '3000000' }
-      ],
-      hint: 'Сумма двух переменных — это a + b внутри print().',
-      solution: 'a = int(input())\nb = int(input())\nprint(a + b)'
-    },
-    {
-      id: 't3',
-      title: 'Чётное или нечётное',
-      subtitle: 'if / else, остаток %',
-      theory: '<p>Остаток от деления — <code>%</code>. Если <code>n % 2 == 0</code>, число чётное.</p>' +
-              '<p>После условия обязательно двоеточие, а тело — с отступом в 4 пробела.</p>',
-      prompt: 'Считай целое число. Выведи ровно одно слово: <code>чётное</code> или <code>нечётное</code>.',
-      examples: [{ inp: '4', out: 'чётное' }, { inp: '7', out: 'нечётное' }],
-      starter: 'n = int(input())\n\nif n % 2 == 0:\n    print("чётное")\nelse:\n    print("нечётное")\n',
-      tests: [
-        { stdin: '4', expected: 'чётное' },
-        { stdin: '7', expected: 'нечётное' },
-        { stdin: '0', expected: 'чётное' },
-        { stdin: '-3', expected: 'нечётное' }
-      ],
-      hint: 'В Python остаток от деления отрицательного числа тоже не равен нулю, так что -3 % 2 == 1 — условие сработает верно.',
-      solution: 'n = int(input())\nif n % 2 == 0:\n    print("чётное")\nelse:\n    print("нечётное")'
-    },
-    {
-      id: 't4',
-      title: 'Оценка по баллам',
-      subtitle: 'elif, вложенные условия',
-      theory: '<p>Цепочка <code>if / elif / else</code> проверяет условия сверху вниз и выполняет только первую подходящую ветку.</p>' +
-              '<p>Порядок важен: если сначала проверить <code>&gt;= 40</code>, то 90 баллов тоже туда попадёт.</p>',
-      prompt: 'Считай баллы (0–100). Выведи оценку: <code>80</code> и больше → <code>5</code>; <code>60</code> и больше → <code>4</code>; ' +
-              '<code>40</code> и больше → <code>3</code>; меньше <code>40</code> → <code>2</code>.',
-      examples: [{ inp: '85', out: '5' }, { inp: '61', out: '4' }, { inp: '10', out: '2' }],
-      starter: 'ball = int(input())\n\nif ball >= 80:\n    print(5)\nelif ball >= 60:\n    print(4)\n# продолжи цепочку\n',
-      tests: [
-        { stdin: '100', expected: '5' },
-        { stdin: '80', expected: '5' },
-        { stdin: '79', expected: '4' },
-        { stdin: '60', expected: '4' },
-        { stdin: '40', expected: '3' },
-        { stdin: '39', expected: '2' },
-        { stdin: '0', expected: '2' }
-      ],
-      hint: 'Добавь elif ball >= 40: и последний else: для двойки.',
-      solution: 'ball = int(input())\nif ball >= 80:\n    print(5)\nelif ball >= 60:\n    print(4)\nelif ball >= 40:\n    print(3)\nelse:\n    print(2)'
-    },
-    {
-      id: 't5',
-      title: 'Сумма от 1 до N',
-      subtitle: 'for, range, накопитель',
-      theory: '<p><code>range(1, n + 1)</code> даёт числа от 1 до n включительно: правая граница не входит.</p>' +
-              '<p>Накопитель заводится до цикла: <code>total = 0</code>, и увеличивается внутри: <code>total += i</code>.</p>',
-      prompt: 'Считай N (натуральное число). Выведи сумму всех чисел от 1 до N включительно.',
-      examples: [{ inp: '5', out: '15' }],
-      starter: 'n = int(input())\ntotal = 0\n\n# цикл от 1 до n\n\nprint(total)\n',
-      tests: [
-        { stdin: '5', expected: '15' },
-        { stdin: '1', expected: '1' },
-        { stdin: '100', expected: '5050' },
-        { stdin: '1000', expected: '500500' }
-      ],
-      hint: 'for i in range(1, n + 1):  и внутри total += i.',
-      solution: 'n = int(input())\ntotal = 0\nfor i in range(1, n + 1):\n    total += i\nprint(total)'
-    },
-    {
-      id: 't6',
-      title: 'Сумма цифр числа',
-      subtitle: 'while, // и %',
-      theory: '<p>Цифры числа достаются справа налево: последняя цифра — <code>n % 10</code>, остальное — <code>n // 10</code>.</p>' +
-              '<p><code>while n &gt; 0:</code> повторяет, пока в числе остались цифры.</p>',
-      prompt: 'Считай натуральное число. Выведи сумму его цифр.',
-      examples: [{ inp: '123', out: '6' }],
-      starter: 'n = int(input())\ntotal = 0\n\nwhile n > 0:\n    # добавь последнюю цифру и отбрось её\n\nprint(total)\n',
-      tests: [
-        { stdin: '123', expected: '6' },
-        { stdin: '9', expected: '9' },
-        { stdin: '1000', expected: '1' },
-        { stdin: '987654321', expected: '45' }
-      ],
-      hint: 'Внутри цикла: total += n % 10, затем n = n // 10. Порядок важен — сначала забери цифру.',
-      solution: 'n = int(input())\ntotal = 0\nwhile n > 0:\n    total += n % 10\n    n = n // 10\nprint(total)'
-    },
-    {
-      id: 't7',
-      title: 'Палиндром',
-      subtitle: 'строки, срезы, ==',
-      theory: '<p>Срез <code>s[::-1]</code> переворачивает строку: шаг −1 идёт с конца.</p>' +
-              '<p>Строки сравниваются через <code>==</code> — посимвольно, с учётом регистра.</p>',
-      prompt: 'Считай слово (одна строка). Выведи <code>да</code>, если оно читается одинаково в обе стороны, иначе <code>нет</code>.',
-      examples: [{ inp: 'шалаш', out: 'да' }, { inp: 'привет', out: 'нет' }],
-      starter: 'word = input()\n\n# переверни строку и сравни\n',
-      tests: [
-        { stdin: 'шалаш', expected: 'да' },
-        { stdin: 'привет', expected: 'нет' },
-        { stdin: 'а', expected: 'да' },
-        { stdin: 'abba', expected: 'да' },
-        { stdin: 'Abc', expected: 'нет' }
-      ],
-      hint: 'if word == word[::-1]: print("да") else: print("нет").',
-      solution: 'word = input()\nif word == word[::-1]:\n    print("да")\nelse:\n    print("нет")'
-    },
-    {
-      id: 't8',
-      title: 'Средний балл',
-      subtitle: 'split(), списки, float, f-строка',
-      theory: '<p><code>input()</code> вернёт всю строку целиком. <code>s.split()</code> разрежет её по пробелам в список строк.</p>' +
-              '<p>Превратить весь список в числа: <code>[int(x) for x in s.split()]</code> — это генератор списка.</p>' +
-              '<p>Один знак после запятой: <code>f"{value:.1f}"</code>. Деление <code>/</code> всегда даёт float.</p>',
-      prompt: 'Первая строка — количество чисел N. Вторая строка — N оценок через пробел. ' +
-              'Выведи среднее арифметическое с одним знаком после запятой.',
-      examples: [{ inp: '3\n4 5 6', out: '5.0' }],
-      starter: 'n = int(input())\nmarks = [int(x) for x in input().split()]\n\n# посчитай среднее\n',
-      tests: [
-        { stdin: '3\n4 5 6', expected: '5.0' },
-        { stdin: '4\n3 3 4 4', expected: '3.5' },
-        { stdin: '1\n5', expected: '5.0' },
-        { stdin: '5\n2 2 2 2 3', expected: '2.2' }
-      ],
-      hint: 'Среднее — sum(marks) / len(marks). Вывести: print(f"{avg:.1f}").',
-      solution: 'n = int(input())\nmarks = [int(x) for x in input().split()]\navg = sum(marks) / len(marks)\nprint(f"{avg:.1f}")'
-    },
-    {
-      id: 't9',
-      title: 'Простое число',
-      subtitle: 'def, return, break',
-      theory: '<p>Функция объявляется через <code>def имя(параметры):</code> и возвращает значение через <code>return</code>.</p>' +
-              '<p>Число простое, если делится только на 1 и на себя. Достаточно проверить делители до корня — но для школьных чисел хватит и полного перебора.</p>',
-      prompt: 'Считай целое число (больше 1). Выведи <code>простое</code> или <code>составное</code>. ' +
-              'Обязательное условие: проверка должна быть внутри функции <code>is_prime(n)</code>, которая возвращает True или False.',
-      examples: [{ inp: '7', out: 'простое' }, { inp: '9', out: 'составное' }],
-      starter: 'def is_prime(n):\n    # верни True, если n простое\n    return True\n\n\nn = int(input())\nif is_prime(n):\n    print("простое")\nelse:\n    print("составное")\n',
-      tests: [
-        { stdin: '7', expected: 'простое' },
-        { stdin: '9', expected: 'составное' },
-        { stdin: '2', expected: 'простое' },
-        { stdin: '97', expected: 'простое' },
-        { stdin: '100', expected: 'составное' }
-      ],
-      hint: 'Перебери d от 2 до n - 1: если n % d == 0 — сразу return False. Если цикл закончился, return True.',
-      solution: 'def is_prime(n):\n    d = 2\n    while d < n:\n        if n % d == 0:\n            return False\n        d += 1\n    return True\n\n\nn = int(input())\nif is_prime(n):\n    print("простое")\nelse:\n    print("составное")'
-    },
-    {
-      id: 't10',
-      title: 'Частота слов',
-      subtitle: 'словари, get(), sorted()',
-      theory: '<p>Словарь хранит пары «ключ → значение»: <code>counts[word] = counts.get(word, 0) + 1</code> — так считают частоты без проверки на существование.</p>' +
-              '<p><code>sorted(counts)</code> сортирует ключи по алфавиту. Порядок вывода должен быть предсказуемым — сортировка как раз для этого.</p>',
-      prompt: 'Считай строку из слов, разделённых пробелами. Для каждого уникального слова выведи строку <code>слово: количество</code>. ' +
-              'Слова выводи в алфавитном порядке.',
-      examples: [{ inp: 'кот пёс кот', out: 'кот: 2\nпёс: 1' }],
-      starter: 'words = input().split()\ncounts = {}\n\n# посчитай частоты\n\n# выведи в алфавитном порядке\n',
-      tests: [
-        { stdin: 'кот пёс кот', expected: 'кот: 2\nпёс: 1' },
-        { stdin: 'a b c', expected: 'a: 1\nb: 1\nc: 1' },
-        { stdin: 'раз раз раз', expected: 'раз: 3' },
-        { stdin: 'я мы ты мы я я', expected: 'мы: 2\nты: 1\nя: 3' }
-      ],
-      hint: 'После подсчёта: for word in sorted(counts): print(f"{word}: {counts[word]}").',
-      solution: 'words = input().split()\ncounts = {}\nfor w in words:\n    counts[w] = counts.get(w, 0) + 1\nfor w in sorted(counts):\n    print(f"{w}: {counts[w]}")'
-    }
-  ];
+/* ===== m2-algoritmy.js ===== */
+/* ==========================================================================
+   Модуль 2 «Алгоритмы» — перебор, поиск, сортировка, рекурсия, Евклид.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  global.PYMODULES = global.PYMODULES || [];
+  global.PYMODULES.push({
+    id: 'm2',
+    title: 'Модуль 2. Алгоритмы',
+    subtitle: 'перебор, максимум, пузырёк, бинарный поиск, рекурсия, НОД',
+    tasks: [
+      {
+        id: 'm2t1',
+        level: 'легко',
+        title: 'Чётные числа',
+        subtitle: 'перебор + накопление в список',
+        theory: '<p>Чтобы вывести числа через пробел, собери их в список и склей строкой-разделителем: ' +
+                '<code>" ".join(строки)</code>. Важно: <code>join</code> работает только со строками, ' +
+                'поэтому числа сначала превращаются в строки через <code>str()</code>.</p>' +
+                '<p><code>range(1, n + 1)</code> — числа от 1 до n включительно.</p>',
+        prompt: 'Считай N. Выведи через пробел все чётные числа от 1 до N включительно.',
+        examples: [{ inp: '10', out: '2 4 6 8 10' }],
+        starter: 'n = int(input())\nres = []\n\n# перебери числа и собери чётные\n\nprint(" ".join(res))\n',
+        tests: [
+          { stdin: '10', expected: '2 4 6 8 10' },
+          { stdin: '5', expected: '2 4' },
+          { stdin: '2', expected: '2' },
+          { stdin: '20', expected: '2 4 6 8 10 12 14 16 18 20' }
+        ],
+        hint: 'Внутри цикла: if i % 2 == 0: res.append(str(i)).',
+        solution: 'n = int(input())\nres = []\nfor i in range(1, n + 1):\n    if i % 2 == 0:\n        res.append(str(i))\nprint(" ".join(res))'
+      },
+      {
+        id: 'm2t2',
+        level: 'легко',
+        title: 'Максимум без max()',
+        subtitle: 'алгоритм поиска максимума',
+        theory: '<p>Идея поиска максимума: запомнить первый элемент как «лучший», затем сравнивать с ним каждый следующий ' +
+                'и заменять, если встретился больше.</p>' +
+                '<p><code>[int(x) for x in input().split()]</code> превращает строку чисел в список чисел.</p>',
+        prompt: 'Ввод: числа через пробел (одна строка, не меньше двух). Выведи наибольшее, не используя <code>max()</code>.',
+        examples: [{ inp: '4 9 2 7', out: '9' }],
+        starter: 'nums = [int(x) for x in input().split()]\nbest = nums[0]\n\n# сравни с остальными\n\nprint(best)\n',
+        tests: [
+          { stdin: '4 9 2 7', expected: '9' },
+          { stdin: '-5 -2 -9', expected: '-2' },
+          { stdin: '1 1 1', expected: '1' },
+          { stdin: '100 3', expected: '100' }
+        ],
+        hint: 'for v in nums: if v > best: best = v',
+        solution: 'nums = [int(x) for x in input().split()]\nbest = nums[0]\nfor v in nums:\n    if v > best:\n        best = v\nprint(best)'
+      },
+      {
+        id: 'm2t3',
+        level: 'средне',
+        title: 'Сортировка пузырьком',
+        subtitle: 'обмен элементов, вложенные циклы',
+        theory: '<p>Пузырёк: проходим по списку и меняем местами соседей, если они стоят неправильно. ' +
+                'За один проход самый большой элемент «всплывает» в конец. Проходов нужно столько же, сколько элементов.</p>' +
+                '<p>Обмен двух значений в Python короткий: <code>a, b = b, a</code>.</p>',
+        prompt: 'Ввод: числа через пробел. Отсортируй их по возрастанию <b>сам</b> (пузырьком, без <code>sort()</code> и <code>sorted()</code>) ' +
+                'и выведи через пробел.',
+        examples: [{ inp: '5 1 4 2 8', out: '1 2 4 5 8' }],
+        starter: 'nums = [int(x) for x in input().split()]\n\n# двойной цикл и обмен соседей\n\nprint(" ".join(str(x) for x in nums))\n',
+        tests: [
+          { stdin: '5 1 4 2 8', expected: '1 2 4 5 8' },
+          { stdin: '3 3 1', expected: '1 3 3' },
+          { stdin: '-1 0 -5', expected: '-5 -1 0' },
+          { stdin: '9 8 7 6 5 4 3 2 1', expected: '1 2 3 4 5 6 7 8 9' }
+        ],
+        hint: 'Внешний цикл for i in range(len(nums)): внутренний for j in range(len(nums) - 1): ' +
+              'если nums[j] > nums[j + 1], поменяй их местами.',
+        solution: 'nums = [int(x) for x in input().split()]\nfor i in range(len(nums)):\n    for j in range(len(nums) - 1):\n        if nums[j] > nums[j + 1]:\n            nums[j], nums[j + 1] = nums[j + 1], nums[j]\nprint(" ".join(str(x) for x in nums))'
+      },
+      {
+        id: 'm2t4',
+        level: 'средне',
+        title: 'Бинарный поиск',
+        subtitle: 'log₂n вместо перебора, границы left/right',
+        theory: '<p>Бинарный поиск работает в <b>отсортированном</b> списке: смотрим в середину и отбрасываем половину, ' +
+                'где искомого быть не может. Держим две границы: <code>left</code> и <code>right</code>, ' +
+                'пока <code>left &lt;= right</code>.</p>' +
+                '<p>Середина: <code>mid = (left + right) // 2</code>. Если <code>nums[mid] == x</code> — нашли индекс.</p>',
+        prompt: 'Первая строка — числа по возрастанию. Вторая строка — искомое число. ' +
+                'Выведи индекс этого числа (нумерация с нуля) или <code>-1</code>, если его нет. Используй бинарный поиск.',
+        examples: [{ inp: '1 3 5 7 9\n7', out: '3' }, { inp: '1 3 5 7 9\n4', out: '-1' }],
+        starter: 'nums = [int(x) for x in input().split()]\nx = int(input())\nleft = 0\nright = len(nums) - 1\nanswer = -1\n\n# цикл двоичного поиска\n\nprint(answer)\n',
+        tests: [
+          { stdin: '1 3 5 7 9\n7', expected: '3' },
+          { stdin: '1 3 5 7 9\n4', expected: '-1' },
+          { stdin: '1 3 5 7 9\n1', expected: '0' },
+          { stdin: '1 3 5 7 9\n9', expected: '4' },
+          { stdin: '2 4 6 8 10 12 14\n2', expected: '0' }
+        ],
+        hint: 'Если nums[mid] == x: answer = mid и break. Если nums[mid] < x: left = mid + 1, иначе right = mid - 1.',
+        solution: 'nums = [int(x) for x in input().split()]\nx = int(input())\nleft = 0\nright = len(nums) - 1\nanswer = -1\nwhile left <= right:\n    mid = (left + right) // 2\n    if nums[mid] == x:\n        answer = mid\n        break\n    if nums[mid] < x:\n        left = mid + 1\n    else:\n        right = mid - 1\nprint(answer)'
+      },
+      {
+        id: 'm2t5',
+        level: 'средне',
+        title: 'Факториал рекурсией',
+        subtitle: 'рекурсия и база',
+        theory: '<p>Рекурсивная функция вызывает сама себя с меньшим аргументом. Обязательны два куска: ' +
+                '<b>база</b> (когда ответ известен сразу) и <b>шаг</b> (как свести задачу к меньшей).</p>' +
+                '<p>Факториал: <code>n! = n · (n − 1)!</code>, база — <code>0! = 1</code> и <code>1! = 1</code>.</p>',
+        prompt: 'Считай N (0 ≤ N ≤ 12). Выведи N! — факториал числа, вычисленный функцией с рекурсией.',
+        examples: [{ inp: '5', out: '120' }],
+        starter: 'def fact(n):\n    # база и шаг\n    return 1\n\n\nn = int(input())\nprint(fact(n))\n',
+        tests: [
+          { stdin: '5', expected: '120' },
+          { stdin: '0', expected: '1' },
+          { stdin: '1', expected: '1' },
+          { stdin: '10', expected: '3628800' }
+        ],
+        hint: 'if n <= 1: return 1, иначе return n * fact(n - 1).',
+        solution: 'def fact(n):\n    if n <= 1:\n        return 1\n    return n * fact(n - 1)\n\n\nn = int(input())\nprint(fact(n))'
+      },
+      {
+        id: 'm2t6',
+        level: 'средне',
+        title: 'НОД по Евклиду',
+        subtitle: 'алгоритм, который старше компьютеров',
+        theory: '<p>Алгоритм Евклида: <code>НОД(a, b) = НОД(b, a % b)</code>, а когда остаток стал нулём — ' +
+                'ответ это предыдущее число.</p>' +
+                '<p>Пример: НОД(48, 18) → 48 % 18 = 12 → 18 % 12 = 6 → 12 % 6 = 0. Ответ 6.</p>',
+        prompt: 'Ввод: два натуральных числа через пробел. Выведи их наибольший общий делитель.',
+        examples: [{ inp: '48 18', out: '6' }],
+        starter: 'a, b = [int(x) for x in input().split()]\n\nwhile b != 0:\n    # обмен по Евклиду\n    pass\n\nprint(a)\n',
+        tests: [
+          { stdin: '48 18', expected: '6' },
+          { stdin: '7 13', expected: '1' },
+          { stdin: '100 10', expected: '10' },
+          { stdin: '17 17', expected: '17' }
+        ],
+        hint: 'Внутри цикла: a, b = b, a % b. Когда цикл закончится, в a будет НОД.',
+        solution: 'a, b = [int(x) for x in input().split()]\nwhile b != 0:\n    a, b = b, a % b\nprint(a)'
+      }
+    ]
+  });
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.PYMODULES;
+})(typeof window !== 'undefined' ? window : globalThis);
 
-  global.PYTASKS = TASKS;
-  if (typeof module !== 'undefined' && module.exports) module.exports = TASKS;
+/* ===== m3-kollekcii.js ===== */
+/* ==========================================================================
+   Модуль 3 «Коллекции и строки» — словари, множества, сортировка, шифры.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  global.PYMODULES = global.PYMODULES || [];
+  global.PYMODULES.push({
+    id: 'm3',
+    title: 'Модуль 3. Коллекции и строки',
+    subtitle: 'словари, множества, нормализация текста, шифр Цезаря',
+    tasks: [
+      {
+        id: 'm3t1',
+        level: 'легко',
+        title: 'Уникальные слова',
+        subtitle: 'словарь как «уже встречалось»',
+        theory: '<p>Словарь удобно использовать как отметку «слово уже было»: <code>seen = {}</code>, ' +
+                'затем <code>if word not in seen:</code> — добавляем его в результат.</p>' +
+                '<p>С 3.7 словарь помнит порядок вставки, но полагаться на это в учебной задаче не стоит — ' +
+                'лучше явно собирать список.</p>',
+        prompt: 'Считай строку слов. Выведи только уникальные слова через пробел, в порядке первого появления.',
+        examples: [{ inp: 'кот пёс кот мышь пёс', out: 'кот пёс мышь' }],
+        starter: 'words = input().split()\nseen = {}\nres = []\n\n# собери уникальные\n\nprint(" ".join(res))\n',
+        tests: [
+          { stdin: 'кот пёс кот мышь пёс', expected: 'кот пёс мышь' },
+          { stdin: 'a a a', expected: 'a' },
+          { stdin: 'один два три', expected: 'один два три' },
+          { stdin: 'x y x z y', expected: 'x y z' }
+        ],
+        hint: 'for w in words: if w not in seen: seen[w] = True; res.append(w)',
+        solution: 'words = input().split()\nseen = {}\nres = []\nfor w in words:\n    if w not in seen:\n        seen[w] = True\n        res.append(w)\nprint(" ".join(res))'
+      },
+      {
+        id: 'm3t2',
+        level: 'легко',
+        title: 'Сколько разных букв',
+        subtitle: 'множество set()',
+        theory: '<p>Множество <code>set</code> хранит только уникальные элементы: <code>set("абракадабра")</code> — ' +
+                'это набор неповторяющихся букв. У множества есть длина, и в нём можно проверять наличие: ' +
+                '<code>"а" in s</code>.</p>' +
+                '<p>Множество удобно там, где важен только факт «есть / нет», а не порядок.</p>',
+        prompt: 'Считай слово. Выведи количество <b>разных</b> букв в нём (регистр важен: «А» и «а» — разные).',
+        examples: [{ inp: 'абракадабра', out: '5' }],
+        starter: 'word = input()\n\n# множество букв и его длина\n',
+        tests: [
+          { stdin: 'абракадабра', expected: '5' },
+          { stdin: 'ааа', expected: '1' },
+          { stdin: 'abc', expected: '3' },
+          { stdin: 'Аа', expected: '2' },
+          { stdin: 'привет', expected: '6' }
+        ],
+        hint: 'print(len(set(word)))',
+        solution: 'word = input()\nprint(len(set(word)))'
+      },
+      {
+        id: 'm3t3',
+        level: 'средне',
+        title: 'Самое частое слово',
+        subtitle: 'частоты + правило ничьей',
+        theory: '<p>Считаем частоты в словаре: <code>counts[w] = counts.get(w, 0) + 1</code>.</p>' +
+                '<p>Затем идём по <code>sorted(counts)</code> — ключи по алфавиту — и берём слово с максимальным счётчиком. ' +
+                'Если строго больше (<code>&gt;</code>), то при равенстве останется первое по алфавиту: это и есть правило ничьей.</p>',
+        prompt: 'Считай строку слов. Выведи слово, которое встречается чаще всех. ' +
+                'Если таких несколько — то, что раньше по алфавиту.',
+        examples: [{ inp: 'кот пёс кот мышь', out: 'кот' }, { inp: 'б а б а', out: 'а' }],
+        starter: 'words = input().split()\ncounts = {}\n\n# посчитай частоты\n\nbest = ""\nbest_n = 0\nprint(best)\n',
+        tests: [
+          { stdin: 'кот пёс кот мышь', expected: 'кот' },
+          { stdin: 'б а б а', expected: 'а' },
+          { stdin: 'раз два три', expected: 'два' },
+          { stdin: 'я я ты мы', expected: 'я' }
+        ],
+        hint: 'for w in sorted(counts): if counts[w] > best_n: best = w; best_n = counts[w]',
+        solution: 'words = input().split()\ncounts = {}\nfor w in words:\n    counts[w] = counts.get(w, 0) + 1\nbest = ""\nbest_n = 0\nfor w in sorted(counts):\n    if counts[w] > best_n:\n        best = w\n        best_n = counts[w]\nprint(best)'
+      },
+      {
+        id: 'm3t4',
+        level: 'легко',
+        title: 'Нормализация текста',
+        subtitle: 'split / title / join',
+        theory: '<p><code>split()</code> без аргумента сам убирает лишние пробелы и режет по любому их количеству.</p>' +
+                '<p><code>title()</code> делает каждое слово с большой буквы, <code>" ".join(...)</code> собирает обратно ' +
+                'с ровно одним пробелом между словами.</p>',
+        prompt: 'Считай строку с лишними пробелами. Выведи её же, но с одним пробелом между словами ' +
+                'и с большой буквы в каждом слове.',
+        examples: [{ inp: '  привет   мир  ', out: 'Привет Мир' }],
+        starter: 'text = input()\nwords = text.split()\n\n# нормализуй и склей\n',
+        tests: [
+          { stdin: '  привет   мир  ', expected: 'Привет Мир' },
+          { stdin: 'python это просто', expected: 'Python Это Просто' },
+          { stdin: 'один', expected: 'Один' },
+          { stdin: 'a   b     c', expected: 'A B C' }
+        ],
+        hint: 'Нужен список из w.title() для каждого слова, затем " ".join(список).',
+        solution: 'text = input()\nwords = text.split()\nres = []\nfor w in words:\n    res.append(w.title())\nprint(" ".join(res))'
+      },
+      {
+        id: 'm3t5',
+        level: 'средне',
+        title: 'Шифр Цезаря',
+        subtitle: 'ord / chr, работа с кодами символов',
+        theory: '<p>У каждого символа есть числовой код: <code>ord("a")</code> → 97, <code>chr(98)</code> → "b".</p>' +
+                '<p>Сдвиг буквы на k: <code>chr((ord(ch) - ord("a") + k) % 26 + ord("a"))</code>. ' +
+                'Остаток <code>% 26</code> нужен, чтобы после «z» снова шла «a».</p>',
+        prompt: 'Первая строка — слово из маленьких латинских букв. Вторая — сдвиг k (0–25). ' +
+                'Зашифруй слово шифром Цезаря и выведи результат.',
+        examples: [{ inp: 'abc\n2', out: 'cde' }, { inp: 'xyz\n3', out: 'abc' }],
+        starter: 'word = input()\nk = int(input())\nres = ""\n\n# сдвинь каждую букву\n\nprint(res)\n',
+        tests: [
+          { stdin: 'abc\n2', expected: 'cde' },
+          { stdin: 'xyz\n3', expected: 'abc' },
+          { stdin: 'hello\n0', expected: 'hello' },
+          { stdin: 'python\n13', expected: 'clguba' }
+        ],
+        hint: 'base = ord("a"); для каждой буквы: code = ord(ch) - base; code = (code + k) % 26; res += chr(code + base).',
+        solution: 'word = input()\nk = int(input())\nres = ""\nbase = ord("a")\nfor ch in word:\n    code = (ord(ch) - base + k) % 26\n    res += chr(code + base)\nprint(res)'
+      },
+      {
+        id: 'm3t6',
+        level: 'средне',
+        title: 'Второй по величине',
+        subtitle: 'уникальные значения и сортировка',
+        theory: '<p>Задача с подвохом: «второй по величине» — это второе <b>различное</b> значение, ' +
+                'а не второй элемент списка.</p>' +
+                '<p>Самый короткий путь: <code>nums = sorted(set(nums))</code> — уникальные по возрастанию, ' +
+                'затем предпоследний элемент <code>nums[-2]</code>.</p>',
+        prompt: 'Ввод: числа через пробел (не меньше двух различных). Выведи второе по величине значение.',
+        examples: [{ inp: '5 9 9 2', out: '5' }],
+        starter: 'nums = [int(x) for x in input().split()]\n\n# уникальные по возрастанию\n',
+        tests: [
+          { stdin: '5 9 9 2', expected: '5' },
+          { stdin: '1 2 3', expected: '2' },
+          { stdin: '10 10 10 7', expected: '7' },
+          { stdin: '-1 -5 -3', expected: '-3' }
+        ],
+        hint: 'u = sorted(set(nums)); print(u[-2])',
+        solution: 'nums = [int(x) for x in input().split()]\nu = sorted(set(nums))\nprint(u[-2])'
+      }
+    ]
+  });
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.PYMODULES;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ===== m4-funkcii.js ===== */
+/* ==========================================================================
+   Модуль 4 «Функции» — параметры по умолчанию, возврат списков, рекурсия, модули.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  global.PYMODULES = global.PYMODULES || [];
+  global.PYMODULES.push({
+    id: 'm4',
+    title: 'Модуль 4. Функции',
+    subtitle: 'параметры по умолчанию, возврат значений, рекурсия, модуль math',
+    tasks: [
+      {
+        id: 'm4t1',
+        level: 'легко',
+        title: 'Степень с умолчанием',
+        subtitle: 'параметр по умолчанию',
+        theory: '<p>Параметр может иметь значение по умолчанию: <code>def power(x, p=2):</code>. ' +
+                'Если второй аргумент не передали — берётся 2.</p>' +
+                '<p>Одна и та же функция вызывается по-разному: <code>power(5)</code> и <code>power(2, 10)</code>.</p>',
+        prompt: 'Первая строка — число x, вторая — показатель p. ' +
+                'Напиши функцию <code>power(x, p=2)</code> и выведи две строки: <code>power(x)</code> и <code>power(x, p)</code>.',
+        examples: [{ inp: '5\n2', out: '25\n25' }, { inp: '2\n10', out: '4\n1024' }],
+        starter: 'def power(x, p=2):\n    # верни x в степени p\n    return 0\n\n\nx = int(input())\np = int(input())\nprint(power(x))\nprint(power(x, p))\n',
+        tests: [
+          { stdin: '5\n2', expected: '25\n25' },
+          { stdin: '2\n10', expected: '4\n1024' },
+          { stdin: '3\n3', expected: '9\n27' },
+          { stdin: '1\n7', expected: '1\n1' }
+        ],
+        hint: 'В теле функции: return x ** p.',
+        solution: 'def power(x, p=2):\n    return x ** p\n\n\nx = int(input())\np = int(input())\nprint(power(x))\nprint(power(x, p))'
+      },
+      {
+        id: 'm4t2',
+        level: 'легко',
+        title: 'Функция возвращает список',
+        subtitle: 'return списка, диапазон аргументов',
+        theory: '<p>Функция может возвращать не одно число, а целый список: создаём его внутри, ' +
+                'наполняем и возвращаем через <code>return res</code>.</p>' +
+                '<p>Вызывающий код получает готовый список и может, например, склеить его в строку.</p>',
+        prompt: 'Ввод: два числа a и b (a ≤ b). Напиши функцию <code>evens(a, b)</code>, которая возвращает список ' +
+                'чётных чисел от a до b включительно. Выведи результат через пробел.',
+        examples: [{ inp: '2 8', out: '2 4 6 8' }],
+        starter: 'def evens(a, b):\n    res = []\n    # перебери диапазон\n    return res\n\n\na, b = [int(x) for x in input().split()]\nprint(" ".join(str(x) for x in evens(a, b)))\n',
+        tests: [
+          { stdin: '2 8', expected: '2 4 6 8' },
+          { stdin: '1 5', expected: '2 4' },
+          { stdin: '4 4', expected: '4' },
+          { stdin: '11 13', expected: '12' }
+        ],
+        hint: 'for i in range(a, b + 1): if i % 2 == 0: res.append(i)',
+        solution: 'def evens(a, b):\n    res = []\n    for i in range(a, b + 1):\n        if i % 2 == 0:\n            res.append(i)\n    return res\n\n\na, b = [int(x) for x in input().split()]\nprint(" ".join(str(x) for x in evens(a, b)))'
+      },
+      {
+        id: 'm4t3',
+        level: 'средне',
+        title: 'Сумма цифр через рекурсию',
+        subtitle: 'рекурсия без циклов',
+        theory: '<p>Число можно «разобрать» рекурсивно: последняя цифра — <code>n % 10</code>, остальное — <code>n // 10</code>. ' +
+                'Тогда <code>sum_digits(n) = n % 10 + sum_digits(n // 10)</code>, база — когда <code>n == 0</code>.</p>',
+        prompt: 'Считай натуральное число. Выведи сумму его цифр, посчитанную рекурсивной функцией <code>sum_digits(n)</code>.',
+        examples: [{ inp: '1234', out: '10' }],
+        starter: 'def sum_digits(n):\n    # база и шаг\n    return 0\n\n\nn = int(input())\nprint(sum_digits(n))\n',
+        tests: [
+          { stdin: '1234', expected: '10' },
+          { stdin: '9', expected: '9' },
+          { stdin: '1000', expected: '1' },
+          { stdin: '99999', expected: '45' }
+        ],
+        hint: 'if n == 0: return 0; иначе return n % 10 + sum_digits(n // 10).',
+        solution: 'def sum_digits(n):\n    if n == 0:\n        return 0\n    return n % 10 + sum_digits(n // 10)\n\n\nn = int(input())\nprint(sum_digits(n))'
+      },
+      {
+        id: 'm4t4',
+        level: 'средне',
+        title: 'Взаимно простые',
+        subtitle: 'функция + reuse',
+        theory: '<p>Хорошая функция используется несколько раз. Здесь НОД нужен как инструмент: ' +
+                'два числа взаимно простые, если их НОД равен 1.</p>' +
+                '<p>Функцию лучше писать отдельно от ввода-вывода: она принимает числа и возвращает результат.</p>',
+        prompt: 'Ввод: два числа через пробел. Напиши функцию <code>gcd(a, b)</code> и выведи <code>да</code>, ' +
+                'если числа взаимно простые (НОД = 1), иначе <code>нет</code>.',
+        examples: [{ inp: '9 28', out: 'да' }, { inp: '12 18', out: 'нет' }],
+        starter: 'def gcd(a, b):\n    # алгоритм Евклида\n    return 1\n\n\na, b = [int(x) for x in input().split()]\nif gcd(a, b) == 1:\n    print("да")\nelse:\n    print("нет")\n',
+        tests: [
+          { stdin: '9 28', expected: 'да' },
+          { stdin: '12 18', expected: 'нет' },
+          { stdin: '7 13', expected: 'да' },
+          { stdin: '100 75', expected: 'нет' }
+        ],
+        hint: 'Внутри gcd: while b != 0: a, b = b, a % b; затем return a.',
+        solution: 'def gcd(a, b):\n    while b != 0:\n        a, b = b, a % b\n    return a\n\n\na, b = [int(x) for x in input().split()]\nif gcd(a, b) == 1:\n    print("да")\nelse:\n    print("нет")'
+      },
+      {
+        id: 'm4t5',
+        level: 'средне',
+        title: 'Палиндромы пачкой',
+        subtitle: 'функция в цикле по строкам',
+        theory: '<p>Первая строка ввода может говорить, сколько будет строк: <code>n = int(input())</code>, ' +
+                'а дальше цикл <code>for i in range(n)</code> читает по одной строке.</p>' +
+                '<p>Так проверяют сразу много слов одной функцией — это и есть смысл функций.</p>',
+        prompt: 'Первая строка — количество слов N. Далее N строк со словами. Для каждого слова выведи ' +
+                '<code>да</code>, если это палиндром, иначе <code>нет</code> — каждое с новой строки. ' +
+                'Проверку оформи функцией <code>is_palindrome(s)</code>.',
+        examples: [{ inp: '2\nшалаш\nпривет', out: 'да\nнет' }],
+        starter: 'def is_palindrome(s):\n    # верни True или False\n    return False\n\n\nn = int(input())\nfor i in range(n):\n    word = input()\n    # выведи ответ\n',
+        tests: [
+          { stdin: '2\nшалаш\nпривет', expected: 'да\nнет' },
+          { stdin: '3\nа\nabba\nabc', expected: 'да\nда\nнет' },
+          { stdin: '1\nтопот', expected: 'да' }
+        ],
+        hint: 'В функции: return s == s[::-1]. В цикле: if is_palindrome(word): print("да") else: print("нет").',
+        solution: 'def is_palindrome(s):\n    return s == s[::-1]\n\n\nn = int(input())\nfor i in range(n):\n    word = input()\n    if is_palindrome(word):\n        print("да")\n    else:\n        print("нет")'
+      },
+      {
+        id: 'm4t6',
+        level: 'средне',
+        title: 'Модуль math',
+        subtitle: 'import math, округление форматом',
+        theory: '<p>Готовые функции берут из модулей: <code>import math</code> даёт <code>math.sqrt</code> (корень), ' +
+                '<code>math.floor</code>, <code>math.pi</code> и другие.</p>' +
+                '<p>Формат <code>f"{x:.2f}"</code> печатает число с двумя знаками после запятой — это не округление значения, ' +
+                'а формат вывода.</p>',
+        prompt: 'Ввод: два катета через пробел. Напиши функцию <code>hypot(a, b)</code> с использованием <code>math.sqrt</code> ' +
+                'и выведи гипотенузу с двумя знаками после запятой.',
+        examples: [{ inp: '3 4', out: '5.00' }, { inp: '1 1', out: '1.41' }],
+        starter: 'import math\n\n\ndef hypot(a, b):\n    # теорема Пифагора\n    return 0\n\n\na, b = [int(x) for x in input().split()]\nprint(f"{hypot(a, b):.2f}")\n',
+        tests: [
+          { stdin: '3 4', expected: '5.00' },
+          { stdin: '1 1', expected: '1.41' },
+          { stdin: '6 8', expected: '10.00' },
+          { stdin: '5 12', expected: '13.00' }
+        ],
+        hint: 'return math.sqrt(a * a + b * b) — или math.hypot(a, b).',
+        solution: 'import math\n\n\ndef hypot(a, b):\n    return math.sqrt(a * a + b * b)\n\n\na, b = [int(x) for x in input().split()]\nprint(f"{hypot(a, b):.2f}")'
+      }
+    ]
+  });
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.PYMODULES;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ===== m5-dannye.js ===== */
+/* ==========================================================================
+   Модуль 5 «Данные» — таблицы, статистика, проценты, гистограммы, CSV.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  global.PYMODULES = global.PYMODULES || [];
+  global.PYMODULES.push({
+    id: 'm5',
+    title: 'Модуль 5. Данные',
+    subtitle: 'статистика, таблицы, доли и проценты, гистограмма, разбор CSV',
+    tasks: [
+      {
+        id: 'm5t1',
+        level: 'легко',
+        title: 'Статистика ряда',
+        subtitle: 'N чисел: минимум, максимум, среднее',
+        theory: '<p>Классический разбор данных: прочитать N, затем N чисел, затем посчитать <code>min</code>, ' +
+                '<code>max</code> и среднее <code>sum / len</code>.</p>' +
+                '<p>Среднее почти всегда дробное — выводи форматом <code>f"{avg:.1f}"</code>.</p>',
+        prompt: 'Первая строка — количество чисел N. Вторая — N чисел через пробел. ' +
+                'Выведи три строки: минимум, максимум и среднее с одним знаком после запятой.',
+        examples: [{ inp: '4\n4 8 15 16', out: '4\n16\n10.8' }],
+        starter: 'n = int(input())\nnums = [int(x) for x in input().split()]\n\n# три строки\n',
+        tests: [
+          { stdin: '4\n4 8 15 16', expected: '4\n16\n10.8' },
+          { stdin: '3\n5 5 5', expected: '5\n5\n5.0' },
+          { stdin: '2\n-3 7', expected: '-3\n7\n2.0' },
+          { stdin: '5\n1 2 3 4 5', expected: '1\n5\n3.0' }
+        ],
+        hint: 'avg = sum(nums) / len(nums). Каждое значение — отдельным print().',
+        solution: 'n = int(input())\nnums = [int(x) for x in input().split()]\navg = sum(nums) / len(nums)\nprint(min(nums))\nprint(max(nums))\nprint(f"{avg:.1f}")'
+      },
+      {
+        id: 'm5t2',
+        level: 'средне',
+        title: 'Средний балл по ученикам',
+        subtitle: 'таблица из строк, split по пробелам',
+        theory: '<p>Строка таблицы — это тоже данные: <code>parts = line.split()</code> даёт <code>["Аня", "4", "5", "5"]</code>. ' +
+                'Первое поле — текст, остальные нужно превратить в числа.</p>' +
+                '<p>Так обычный текст становится таблицей без всяких библиотек.</p>',
+        prompt: 'Первая строка — количество учеников N. Далее N строк вида «Имя б1 б2 б3». ' +
+                'Для каждого ученика выведи строку <code>Имя среднее</code> с одним знаком после запятой, в порядке ввода.',
+        examples: [{ inp: '2\nАня 4 5 5\nБоря 3 3 4', out: 'Аня 4.7\nБоря 3.3' }],
+        starter: 'n = int(input())\nfor i in range(n):\n    parts = input().split()\n    name = parts[0]\n    # посчитай среднее по остальным полям\n',
+        tests: [
+          { stdin: '2\nАня 4 5 5\nБоря 3 3 4', expected: 'Аня 4.7\nБоря 3.3' },
+          { stdin: '1\nВера 5 5 5', expected: 'Вера 5.0' },
+          { stdin: '2\nГоша 2 3\nДаша 4', expected: 'Гоша 2.5\nДаша 4.0' }
+        ],
+        hint: 'marks = [int(x) for x in parts[1:]]; avg = sum(marks) / len(marks); print(name, f"{avg:.1f}").',
+        solution: 'n = int(input())\nfor i in range(n):\n    parts = input().split()\n    name = parts[0]\n    marks = [int(x) for x in parts[1:]]\n    avg = sum(marks) / len(marks)\n    print(name, f"{avg:.1f}")'
+      },
+      {
+        id: 'm5t3',
+        level: 'средне',
+        title: 'Подсчёт по категориям',
+        subtitle: 'словарь-счётчик и сортировка вывода',
+        theory: '<p>Группировка — базовый шаг анализа данных: одна переменная хранит категорию, словарь накапливает счётчики ' +
+                '<code>counts[cat] = counts.get(cat, 0) + 1</code>.</p>' +
+                '<p>Вывод в отсортированном порядке делает результат предсказуемым: <code>for cat in sorted(counts)</code>.</p>',
+        prompt: 'Первая строка — количество записей N. Далее N строк вида «товар категория». ' +
+                'Выведи по строке <code>категория: количество</code> в алфавитном порядке категорий.',
+        examples: [{ inp: '3\nхлеб еда\nстол мебель\nсыр еда', out: 'еда: 2\nмебель: 1' }],
+        starter: 'n = int(input())\ncounts = {}\nfor i in range(n):\n    parts = input().split()\n    cat = parts[1]\n    # увеличить счётчик\n\n# вывести по алфавиту\n',
+        tests: [
+          { stdin: '3\nхлеб еда\nстол мебель\nсыр еда', expected: 'еда: 2\nмебель: 1' },
+          { stdin: '4\na x\nb y\nc x\nd y', expected: 'x: 2\ny: 2' },
+          { stdin: '1\nчай напиток', expected: 'напиток: 1' }
+        ],
+        hint: 'После подсчёта: for cat in sorted(counts): print(f"{cat}: {counts[cat]}").',
+        solution: 'n = int(input())\ncounts = {}\nfor i in range(n):\n    parts = input().split()\n    cat = parts[1]\n    counts[cat] = counts.get(cat, 0) + 1\nfor cat in sorted(counts):\n    print(f"{cat}: {counts[cat]}")'
+      },
+      {
+        id: 'm5t4',
+        level: 'средне',
+        title: 'Доли в процентах',
+        subtitle: 'нормировка, формат .1f',
+        theory: '<p>Доля элемента: <code>value / total</code>. В процентах — умножить на 100.</p>' +
+                '<p>Чтобы сумма процентов не «плясала», считаем <code>total</code> один раз до цикла, а не внутри.</p>',
+        prompt: 'Ввод: числа через пробел (все положительные). Выведи долю каждого числа в процентах ' +
+                'с одним знаком после запятой, через пробел.',
+        examples: [{ inp: '1 1 2', out: '25.0 25.0 50.0' }],
+        starter: 'nums = [int(x) for x in input().split()]\ntotal = sum(nums)\nres = []\n\n# посчитай проценты\n\nprint(" ".join(res))\n',
+        tests: [
+          { stdin: '1 1 2', expected: '25.0 25.0 50.0' },
+          { stdin: '5 5', expected: '50.0 50.0' },
+          { stdin: '1 3', expected: '25.0 75.0' },
+          { stdin: '10 20 30 40', expected: '10.0 20.0 30.0 40.0' }
+        ],
+        hint: 'Для каждого числа: percent = v / total * 100, затем f"{percent:.1f}".',
+        solution: 'nums = [int(x) for x in input().split()]\ntotal = sum(nums)\nres = []\nfor v in nums:\n    percent = v / total * 100\n    res.append(f"{percent:.1f}")\nprint(" ".join(res))'
+      },
+      {
+        id: 'm5t5',
+        level: 'средне',
+        title: 'Текстовая гистограмма',
+        subtitle: 'визуализация данных в консоли',
+        theory: '<p>Гистограмма — способ увидеть данные глазами: длина строки из символов показывает величину. ' +
+                '<code>"#" * 3</code> даёт <code>"###"</code>.</p>' +
+                '<p>Такой приём часто используют в отчётах и логах, где нет графиков.</p>',
+        prompt: 'Ввод во второй строке — числа через пробел (каждое от 0 до 20). Для каждого числа выведи строку из символов ' +
+                '<code>#</code> длиной, равной числу. Если число 0 — выведи пустую строку.',
+        examples: [{ inp: '5\n3 1 0 5', out: '###\n#\n\n#####' }],
+        starter: 'n = int(input())\nnums = [int(x) for x in input().split()]\n\nfor v in nums:\n    # строка из решёток\n    pass\n',
+        tests: [
+          { stdin: '5\n3 1 0 5', expected: '###\n#\n\n#####' },
+          { stdin: '3\n2 2 2', expected: '##\n##\n##' },
+          { stdin: '2\n20 0', expected: '####################\n' }
+        ],
+        hint: 'print("#" * v) — печатает и пустую строку, если v равно 0.',
+        solution: 'n = int(input())\nnums = [int(x) for x in input().split()]\nfor v in nums:\n    print("#" * v)'
+      },
+      {
+        id: 'm5t6',
+        level: 'сложно',
+        title: 'Разбор CSV и итоги по городам',
+        subtitle: 'split по запятой, агрегация, сортировка',
+        theory: '<p>CSV — это просто строки с разделителем: <code>line.split(",")</code>. Пробелов вокруг запятых тут нет, ' +
+                'поэтому <code>split()</code> не подойдёт — он режет по пробелам.</p>' +
+                '<p>Агрегация: для каждого города копим сумму в словаре: ' +
+                '<code>totals[city] = totals.get(city, 0) + amount</code>.</p>',
+        prompt: 'Первая строка — количество строк N. Далее N строк вида <code>имя,город,сумма</code>. ' +
+                'Выведи для каждого города строку <code>город: сумма</code> в алфавитном порядке городов.',
+        examples: [{ inp: '2\nАня,Москва,100\nБоря,Омск,50', out: 'Москва: 100\nОмск: 50' }],
+        starter: 'n = int(input())\ntotals = {}\nfor i in range(n):\n    line = input()\n    parts = line.split(",")\n    # город и сумма\n\nfor city in sorted(totals):\n    print(f"{city}: {totals[city]}")\n',
+        tests: [
+          { stdin: '2\nАня,Москва,100\nБоря,Омск,50', expected: 'Москва: 100\nОмск: 50' },
+          { stdin: '3\nАня,Москва,100\nБоря,Москва,250\nВера,Омск,10', expected: 'Москва: 350\nОмск: 10' },
+          { stdin: '1\nГоша,Томск,0', expected: 'Томск: 0' },
+          { stdin: '4\na,Казань,1\nb,Казань,2\nc,Пермь,3\nd,Пермь,4', expected: 'Казань: 3\nПермь: 7' }
+        ],
+        hint: 'city = parts[1]; amount = int(parts[2]); totals[city] = totals.get(city, 0) + amount.',
+        solution: 'n = int(input())\ntotals = {}\nfor i in range(n):\n    line = input()\n    parts = line.split(",")\n    city = parts[1]\n    amount = int(parts[2])\n    totals[city] = totals.get(city, 0) + amount\nfor city in sorted(totals):\n    print(f"{city}: {totals[city]}")'
+      }
+    ]
+  });
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.PYMODULES;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ===== m6-proekt.js ===== */
+/* ==========================================================================
+   Модуль 6 «Итоговый проект» — задачи, где нужно собрать всё вместе.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  global.PYMODULES = global.PYMODULES || [];
+  global.PYMODULES.push({
+    id: 'm6',
+    title: 'Модуль 6. Итоговый проект',
+    subtitle: 'сжатие, разбор выражений, валидация, Фибоначчи, анаграммы',
+    tasks: [
+      {
+        id: 'm6t1',
+        level: 'средне',
+        title: 'Сжатие повторов (RLE)',
+        subtitle: 'два указателя во while',
+        theory: '<p>RLE-сжатие: серия одинаковых символов заменяется символом и количеством: ' +
+                '<code>"aaabcc"</code> → <code>"a3b1c2"</code>.</p>' +
+                '<p>Нужен счётчик <code>i</code>, который сдвигается сразу на длину найденной серии, — иначе символ посчитается дважды.</p>',
+        prompt: 'Считай строку без пробелов. Сожми её по правилу RLE: символ + количество повторов подряд. Выведи результат.',
+        examples: [{ inp: 'aaabcc', out: 'a3b1c2' }],
+        starter: 's = input()\nres = ""\ni = 0\nwhile i < len(s):\n    # найди длину серии, начиная с i\n    pass\n\nprint(res)\n',
+        tests: [
+          { stdin: 'aaabcc', expected: 'a3b1c2' },
+          { stdin: 'a', expected: 'a1' },
+          { stdin: 'aabb', expected: 'a2b2' },
+          { stdin: 'abcd', expected: 'a1b1c1d1' },
+          { stdin: 'zzzzzzzzzz', expected: 'z10' }
+        ],
+        hint: 'Внутри: ch = s[i]; k = 1; while i + k < len(s) and s[i + k] == ch: k += 1; res += ch + str(k); i += k.',
+        solution: 's = input()\nres = ""\ni = 0\nwhile i < len(s):\n    ch = s[i]\n    k = 1\n    while i + k < len(s) and s[i + k] == ch:\n        k += 1\n    res += ch + str(k)\n    i += k\nprint(res)'
+      },
+      {
+        id: 'm6t2',
+        level: 'средне',
+        title: 'Калькулятор из строки',
+        subtitle: 'разбор текста на части',
+        theory: '<p>Выражение <code>"12+5"</code> — это строка. Чтобы её посчитать, нужно найти позицию знака операции, ' +
+                'разрезать строку срезами и превратить части в числа.</p>' +
+                '<p>Срезы <code>expr[:i]</code> и <code>expr[i+1:]</code> дают левую и правую части без знака.</p>',
+        prompt: 'Считай строку вида «число операция число» без пробелов, где операция — одна из <code>+</code>, ' +
+                '<code>-</code>, <code>*</code>, а числа положительные. Выведи результат.',
+        examples: [{ inp: '12+5', out: '17' }, { inp: '7*6', out: '42' }],
+        starter: 'expr = input()\n\n# найди, где заканчивается первое число\ni = 1\nwhile i < len(expr) and expr[i].isdigit():\n    i += 1\n\n# разбери и посчитай\n',
+        tests: [
+          { stdin: '12+5', expected: '17' },
+          { stdin: '7*6', expected: '42' },
+          { stdin: '10-3', expected: '7' },
+          { stdin: '100+1', expected: '101' },
+          { stdin: '9*9', expected: '81' }
+        ],
+        hint: 'a = int(expr[:i]); op = expr[i]; b = int(expr[i+1:]). Затем три ветки: if/elif/else.',
+        solution: 'expr = input()\ni = 1\nwhile i < len(expr) and expr[i].isdigit():\n    i += 1\na = int(expr[:i])\nop = expr[i]\nb = int(expr[i + 1:])\nif op == "+":\n    print(a + b)\nelif op == "-":\n    print(a - b)\nelse:\n    print(a * b)'
+      },
+      {
+        id: 'm6t3',
+        level: 'легко',
+        title: 'Проверка пароля',
+        subtitle: 'флаги и условия',
+        theory: '<p>Проверка «на всё сразу» делается флагами: заводим <code>has_digit = False</code>, ' +
+                'идём по символам и поднимаем флаг, когда условие выполнено.</p>' +
+                '<p>Итог — одна составная проверка через <code>and</code>. Флаги удобнее, чем вложенные условия: ' +
+                'видно, какое именно требование не выполнено.</p>',
+        prompt: 'Считай пароль. Пароль надёжный, если в нём не меньше 8 символов, есть хотя бы одна цифра ' +
+                'и хотя бы одна заглавная буква. Выведи <code>надёжный</code> или <code>слабый</code>.',
+        examples: [{ inp: 'Qwerty12', out: 'надёжный' }, { inp: 'qwerty12', out: 'слабый' }],
+        starter: 'password = input()\n\nhas_digit = False\nhas_upper = False\n# перебери символы\n\nif len(password) >= 8 and has_digit and has_upper:\n    print("надёжный")\nelse:\n    print("слабый")\n',
+        tests: [
+          { stdin: 'Qwerty12', expected: 'надёжный' },
+          { stdin: 'qwerty12', expected: 'слабый' },
+          { stdin: 'Qwerty', expected: 'слабый' },
+          { stdin: 'Qwerty123', expected: 'надёжный' },
+          { stdin: '12345678', expected: 'слабый' }
+        ],
+        hint: 'В цикле по символам: if ch.isdigit(): has_digit = True; if ch.isupper(): has_upper = True.',
+        solution: 'password = input()\nhas_digit = False\nhas_upper = False\nfor ch in password:\n    if ch.isdigit():\n        has_digit = True\n    if ch.isupper():\n        has_upper = True\nif len(password) >= 8 and has_digit and has_upper:\n    print("надёжный")\nelse:\n    print("слабый")'
+      },
+      {
+        id: 'm6t4',
+        level: 'средне',
+        title: 'Числа Фибоначчи до N',
+        subtitle: 'while и обмен значений',
+        theory: '<p>Последовательность Фибоначчи: каждое следующее число — сумма двух предыдущих. ' +
+                'Держим два числа <code>a</code> и <code>b</code> и обновляем их: <code>a, b = b, a + b</code>.</p>' +
+                '<p><code>while a &lt;= n</code> — цикл идёт, пока число не вышло за границу.</p>',
+        prompt: 'Считай N. Выведи через пробел все числа Фибоначчи, начиная с двух единиц, которые не больше N.',
+        examples: [{ inp: '10', out: '1 1 2 3 5 8' }],
+        starter: 'n = int(input())\na = 1\nb = 1\nres = []\n\nwhile a <= n:\n    # добавь a и сдвинь пару\n    pass\n\nprint(" ".join(res))\n',
+        tests: [
+          { stdin: '10', expected: '1 1 2 3 5 8' },
+          { stdin: '1', expected: '1 1' },
+          { stdin: '20', expected: '1 1 2 3 5 8 13' },
+          { stdin: '2', expected: '1 1 2' }
+        ],
+        hint: 'Внутри цикла: res.append(str(a)); a, b = b, a + b.',
+        solution: 'n = int(input())\na = 1\nb = 1\nres = []\nwhile a <= n:\n    res.append(str(a))\n    a, b = b, a + b\nprint(" ".join(res))'
+      },
+      {
+        id: 'm6t5',
+        level: 'легко',
+        title: 'Анаграммы',
+        subtitle: 'сортировка букв как подпись слова',
+        theory: '<p>Два слова — анаграммы, если состоят из одинаковых букв в разном порядке. ' +
+                'Если отсортировать буквы, у анаграмм получится одинаковая строка: <code>"кот"</code> и <code>"ток"</code> → <code>"кот"</code>.</p>' +
+                '<p><code>sorted("кот")</code> возвращает список букв — сравнить можно и списки.</p>',
+        prompt: 'Ввод: два слова, каждое на своей строке. Выведи <code>да</code>, если это анаграммы, иначе <code>нет</code>.',
+        examples: [{ inp: 'кот\nток', out: 'да' }, { inp: 'кот\nпёс', out: 'нет' }],
+        starter: 'first = input()\nsecond = input()\n\n# сравни отсортированные буквы\n',
+        tests: [
+          { stdin: 'кот\nток', expected: 'да' },
+          { stdin: 'кот\nкто', expected: 'да' },
+          { stdin: 'кот\nпёс', expected: 'нет' },
+          { stdin: 'аб\nа', expected: 'нет' }
+        ],
+        hint: 'if sorted(first) == sorted(second): print("да") — иначе print("нет").',
+        solution: 'first = input()\nsecond = input()\nif sorted(first) == sorted(second):\n    print("да")\nelse:\n    print("нет")'
+      }
+    ]
+  });
+  if (typeof module !== 'undefined' && module.exports) module.exports = global.PYMODULES;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>/* ==========================================================================
@@ -2245,7 +3091,12 @@ a { color: var(--accent); }
 (function () {
   'use strict';
 
-  var TASKS = window.PYTASKS || [];
+  var MODULES = window.PYMODULES || [];
+  // плоский список задач: [ { …, mod: индекс модуля } ]
+  var TASKS = [];
+  MODULES.forEach(function (m, mi) {
+    m.tasks.forEach(function (t) { t.mod = mi; TASKS.push(t); });
+  });
   var Py = window.PyTrainer;
   var STORE_KEY = 'pyclass.v1';
 
@@ -2516,14 +3367,25 @@ a { color: var(--accent); }
   function renderSidebar() {
     var list = $('taskList');
     var html = '';
-    TASKS.forEach(function (t, i) {
-      var done = !!state.solved[t.id];
-      var lock = !unlocked(i);
-      html += '<button class="task-item' + (i === state.current ? ' active' : '') + (done ? ' done' : '') +
-        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
-        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
-        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
-        '<span class="t-sub">' + esc(t.subtitle) + '</span></span></button>';
+    var flat = 0;
+    MODULES.forEach(function (m, mi) {
+      var doneInModule = 0;
+      m.tasks.forEach(function (t) { if (state.solved[t.id]) doneInModule++; });
+      var activeHere = (TASKS[state.current] && TASKS[state.current].mod === mi);
+      html += '<div class="module-head' + (activeHere ? ' active' : '') + '">' +
+        '<span class="m-title">' + esc(m.title) + '</span>' +
+        '<span class="m-count">' + doneInModule + '/' + m.tasks.length + '</span></div>';
+      m.tasks.forEach(function (t) {
+        var i = flat++;
+        var done = !!state.solved[t.id];
+        var lock = !unlocked(i);
+        var num = i - MODULES.slice(0, mi).reduce(function (acc, mm) { return acc + mm.tasks.length; }, 0) + 1;
+        html += '<button class="task-item' + (i === state.current ? ' active' : '') + (done ? ' done' : '') +
+          (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+          '<span class="num">' + (done ? '✓' : (lock ? '🔒' : num)) + '</span>' +
+          '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+          '<span class="t-sub">' + esc(t.subtitle) + '</span></span></button>';
+      });
     });
     list.innerHTML = html;
     Array.prototype.forEach.call(list.querySelectorAll('.task-item'), function (b) {
@@ -2539,6 +3401,7 @@ a { color: var(--accent); }
     var n = solvedCount();
     $('progressBar').style.width = (n / TASKS.length * 100) + '%';
     $('progressText').innerHTML = '<b>' + n + '</b> из ' + TASKS.length + ' задач';
+    $('modulesBadge').textContent = 'модулей: ' + MODULES.length;
   }
 
   function openTask(i) {
@@ -2546,6 +3409,11 @@ a { color: var(--accent); }
     state.lastRun = null;
     var t = TASKS[i];
     $('taskTitle').textContent = t.title;
+    var mod = MODULES[t.mod];
+    $('taskModule').textContent = mod ? mod.title : '';
+    var lvl = $('taskLevel');
+    if (t.level) { lvl.textContent = t.level; lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard'); }
+    else { lvl.textContent = ''; lvl.className = 'chip'; }
     $('taskSub').textContent = t.subtitle;
     $('theory').innerHTML = t.theory;
     $('prompt').innerHTML = t.prompt;

@@ -12,9 +12,10 @@
 <header class="topbar">
   <div class="logo">
     <span class="logo-mark">Py</span>
-    <span>Python-класс<small>тренажёр IT-квантума · модуль 1 «Основы»</small></span>
+    <span>Python-класс<small>тренажёр IT-квантума · курс Python: 6 модулей</small></span>
   </div>
   <div class="spacer"></div>
+  <span class="badge" id="modulesBadge"></span>
   <span class="badge engine" id="engineBadge" title="Код выполняется прямо в браузере: ни сервера, ни установки, ни интернета.">движок: встроенный</span>
   <div class="progress-wrap">
     <div class="progress"><i id="progressBar"></i></div>
@@ -24,7 +25,7 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-head">Задачи модуля</div>
+    <div class="sidebar-head">Курс Python</div>
     <div class="task-list" id="taskList"></div>
     <div class="sidebar-foot">
       <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
@@ -35,6 +36,7 @@
   <main class="work">
     <section class="card">
       <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
         <h1 id="taskTitle"></h1>
         <div class="sub" id="taskSub"></div>
       </div>

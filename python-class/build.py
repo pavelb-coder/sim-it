@@ -5,10 +5,15 @@ import pathlib
 BASE = pathlib.Path(__file__).resolve().parent   # python-class/
 src = BASE / 'src'
 html = (src / 'index.html').read_text(encoding='utf-8')
+modules = sorted((src / 'modules').glob('*.js'))
+assert modules, 'нет файлов задач в src/modules'
+module_js = '\n'.join(
+    '/* ===== %s ===== */\n%s' % (m.name, m.read_text(encoding='utf-8')) for m in modules
+)
 parts = {
     '/*__CSS__*/': (src / 'style.css').read_text(encoding='utf-8'),
     '/*__PY__*/': (src / 'py.js').read_text(encoding='utf-8'),
-    '/*__TASKS__*/': (src / 'tasks.js').read_text(encoding='utf-8'),
+    '/*__TASKS__*/': module_js,
     '/*__APP__*/': (src / 'app.js').read_text(encoding='utf-8'),
 }
 for marker, code in parts.items():
@@ -26,3 +31,4 @@ print('собрано:', target, round(len(html) / 1024, 1), 'КБ')
 root_copy = BASE.parent / 'index.html'
 root_copy.write_text(html, encoding='utf-8')
 print('опубликовано:', root_copy.name, '(GitHub Pages + локальный сервер)')
+print('модулей в сборке:', len(modules))

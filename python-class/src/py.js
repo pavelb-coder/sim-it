@@ -21,6 +21,29 @@
   function F(v) { this.v = v; }                 // float-обёртка: отличает 2.0 от 2
   function isF(v) { return v instanceof F; }
   function isNum(v) { return typeof v === 'number' || v instanceof F; }
+  function S(items) {                    // множество: Map «значение -> true»
+    this.m = new Map();
+    var self = this;
+    (items || []).forEach(function (v) { self.add(v); });
+  }
+  S.prototype.add = function (v) {
+    var k = hashKey(v);
+    this.m.set(k, v);
+    return this;
+  };
+  S.prototype.has = function (v) { return this.m.has(hashKey(v)); };
+  S.prototype.delete = function (v) { return this.m.delete(hashKey(v)); };
+  S.prototype.size = function () { return this.m.size; };
+  S.prototype.values = function () { var r = []; this.m.forEach(function (v) { r.push(v); }); return r; };
+  function hashKey(v) {
+    if (Array.isArray(v) || v instanceof Map || v instanceof S) {
+      throw pyErr('список нельзя положить в множество (unhashable)', null, 'TypeError');
+    }
+    if (isNum(v)) return 'n:' + num(v);
+    if (typeof v === 'string') return 's:' + v;
+    if (typeof v === 'boolean') return 'n:' + (v ? 1 : 0);
+    return 'x:' + String(v);
+  }
   function num(v) { return v instanceof F ? v.v : v; }
   function mkNum(n, asFloat) { return asFloat ? new F(n) : n; }
   function pyRound(x) {
@@ -37,6 +60,7 @@
   function typeName(v) {
     if (v === null || v === undefined) return 'None';
     if (v instanceof F) return 'float';
+    if (v instanceof S) return 'set';
     if (typeof v === 'boolean') return 'bool';
     if (typeof v === 'number') return Number.isInteger(v) ? 'int' : 'float';
     if (typeof v === 'string') return 'str';
@@ -483,18 +507,38 @@
     return this.parseComparison();
   };
 
-  Parser.prototype.parseComparison = function () {
+  Parser.prototype.parseBitOr = function () {
+    var line = this.peek().line;
+    var left = this.parseBitAnd();
+    while (this.atOp('|')) {
+      this.next();
+      left = { type: 'Bin', op: '|', l: left, r: this.parseBitAnd(), line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseBitAnd = function () {
     var line = this.peek().line;
     var left = this.parseArith();
+    while (this.atOp('&')) {
+      this.next();
+      left = { type: 'Bin', op: '&', l: left, r: this.parseArith(), line: line };
+    }
+    return left;
+  };
+
+  Parser.prototype.parseComparison = function () {
+    var line = this.peek().line;
+    var left = this.parseBitOr();
     var ops = [], operands = [left];
     for (;;) {
       var t = this.peek();
       if (t.type === 'OP' && ['==','!=','<','>','<=','>='].indexOf(t.value) >= 0) {
-        this.next(); ops.push(t.value); operands.push(this.parseArith());
+        this.next(); ops.push(t.value); operands.push(this.parseBitOr());
       } else if (this.atKw('in')) {
-        this.next(); ops.push('in'); operands.push(this.parseArith());
+        this.next(); ops.push('in'); operands.push(this.parseBitOr());
       } else if (this.atKw('not') && this.peek(1).type === 'NAME' && this.peek(1).value === 'in') {
-        this.next(); this.next(); ops.push('not in'); operands.push(this.parseArith());
+        this.next(); this.next(); ops.push('not in'); operands.push(this.parseBitOr());
       } else break;
     }
     if (!ops.length) return left;
@@ -552,7 +596,9 @@
             this.next();
             kwargs.push({ name: kwName, value: this.parseExpr() });
           } else {
-            args.push(this.parseExpr());
+            var argExpr = this.parseExpr();
+            if (this.atKw('for')) argExpr = this.parseCompClauses(argExpr, node.line);
+            args.push(argExpr);
           }
           if (!this.atOp(')')) this.expect('OP', ',');
         }
@@ -644,33 +690,51 @@
     }
     if (t.type === 'OP' && t.value === '{') {
       this.next();
-      var keys = [], vals = [];
-      while (!this.atOp('}')) {
-        keys.push(this.parseExpr());
-        this.expect('OP', ':', 'в словаре нужно «:» после ключа');
+      if (this.atOp('}')) { this.next(); return { type: 'Dict', keys: [], values: [], line: t.line }; }
+      var firstKey = this.parseExpr();
+      if (this.atOp(':')) {
+        var keys = [firstKey], vals = [];
+        this.next();
         vals.push(this.parseExpr());
-        if (!this.atOp('}')) this.expect('OP', ',');
+        while (this.eat('OP', ',')) {
+          if (this.atOp('}')) break;
+          keys.push(this.parseExpr());
+          this.expect('OP', ':', 'в словаре нужно «:» после ключа');
+          vals.push(this.parseExpr());
+        }
+        this.expect('OP', '}');
+        return { type: 'Dict', keys: keys, values: vals, line: t.line };
+      }
+      var setItems = [firstKey];
+      while (this.eat('OP', ',')) {
+        if (this.atOp('}')) break;
+        setItems.push(this.parseExpr());
       }
       this.expect('OP', '}');
-      return { type: 'Dict', keys: keys, values: vals, line: t.line };
+      return { type: 'SetLit', items: setItems, line: t.line };
     }
     throw pyErr('неожидаемый символ «' + (t.value || t.type) + '»', t.line, 'SyntaxError');
   };
 
-  Parser.prototype.parseComp = function (elt, line) {
+  Parser.prototype.parseCompClauses = function (elt, line) {
     var clauses = [];
     while (this.atKw('for')) {
       this.next();
       var target = this.parseForTarget();
-      if (!this.atKw('in')) throw pyErr('в генераторе списка ожидается «in»', line, 'SyntaxError');
+      if (!this.atKw('in')) throw pyErr('в генераторе ожидается «in»', line, 'SyntaxError');
       this.next();
       var iter = this.parseOr();
       var conds = [];
       while (this.atKw('if')) { this.next(); conds.push(this.parseOr()); }
       clauses.push({ target: target, iter: iter, conds: conds });
     }
-    this.expect('OP', ']', 'не закрыта квадратная скобка в генераторе списка');
     return { type: 'Comp', elt: elt, clauses: clauses, line: line };
+  };
+
+  Parser.prototype.parseComp = function (elt, line) {
+    var node = this.parseCompClauses(elt, line);
+    this.expect('OP', ']', 'не закрыта квадратная скобка в генераторе списка');
+    return node;
   };
 
   Parser.prototype.parseFString = function (raw, line) {
@@ -719,6 +783,7 @@
   function truthy(v) {
     if (v === null || v === undefined) return false;
     if (v instanceof F) return v.v !== 0;
+    if (v instanceof S) return v.size() > 0;
     if (typeof v === 'boolean') return v;
     if (typeof v === 'number') return v !== 0;
     if (typeof v === 'string') return v.length > 0;
@@ -741,6 +806,11 @@
     if (typeof v === 'number') return fmtNum(v);
     if (typeof v === 'string') return v;
     if (Array.isArray(v)) return '[' + v.map(pyRepr).join(', ') + ']';
+    if (v instanceof S) {
+      var items = v.values();
+      if (!items.length) return 'set()';
+      return '{' + items.map(pyRepr).join(', ') + '}';
+    }
     if (v instanceof Map) {
       var s = '{', first = true;
       v.forEach(function (val, key) {
@@ -763,6 +833,7 @@
   function toList(v, line) {
     if (Array.isArray(v)) return v;
     if (typeof v === 'string') return v.split('');
+    if (v instanceof S) return v.values();
     if (v instanceof Map) { var ks = []; v.forEach(function (_, k) { ks.push(k); }); return ks; }
     throw pyErr('объект ' + typeName(v) + ' не перебирается в цикле', line, 'TypeError');
   }
@@ -776,6 +847,12 @@
       if (a.length !== b.length) return false;
       for (var i = 0; i < a.length; i++) if (!pyEq(a[i], b[i])) return false;
       return true;
+    }
+    if (a instanceof S && b instanceof S) {
+      if (a.size() !== b.size()) return false;
+      var same = true;
+      a.m.forEach(function (_, k) { if (!b.m.has(k)) same = false; });
+      return same;
     }
     if (a instanceof Map && b instanceof Map) {
       if (a.size !== b.size) return false;
@@ -808,6 +885,7 @@
       for (var i = 0; i < haystack.length; i++) if (pyEq(haystack[i], needle)) return true;
       return false;
     }
+    if (haystack instanceof S) return haystack.has(needle);
     if (haystack instanceof Map) return haystack.has(needle);
     throw pyErr('операция «in» не работает с ' + typeName(haystack), line, 'TypeError');
   }
@@ -848,6 +926,11 @@
         for (var j = 0; j < Math.floor(num(l)); j++) out2 = out2.concat(r);
         return out2;
       }
+    }
+    if (l instanceof S && r instanceof S) {
+      if (op === '|') { var u = new S(l.values()); r.m.forEach(function (v) { u.add(v); }); return u; }
+      if (op === '&') { var it = new S(); l.m.forEach(function (v, k) { if (r.m.has(k)) it.add(v); }); return it; }
+      if (op === '-') { var df = new S(); l.m.forEach(function (v, k) { if (!r.m.has(k)) df.add(v); }); return df; }
     }
     throw typeErr(op, l, r, line);
   }
@@ -1103,6 +1186,11 @@
         for (var j = 0; j < n.items.length; j++) tarr.push(this.eval(n.items[j], scope));
         return tarr;
       }
+      case 'SetLit': {
+        var setItems = new S();
+        for (var si = 0; si < n.items.length; si++) setItems.add(this.eval(n.items[si], scope));
+        return setItems;
+      }
       case 'Dict': {
         var m = new Map();
         for (var d = 0; d < n.keys.length; d++) m.set(this.eval(n.keys[d], scope), this.eval(n.values[d], scope));
@@ -1259,7 +1347,11 @@
       var strMethods = {
         upper: function () { return obj.toUpperCase(); },
         lower: function () { return obj.toLowerCase(); },
-        title: function () { return obj.replace(/\w\S*/g, function (w) { return w[0].toUpperCase() + w.slice(1).toLowerCase(); }); },
+        title: function () {
+          return obj.replace(/[\p{L}\p{N}_']+/gu, function (w) {
+            return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+          });
+        },
         capitalize: function () { return obj.charAt(0).toUpperCase() + obj.slice(1).toLowerCase(); },
         strip: function (args) { return stripChars(obj, args[0], true, true); },
         lstrip: function (args) { return stripChars(obj, args[0], true, false); },
@@ -1317,13 +1409,40 @@
           throw pyErr('значения ' + pyRepr(args[0]) + ' нет в списке', line, 'ValueError');
         },
         count: function (args) { var c = 0; for (var i = 0; i < obj.length; i++) if (pyEq(obj[i], args[0])) c++; return c; },
-        sort: function () { obj.sort(function (a, b) { return pyCmp(a, b, line); }); return null; },
+        sort: function (args, kwargs) {
+          var rev = false;
+          (kwargs || []).forEach(function (kw) {
+            if (kw.name === 'reverse') rev = truthy(kw.value);
+            else if (kw.name === 'key') throw pyErr('key= в тренажёре не поддерживается: отсортируй по правилу вручную', line, 'NotSupported');
+          });
+          obj.sort(function (a, b) { return pyCmp(a, b, line); });
+          if (rev) obj.reverse();
+          return null;
+        },
         reverse: function () { obj.reverse(); return null; },
         copy: function () { return obj.slice(); },
         clear: function () { obj.length = 0; return null; }
       };
       if (listMethods[name]) return wrapMethod(listMethods[name], name);
       throw pyErr('у списка нет метода «' + name + '»', line, 'AttributeError');
+    }
+
+    if (obj instanceof S) {
+      var n0 = obj;
+      var setMethods = {
+        add: function (args) { n0.add(args[0]); return null; },
+        discard: function (args) { n0.delete(args[0]); return null; },
+        remove: function (args) {
+          if (!n0.has(args[0])) throw pyErr('элемента ' + pyRepr(args[0]) + ' нет в множестве', line, 'KeyError');
+          n0.delete(args[0]); return null;
+        },
+        union: function (args) { var u = new S(n0.values()); toList(args[0], line).forEach(function (v) { u.add(v); }); return u; },
+        intersection: function (args) { var o = toList(args[0], line); var r = new S(); r.m.forEach; n0.values().forEach(function (v) { if (o.some(function (x) { return pyEq(x, v); })) r.add(v); }); return r; },
+        copy: function () { return new S(n0.values()); },
+        clear: function () { n0.m.clear(); return null; }
+      };
+      if (setMethods[name]) return wrapMethod(setMethods[name], name);
+      throw pyErr('у множества нет метода «' + name + '»', line, 'AttributeError');
     }
 
     if (obj instanceof Map) {
@@ -1452,6 +1571,7 @@
         var v = args[0];
         if (typeof v === 'string') return v.length;
         if (Array.isArray(v)) return v.length;
+        if (v instanceof S) return v.size();
         if (v instanceof Map) return v.size;
         throw pyErr('у объекта ' + typeName(v) + ' нет длины', line, 'TypeError');
       }, 'len');
@@ -1511,7 +1631,10 @@
       case 'sorted': return wrapMethod(function (args, kwargs) {
         var items = toList(args[0], line).slice();
         var rev = false;
-        for (var i = 0; i < (kwargs || []).length; i++) if (kwargs[i].name === 'reverse') rev = truthy(kwargs[i].value);
+        for (var i = 0; i < (kwargs || []).length; i++) {
+          if (kwargs[i].name === 'reverse') rev = truthy(kwargs[i].value);
+          else if (kwargs[i].name === 'key') throw pyErr('key= в тренажёре не поддерживается: отсортируй по правилу вручную', line, 'NotSupported');
+        }
         items.sort(function (a, b) { return pyCmp(a, b, line); });
         if (rev) items.reverse();
         return items;
@@ -1544,6 +1667,9 @@
         for (var i = 0; i < n; i++) out.push(lists.map(function (l) { return l[i]; }));
         return out;
       }, 'zip');
+      case 'set': case 'frozenset': return wrapMethod(function (args) {
+        return new S(args.length ? toList(args[0], line) : []);
+      }, name);
       case 'dict': return wrapMethod(function (args) {
         var m = new Map();
         if (args.length && args[0] instanceof Map) args[0].forEach(function (v, k) { m.set(k, v); });

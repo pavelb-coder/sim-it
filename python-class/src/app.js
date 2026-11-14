@@ -6,7 +6,12 @@
 (function () {
   'use strict';
 
-  var TASKS = window.PYTASKS || [];
+  var MODULES = window.PYMODULES || [];
+  // плоский список задач: [ { …, mod: индекс модуля } ]
+  var TASKS = [];
+  MODULES.forEach(function (m, mi) {
+    m.tasks.forEach(function (t) { t.mod = mi; TASKS.push(t); });
+  });
   var Py = window.PyTrainer;
   var STORE_KEY = 'pyclass.v1';
 
@@ -277,14 +282,25 @@
   function renderSidebar() {
     var list = $('taskList');
     var html = '';
-    TASKS.forEach(function (t, i) {
-      var done = !!state.solved[t.id];
-      var lock = !unlocked(i);
-      html += '<button class="task-item' + (i === state.current ? ' active' : '') + (done ? ' done' : '') +
-        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
-        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
-        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
-        '<span class="t-sub">' + esc(t.subtitle) + '</span></span></button>';
+    var flat = 0;
+    MODULES.forEach(function (m, mi) {
+      var doneInModule = 0;
+      m.tasks.forEach(function (t) { if (state.solved[t.id]) doneInModule++; });
+      var activeHere = (TASKS[state.current] && TASKS[state.current].mod === mi);
+      html += '<div class="module-head' + (activeHere ? ' active' : '') + '">' +
+        '<span class="m-title">' + esc(m.title) + '</span>' +
+        '<span class="m-count">' + doneInModule + '/' + m.tasks.length + '</span></div>';
+      m.tasks.forEach(function (t) {
+        var i = flat++;
+        var done = !!state.solved[t.id];
+        var lock = !unlocked(i);
+        var num = i - MODULES.slice(0, mi).reduce(function (acc, mm) { return acc + mm.tasks.length; }, 0) + 1;
+        html += '<button class="task-item' + (i === state.current ? ' active' : '') + (done ? ' done' : '') +
+          (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+          '<span class="num">' + (done ? '✓' : (lock ? '🔒' : num)) + '</span>' +
+          '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+          '<span class="t-sub">' + esc(t.subtitle) + '</span></span></button>';
+      });
     });
     list.innerHTML = html;
     Array.prototype.forEach.call(list.querySelectorAll('.task-item'), function (b) {
@@ -300,6 +316,7 @@
     var n = solvedCount();
     $('progressBar').style.width = (n / TASKS.length * 100) + '%';
     $('progressText').innerHTML = '<b>' + n + '</b> из ' + TASKS.length + ' задач';
+    $('modulesBadge').textContent = 'модулей: ' + MODULES.length;
   }
 
   function openTask(i) {
@@ -307,6 +324,11 @@
     state.lastRun = null;
     var t = TASKS[i];
     $('taskTitle').textContent = t.title;
+    var mod = MODULES[t.mod];
+    $('taskModule').textContent = mod ? mod.title : '';
+    var lvl = $('taskLevel');
+    if (t.level) { lvl.textContent = t.level; lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard'); }
+    else { lvl.textContent = ''; lvl.className = 'chip'; }
     $('taskSub').textContent = t.subtitle;
     $('theory').innerHTML = t.theory;
     $('prompt').innerHTML = t.prompt;

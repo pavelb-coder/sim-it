@@ -11,7 +11,7 @@ function click(el){ el.dispatchEvent(new w.MouseEvent('click', {bubbles:true}));
 function fire(el, t){ el.dispatchEvent(new w.Event(t, {bubbles:true})); }
 console.log('задач в списке:', d.querySelectorAll('.task-item').length);
 console.log('заголовок открыт:', $('#taskTitle').textContent);
-$('#code').value = w.PYTASKS[0].solution;
+$('#code').value = w.PYMODULES[0].tasks[0].solution;
 fire($('#code'), 'input');
 click($('#btnCheck'));
 console.log('проверка без localStorage:', /Все тесты пройдены/.test($('#panel-check').textContent));
