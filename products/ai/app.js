@@ -372,6 +372,7 @@
     });
 
     window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
       var t = window.AI_TASKS[i];
       state.dataset = t.dataset; $('dsSelect').value = t.dataset;
       state.hidden = t.hidden; $('hiddenSelect').value = String(t.hidden);

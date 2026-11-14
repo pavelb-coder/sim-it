@@ -525,6 +525,7 @@
       state: state
     };
     window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
       return window.TERM_TASKS[i].solution.forEach(function (cmd) { execute(cmd); });
     };
   });

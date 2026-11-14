@@ -1788,6 +1788,7 @@ a { color: var(--accent); }
     });
 
     window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
       var t = window.NET_TASKS[i];
       if (t.apply) t.apply(state.topo, window.NetAPI);
       renderTopology();

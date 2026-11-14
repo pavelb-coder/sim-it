@@ -65,6 +65,7 @@
     });
 
     window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
       var s = window.WEB_TASKS[i].solution;
       $('htmlCode').value = s.html;
       $('cssCode').value = s.css;

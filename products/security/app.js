@@ -178,6 +178,7 @@
     });
 
     window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
       var task = window.SEC_TASKS[i];
       setAnswerMode(task);
       if (task.answer === 'rows') {

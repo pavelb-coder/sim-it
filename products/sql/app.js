@@ -272,6 +272,7 @@
     });
 
     window.__solve = function (i) {
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
       $('sqlInput').value = window.SQL_TASKS[i].solution;
       try { $('sqlResult').innerHTML = renderResult(runQuery($('sqlInput').value)); } catch (e) {}
     };
