@@ -23,3 +23,4 @@ netrc
 # локальная конфигурация git, не часть проекта
 .gitconfig
 .git-credentials
+qa/

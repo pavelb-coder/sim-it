@@ -1,28 +1,58 @@
-<div class="two-col" style="grid-template-columns:1.3fr 1fr">
+<div class="cpp-grid">
   <div>
-    <div class="ws-label">Редактор C++ <span style="color:#6b7a94">— Tab добавляет отступ, Ctrl+Enter запускает</span></div>
-    <textarea id="cppCode" class="code-area cpp-editor" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+    <div class="ws-label">Код программы · Ctrl+Enter — выполнить</div>
+    <div class="cpp-editor-wrap">
+      <div class="cpp-gutter" id="cppGutter">1</div>
+      <textarea id="cppCode" class="cpp-code" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="int main() { }"></textarea>
+    </div>
     <div class="btn-row" style="margin-top:8px">
-      <button id="btnRun" class="btn btn-primary">▶ Запустить</button>
-      <button id="btnClearOut" class="btn">Очистить вывод</button>
+      <button id="btnRun" class="btn btn-primary">▶ Выполнить</button>
       <button id="btnResetCode" class="btn">Вернуть заготовку</button>
     </div>
-    <div class="ws-label" style="margin-top:12px">Ввод для программы (как будто набрали с клавиатуры)</div>
-    <textarea id="cppStdin" class="code-area cpp-stdin" rows="2" spellcheck="false" placeholder="например: 2 3"></textarea>
+
+    <div class="ws-label" style="margin-top:12px">Тестовый ввод — то, что прочитает <code>cin</code></div>
+    <textarea id="cppStdin" class="code-area cpp-stdin" rows="2" spellcheck="false" placeholder="например: 4 9"></textarea>
+
+    <div class="ws-label" style="margin-top:12px">Вывод программы</div>
+    <pre id="cppOut" class="cpp-out"><span class="cpp-dim">здесь появится то, что напечатает cout</span></pre>
+    <div id="cppErr" class="cpp-err" style="display:none"></div>
   </div>
 
   <div>
-    <div class="ws-label">Вывод программы</div>
-    <pre id="cppOut" class="cpp-out"></pre>
-    <div id="cppErr" class="feedback err" style="margin-top:8px"></div>
+    <div class="ws-label">Тесты этой задачи</div>
+    <div id="cppTests" class="ws-panel"></div>
+    <details class="cpp-cheat" style="margin-top:12px">
+      <summary>Шпаргалка C++ — открыть</summary>
+      <pre>#include &lt;iostream&gt;      подключить ввод-вывод
+using namespace std;     cout вместо std::cout
 
-    <div class="ws-label" style="margin-top:12px">Частые ошибки</div>
-    <div class="ws-panel cpp-tips">
-      <p><b>expected ';'</b> — забыта точка с запятой в конце команды.</p>
-      <p><b>'x' was not declared</b> — переменная не объявлена (или объявлена ниже).</p>
-      <p><b>expected initializer</b> — в объявлении потерян тип или «=».</p>
-      <p><b>выход за границы</b> — индекс равен длине массива: нумерация с нуля.</p>
-      <p><b>деление на ноль</b> — проверь делитель перед делением.</p>
+int a = 5;  double x = 1.5;  char c = 'A';
+bool ok = true;  string s = "текст";
+
+cout &lt;&lt; "текст" &lt;&lt; a &lt;&lt; endl;   вывод
+cin &gt;&gt; a &gt;&gt; b;                    ввод двух чисел
+
+if (a % 2 == 0) { … } else { … }
+for (int i = 0; i &lt; n; i++) { … }
+while (n &gt; 0) { … }
+
+int a[10];           массив на 10 ячеек (0…9)
+vector&lt;int&gt; v;        растущий массив
+v.push_back(x);  v.size();  v[i];
+
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+a / b  — целое деление     a % b — остаток
+a * 1.0 / b — вещественное (int)x — приведение типа</pre>
+    </details>
+
+    <div class="ws-label" style="margin-top:12px">Движок тренажёра</div>
+    <div class="ws-panel cpp-note">
+      <p style="margin:0 0 8px">Код не отправляется на сервер: его разбирает и выполняет собственный интерпретатор учебного подмножества C++ прямо в браузере.</p>
+      <p style="margin:0 0 8px">Понимает <code>#include</code>, <code>int/double/char/bool/string/auto</code>, массивы и <code>vector</code>, <code>if/else</code>, <code>for</code>, <code>while</code>, <code>do-while</code>, функции и рекурсию, <code>cout</code>/<code>cin</code>, приведение типов <code>(int)</code>.</p>
+      <p style="margin:0">Не понимает указатели, <code>struct/class</code>, <code>switch</code> и чужие библиотеки — на них тренажёр честно скажет, что не поддерживает.</p>
     </div>
   </div>
 </div>

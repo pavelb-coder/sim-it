@@ -24,9 +24,9 @@ PRODUCTS = [
          tag='язык программирования', color='#7bd88f'),
     dict(slug='cpp', mark='C++', h1='C++-класс',
          title='C++-класс · тренажёр для IT-квантума',
-         subtitle='компилятор C++ прямо в браузере · 8 задач',
-         description='Тренажёр C++ в браузере: мини-компилятор, 8 задач с автопроверкой, без установки и без интернета.',
-         tag='язык программирования', color='#5b8cff'),
+         subtitle='11 задач · свой компилятор C++ прямо в браузере',
+         description='Тренажёр C++ для IT-квантума: 11 задач с автопроверкой, учебное подмножество C++ выполняется в браузере без установки.',
+         tag='язык программирования', color='#5aa9ff'),
     dict(slug='terminal', mark='$_', h1='Терминал Linux',
          title='Терминал Linux · тренажёр для IT-квантума',
          subtitle='виртуальная файловая система в браузере',
@@ -88,10 +88,10 @@ def build_product(cfg: dict) -> str:
     workspace = (pdir / 'workspace.html').read_text(encoding='utf-8')
     tools = (pdir / 'tools.html').read_text(encoding='utf-8') if (pdir / 'tools.html').exists() else ''
     tasks = (pdir / 'tasks.js').read_text(encoding='utf-8')
-    app = (pdir / 'app.js').read_text(encoding='utf-8')
-    engine = (pdir / 'engine.js').read_text(encoding='utf-8') if (pdir / 'engine.js').exists() else ''
-    if engine:
-        app = engine + '\n' + app
+    app = ''
+    if (pdir / 'engine.js').exists():
+        app += (pdir / 'engine.js').read_text(encoding='utf-8') + '\n'
+    app += (pdir / 'app.js').read_text(encoding='utf-8')
     extra_css = (pdir / 'style.css').read_text(encoding='utf-8') if (pdir / 'style.css').exists() else ''
 
     page = TEMPLATE
@@ -149,7 +149,7 @@ def build_hub(products_built: list) -> str:
 <div style="max-width:1200px;margin:0 auto;padding:22px 16px 40px">
   <h1 style="font-size:26px;margin:6px 0 6px;letter-spacing:-.02em">Лаборатория IT-квантума</h1>
   <p style="color:var(--muted);max-width:760px;margin:0 0 20px">
-    {len(PRODUCTS)} тренажёров по направлениям IT-квантума. Каждый работает целиком в браузере:
+    Восемь тренажёров по направлениям IT-квантума. Каждый работает целиком в браузере:
     ничего не нужно устанавливать, не нужен интернет и аккаунт, код и действия выполняются
     локально. Есть задачи с автопроверкой — как в хороших симуляторах, только для IT.
   </p>

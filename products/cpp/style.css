@@ -1,22 +1,29 @@
-.cpp-editor{
-  width:100%;height:340px;resize:vertical;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
-  font-size:13.5px;line-height:1.5;tab-size:4;background:#0d1117;color:#e6edf3;
-  border:1px solid #263041;border-radius:10px;padding:12px;white-space:pre;overflow:auto
-}
-.cpp-stdin{width:100%;height:56px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13px;
-  background:#0d1117;color:#7ee787;border:1px solid #263041;border-radius:10px;padding:8px 10px}
-.cpp-out{
-  margin:0;min-height:150px;max-height:300px;overflow:auto;background:#0b0f16;color:#c9d1d9;
-  border:1px solid #263041;border-radius:10px;padding:12px;font-family:ui-monospace,Consolas,monospace;
-  font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word
-}
-.cpp-out:empty::after{content:"здесь появится вывод программы";color:#4a5568}
-.cpp-err-head{color:#ff7b72;font-weight:600;margin-bottom:6px}
-.cpp-err-msg{color:#ffa198;font-size:13.5px;margin-bottom:8px}
-.cpp-err-code{background:#1a1113;border:1px solid #3d1f22;border-radius:8px;padding:8px 10px;
-  color:#ffd7d5;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;overflow:auto;margin:0 0 8px}
-.cpp-err-hint{color:#8b97ad;font-size:12.5px}
-.cpp-ok{color:#7ee787;font-size:13px}
-.cpp-tips{font-size:12.5px;color:#8b97ad;line-height:1.6}
-.cpp-tips p{margin:0 0 6px}
-.cpp-tips b{color:#ffa198;font-family:ui-monospace,Consolas,monospace;font-weight:500}
+.cpp-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media (max-width:1000px){.cpp-grid{grid-template-columns:1fr}}
+.cpp-editor-wrap{display:flex;border:1px solid #263041;border-radius:10px;overflow:hidden;background:#0d1117}
+.cpp-gutter{flex:0 0 auto;padding:10px 8px;text-align:right;color:#4f5a6e;background:#0a0e14;border-right:1px solid #1c2534;
+  font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;user-select:none;overflow:hidden;min-width:38px}
+.cpp-code{flex:1;border:0;outline:0;resize:vertical;background:#0d1117;color:#e6edf3;padding:10px 12px;
+  font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:4;min-height:320px;white-space:pre;overflow:auto}
+.cpp-code::placeholder{color:#3d4757}
+.cpp-stdin{font:13px/1.5 ui-monospace,Consolas,monospace;min-height:48px}
+.cpp-out{margin:0;background:#0a0e14;border:1px solid #263041;border-radius:10px;padding:12px;color:#c8e6c9;
+  font:13px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word;min-height:72px;max-height:280px;overflow:auto}
+.cpp-dim{color:#4f5a6e}
+.cpp-err{margin-top:8px;background:#2a1416;border:1px solid #5d2530;border-radius:10px;padding:10px 12px;color:#ffb4b4;
+  font:13px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap}
+.cpp-note{color:#8b97ad;font-size:12.5px;line-height:1.6}
+.cpp-note code{color:#e6edf3;background:#0a0e14;border:1px solid #1c2534;border-radius:5px;padding:0 4px}
+.cpp-test{border-bottom:1px solid #1c2534;padding:8px 0;font-size:12.5px}
+.cpp-test:last-child{border-bottom:0}
+.cpp-test-head{display:flex;gap:8px;align-items:center;color:#8b97ad}
+.cpp-test-head b{color:#e6edf3;font-weight:600}
+.cpp-test pre{margin:6px 0 0;background:#0a0e14;border:1px solid #1c2534;border-radius:8px;padding:8px;color:#c8d3e3;
+  font:12px/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;max-height:180px;overflow:auto}
+.cpp-test.pass .cpp-test-head b{color:#7ee787}
+.cpp-test.fail .cpp-test-head b{color:#ff8a8a}
+
+.cpp-cheat summary{cursor:pointer;color:#8b97ad;font-size:13px;padding:8px 10px;background:#0d1117;border:1px solid #263041;border-radius:8px}
+.cpp-cheat[open] summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.cpp-cheat pre{margin:0;background:#0a0e14;border:1px solid #263041;border-top:0;border-radius:0 0 8px 8px;padding:10px 12px;
+  color:#c8d3e3;font:12px/1.6 ui-monospace,Consolas,monospace;white-space:pre;overflow:auto}
