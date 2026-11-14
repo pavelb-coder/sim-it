@@ -51,12 +51,23 @@ if [ -f build_site.py ]; then
 fi
 
 # 2. Найти или создать рабочее дерево ветки плагина.
+#    prune убирает записи о рабочих деревьях, удалённых вручную.
+git worktree prune
+
 WT=$(git worktree list --porcelain | awk -v target="refs/heads/$BRANCH" '
   /^worktree /{wt=$2}
   /^branch /{if ($2 == target) print wt; wt=""}')
+if [ -n "$WT" ] && [ ! -f "$WT/simquantum/version.php" ]; then
+  WT=""     # запись есть, а ветки по этому пути нет — пересоздадим
+fi
+
 if [ -z "$WT" ]; then
   git fetch -q origin "$BRANCH" || true
   WT="${PLUGIN_WORKTREE:-$REPO/moodle-plugin}"
+  if [ -e "$WT" ]; then
+    echo "путь $WT занят, но это не рабочее дерево ветки $BRANCH — укажите другой через PLUGIN_WORKTREE" >&2
+    exit 1
+  fi
   if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
     git worktree add -q "$WT" "$BRANCH"
   else

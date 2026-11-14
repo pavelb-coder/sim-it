@@ -34,7 +34,7 @@ echo "синхронизировано: $(git log --oneline -1)"
 if [ -x scripts/sync_plugin.sh ]; then
   echo
   echo "— ветка moodle-plugin —"
-  PLUGIN_SYNC_FLAGS="${PLUGIN_SYNC_FLAGS:-}"
+  PLUGIN_SYNC_FLAGS="${PLUGIN_SYNC_FLAGS:---check}"
   bash scripts/sync_plugin.sh $PLUGIN_SYNC_FLAGS \
     || echo "внимание: ветку moodle-plugin обновить не удалось (main уже опубликован)"
 fi
