@@ -1,0 +1,25 @@
+# окружения и кэши платформы
+.cache/
+.npm/
+.local/
+.config/
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# системный мусор
+.DS_Store
+Thumbs.db
+*.log
+*.deb
+
+# локальные секреты — никогда не коммитим
+.env
+*.token
+.git-credentials
+netrc
+
+# локальная конфигурация git, не часть проекта
+.gitconfig
+.git-credentials

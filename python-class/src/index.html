@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python-класс · тренажёр для IT-квантума</title>
+<meta name="description" content="Браузерный тренажёр Python для IT-квантума: 10 задач с автопроверкой, без установки и без интернета.">
+<style>/*__CSS__*/</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-mark">Py</span>
+    <span>Python-класс<small>тренажёр IT-квантума · модуль 1 «Основы»</small></span>
+  </div>
+  <div class="spacer"></div>
+  <span class="badge engine" id="engineBadge" title="Код выполняется прямо в браузере: ни сервера, ни установки, ни интернета.">движок: встроенный</span>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи модуля</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card editor-card">
+      <div class="editor-toolbar">
+        <button class="btn primary" id="btnRun">▶ Запустить <kbd>Ctrl+↵</kbd></button>
+        <button class="btn ok" id="btnCheck">✔ Проверить <kbd>Ctrl+Shift+↵</kbd></button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        <button class="btn ghost" id="btnReset">↺ Сбросить код</button>
+      </div>
+      <div class="editor-shell">
+        <div class="gutter-nums" id="gutter">1</div>
+        <div class="code-wrap">
+          <pre class="code-hl" id="codeHl" aria-hidden="true"></pre>
+          <textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off" aria-label="Код программы"></textarea>
+        </div>
+      </div>
+      <div class="editor-foot">
+        <span class="stdin-label">Ввод программы:</span>
+        <textarea id="stdin" spellcheck="false" title="по одной строке на каждый input()"></textarea>
+        <span class="hint-inline">каждая строка — ответ на один input()</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs">
+        <button class="tab active" id="tab-out"><span class="dot"></span>Вывод</button>
+        <button class="tab" id="tab-check"><span class="dot"></span>Проверка</button>
+        <button class="tab" id="tab-vars"><span class="dot"></span>Переменные (трейс)</button>
+      </div>
+      <div class="panel" id="panel-out"><pre class="out empty">Нажми «Запустить» (Ctrl+Enter) — вывод появится здесь.</pre></div>
+      <div class="panel" id="panel-check" hidden><pre class="out empty">Нажми «Проверить» — программа прогонится по скрытым тестам.</pre></div>
+      <div class="panel" id="panel-vars" hidden><pre class="out empty">Трейс появится после запуска.</pre></div>
+    </section>
+
+    <div class="foot-note">
+      Работает без интернета и без установки · прогресс и код хранятся в этом браузере · Python выполняется локально, код никуда не отправляется
+    </div>
+  </main>
+</div>
+
+<script>/*__PY__*/</script>
+<script>/*__TASKS__*/</script>
+<script>/*__APP__*/</script>
+</body>
+</html>

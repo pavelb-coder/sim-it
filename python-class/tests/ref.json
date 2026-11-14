@@ -1,0 +1,242 @@
+[
+{
+"ok": true,
+"out": "4",
+"err": ""
+},
+{
+"ok": true,
+"out": "14",
+"err": ""
+},
+{
+"ok": true,
+"out": "512",
+"err": ""
+},
+{
+"ok": true,
+"out": "3 1 -4 1",
+"err": ""
+},
+{
+"ok": true,
+"out": "0.30000000000000004",
+"err": ""
+},
+{
+"ok": true,
+"out": "2.5 2 1",
+"err": ""
+},
+{
+"ok": true,
+"out": "a c bc cba 3",
+"err": ""
+},
+{
+"ok": true,
+"out": "ab abab",
+"err": ""
+},
+{
+"ok": true,
+"out": "hi ['a', 'b', 'c'] x-y",
+"err": ""
+},
+{
+"ok": true,
+"out": "hello HELLO Hello World",
+"err": ""
+},
+{
+"ok": true,
+"out": "5",
+"err": ""
+},
+{
+"ok": true,
+"out": "Привет, Аня!",
+"err": ""
+},
+{
+"ok": true,
+"out": "[1, 2, 3, 4] [0, 0, 0] [3, 2, 1]",
+"err": ""
+},
+{
+"ok": true,
+"out": "[0, 1, 2, 3, 4]\n4\n[0, 1, 2, 3]",
+"err": ""
+},
+{
+"ok": true,
+"out": "[1, 3, 5]\n[5, 3, 1]\n5 1 9",
+"err": ""
+},
+{
+"ok": true,
+"out": "[1, 2, 3] ['a', 'b']",
+"err": ""
+},
+{
+"ok": true,
+"out": "1 2 True",
+"err": ""
+},
+{
+"ok": true,
+"out": "{'x': 5}\n0",
+"err": ""
+},
+{
+"ok": true,
+"out": "15",
+"err": ""
+},
+{
+"ok": true,
+"out": "3\n2\n1",
+"err": ""
+},
+{
+"ok": true,
+"out": "4",
+"err": ""
+},
+{
+"ok": true,
+"out": "0\n2\n4\n6\n8",
+"err": ""
+},
+{
+"ok": true,
+"out": "11 3",
+"err": ""
+},
+{
+"ok": true,
+"out": "120",
+"err": ""
+},
+{
+"ok": true,
+"out": "True False",
+"err": ""
+},
+{
+"ok": true,
+"out": "3 2 bonono",
+"err": ""
+},
+{
+"ok": true,
+"out": "1",
+"err": ""
+},
+{
+"ok": true,
+"out": "True",
+"err": ""
+},
+{
+"ok": true,
+"out": "True True",
+"err": ""
+},
+{
+"ok": true,
+"out": "ok",
+"err": ""
+},
+{
+"ok": true,
+"out": "True",
+"err": ""
+},
+{
+"ok": true,
+"out": "минус",
+"err": ""
+},
+{
+"ok": true,
+"out": "ноль",
+"err": ""
+},
+{
+"ok": true,
+"out": "6",
+"err": ""
+},
+{
+"ok": true,
+"out": "[0, 1, 2, 3, 4] [2, 4, 6]",
+"err": ""
+},
+{
+"ok": true,
+"out": "1",
+"err": ""
+},
+{
+"ok": true,
+"out": "-1 3 7 3.6",
+"err": ""
+},
+{
+"ok": true,
+"out": "2",
+"err": ""
+},
+{
+"ok": true,
+"out": "число: 5 и 6!",
+"err": ""
+},
+{
+"ok": true,
+"out": "<class 'int'> <class 'str'> <class 'float'>",
+"err": ""
+},
+{
+"ok": true,
+"out": "a 1\nb 2",
+"err": ""
+},
+{
+"ok": true,
+"out": "6 п",
+"err": ""
+},
+{
+"ok": true,
+"out": "2.0",
+"err": ""
+},
+{
+"ok": true,
+"out": "True False True",
+"err": ""
+},
+{
+"ok": true,
+"out": "65 B",
+"err": ""
+},
+{
+"ok": true,
+"out": "A\nB\nC",
+"err": ""
+},
+{
+"ok": true,
+"out": "True True",
+"err": ""
+},
+{
+"ok": true,
+"out": "1 3 18",
+"err": ""
+}
+]
