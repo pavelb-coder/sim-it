@@ -1,0 +1,15 @@
+<div class="two-col">
+  <div>
+    <div class="ws-label">Запрос (Ctrl+Enter — выполнить)</div>
+    <textarea id="sqlInput" class="code-area" rows="6" spellcheck="false" placeholder="SELECT * FROM ученики"></textarea>
+    <div class="btn-row" style="margin-top:8px">
+      <button id="btnRunSql" class="btn btn-primary">Выполнить</button>
+    </div>
+    <div id="sqlError" class="feedback err" style="min-height:20px"></div>
+    <div id="sqlResult" class="ws-panel" style="margin-top:8px;overflow:auto"></div>
+  </div>
+  <div>
+    <div class="ws-label">Учебная база: две таблицы</div>
+    <div id="schemaBox" class="ws-panel" style="max-height:460px;overflow:auto"></div>
+  </div>
+</div>

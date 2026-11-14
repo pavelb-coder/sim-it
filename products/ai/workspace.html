@@ -1,0 +1,55 @@
+<div class="two-col" style="grid-template-columns:1.15fr 1fr">
+  <div>
+    <div class="ws-panel" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+      <label class="ai-field">набор данных
+        <select id="dsSelect"></select>
+      </label>
+      <label class="ai-field">скрытый слой
+        <select id="hiddenSelect">
+          <option value="0">без скрытого слоя</option>
+          <option value="2">2 нейрона</option>
+          <option value="4">4 нейрона</option>
+        </select>
+      </label>
+      <label class="ai-field">эпох
+        <input id="epochsInput" type="number" value="300" min="10" max="5000" step="50">
+      </label>
+      <label class="ai-field">скорость <span id="lrV">0.60</span>
+        <input id="lrInput" type="range" min="0.05" max="1.5" step="0.05" value="0.6">
+      </label>
+    </div>
+
+    <div class="btn-row" style="margin-top:10px">
+      <button id="btnTrain" class="btn btn-primary">Обучить</button>
+      <button id="btnTrainFast" class="btn">Обучить сразу</button>
+      <button id="btnReset" class="btn">Сбросить веса</button>
+      <span class="ai-badge">точность: <b id="accOut">—</b></span>
+      <span class="ai-badge">эпох: <b id="epochOut">0</b></span>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Граница решения</div>
+    <canvas id="aiCanvas" width="460" height="380" class="ai-canvas"></canvas>
+    <div id="hintOut" style="color:#8b97ad;font-size:12px;margin-top:6px"></div>
+  </div>
+
+  <div>
+    <div class="ws-label">Ошибка по эпохам</div>
+    <canvas id="aiChart" width="420" height="150" class="ai-canvas"></canvas>
+
+    <div class="ws-label" style="margin-top:14px">Веса вручную (без обучения)</div>
+    <div class="ws-panel">
+      <div class="ai-slider"><span>w1</span><input id="w1S" type="range" min="-4" max="4" step="0.1" value="0"><b id="w1V">0.00</b></div>
+      <div class="ai-slider"><span>w2</span><input id="w2S" type="range" min="-4" max="4" step="0.1" value="0"><b id="w2V">0.00</b></div>
+      <div class="ai-slider"><span>b</span><input id="bS" type="range" min="-4" max="4" step="0.1" value="0"><b id="bV">0.00</b></div>
+      <div style="color:#6b7a94;font-size:12px;margin-top:6px">слайдеры работают, когда скрытого слоя нет</div>
+    </div>
+
+    <div class="ws-label" style="margin-top:14px">Как это работает</div>
+    <div class="ws-panel" style="color:#8b97ad;font-size:13px;line-height:1.6">
+      <p style="margin:0 0 6px"><b style="color:#e6edf3">1.</b> Входы умножаются на веса и складываются со смещением.</p>
+      <p style="margin:0 0 6px"><b style="color:#e6edf3">2.</b> Функция активации превращает сумму в число от 0 до 1.</p>
+      <p style="margin:0 0 6px"><b style="color:#e6edf3">3.</b> Ошибка = насколько ответ отличается от правильного.</p>
+      <p style="margin:0"><b style="color:#e6edf3">4.</b> Веса сдвигаются в сторону меньшей ошибки. Повторить 1000 раз.</p>
+    </div>
+  </div>
+</div>

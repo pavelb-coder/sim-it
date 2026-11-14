@@ -1,0 +1,29 @@
+<div class="two-col">
+  <div>
+    <div class="prompt-line">
+      <span class="ps1" id="ps1">~ $</span>
+      <input id="terminalInput" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="набери команду и нажми Enter" aria-label="Команда терминала">
+    </div>
+    <div class="console" id="terminalOut" style="margin-top:10px"></div>
+    <div class="ws-label" id="filesHere" style="margin-top:8px;font-family:var(--mono)"></div>
+  </div>
+  <div>
+    <div class="ws-label" style="margin-bottom:6px">Шпаргалка</div>
+    <div class="console" style="font-size:12.5px;min-height:0;max-height:none;color:#9fb0cc">
+pwd            где я
+ls -l          что лежит рядом
+cd папка       перейти
+mkdir -p a/b   создать папки
+echo "x" > f   записать в файл
+cat f          показать файл
+cp a b         копировать
+mv a b         переместить
+rm -r папка    удалить
+grep -r слово . поиск по тексту
+wc -l f        строк в файле
+chmod 600 f    права
+*              шаблон имён
+    </div>
+  </div>
+</div>

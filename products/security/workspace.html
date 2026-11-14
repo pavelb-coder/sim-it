@@ -1,0 +1,92 @@
+<div class="two-col">
+  <div>
+    <div class="ws-label">Base64</div>
+    <div class="ws-panel">
+      <input id="b64Input" class="code-area" style="height:64px" placeholder="текст или base64-строка">
+      <div class="btn-row" style="margin-top:6px">
+        <button id="btnB64enc" class="btn">Закодировать</button>
+        <button id="btnB64dec" class="btn">Раскодировать</button>
+      </div>
+      <div id="b64Out" class="out" style="margin-top:6px;word-break:break-all"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Шифр Цезаря</div>
+    <div class="ws-panel">
+      <input id="cesarInput" class="code-area" style="height:56px" placeholder="шифротекст">
+      <div class="btn-row" style="margin-top:6px">
+        <label style="color:#8b97ad;font-size:13px">сдвиг&nbsp;<input id="cesarShift" type="number" value="3" min="1" max="25" style="width:60px;background:#0d1117;color:#e6edf3;border:1px solid #263041;border-radius:6px;padding:4px 6px"></label>
+        <button id="btnCesar" class="btn">Перебрать сдвиги</button>
+      </div>
+      <div id="cesarOut" style="margin-top:6px;max-height:210px;overflow:auto"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Хеш (FNV-1a)</div>
+    <div class="ws-panel">
+      <input id="hashInput" class="code-area" style="height:52px" placeholder="пароль">
+      <div class="btn-row" style="margin-top:6px"><button id="btnHash" class="btn">Хешировать</button></div>
+      <div id="hashOut" class="out" style="margin-top:6px"></div>
+      <div style="margin-top:8px;max-height:220px;overflow:auto" id="hashDict"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">HTTP-заголовки</div>
+    <div class="ws-panel">
+      <textarea id="hdrInput" class="code-area" rows="7" spellcheck="false" placeholder="Server: nginx"></textarea>
+      <div class="btn-row" style="margin-top:6px"><button id="btnParseHdr" class="btn">Разобрать</button></div>
+      <div id="hdrOut" style="margin-top:6px;overflow:auto"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Код на проверку</div>
+    <div class="ws-panel">
+      <div class="console" style="max-height:none;border:0;background:transparent;padding:0">
+        <div class="out" style="white-space:pre;font-family:ui-monospace,Consolas,monospace;font-size:13px">1  login = request.args.get('login')
+2  password = request.args.get('password')
+3  sql = "SELECT * FROM users WHERE login='" + login + "' AND password='" + password + "'"
+4  rows = db.execute(sql)
+5  if len(rows) > 0:
+6      session['user'] = login</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="ws-label">Ответ</div>
+    <div class="ws-panel">
+      <div id="ansTextWrap">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">впиши ответ (регистр не важен):</div>
+        <textarea id="ansText" class="code-area" rows="3" spellcheck="false" placeholder="ответ"></textarea>
+      </div>
+
+      <div id="ansRowsWrap" style="display:none">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">оцени каждый заголовок:</div>
+        <div id="ansRows"></div>
+      </div>
+
+      <div id="ansCodeWrap" style="display:none">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">номер строки:</div>
+        <input id="ansLine" class="code-area" style="height:44px" placeholder="например 3" inputmode="numeric">
+        <div style="color:#8b97ad;font-size:13px;margin:8px 0 6px">тип уязвимости:</div>
+        <select id="ansKind" style="width:100%;background:#0d1117;color:#e6edf3;border:1px solid #263041;border-radius:8px;padding:8px">
+          <option value="">— выбери —</option>
+          <option value="SQL-инъекция">SQL-инъекция</option>
+          <option value="XSS">XSS</option>
+          <option value="Слабый пароль">Слабый пароль</option>
+          <option value="Утечка версии сервера">Утечка версии сервера</option>
+        </select>
+      </div>
+
+      <div id="ansPassWrap" style="display:none">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">твой пароль:</div>
+        <input id="ansPass" class="code-area" style="height:44px" spellcheck="false" placeholder="впиши пароль">
+        <div id="passRules" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Как думать</div>
+    <div class="ws-panel" style="color:#8b97ad;font-size:13px;line-height:1.55">
+      <p style="margin:0 0 8px">1. Что за данные перед тобой?</p>
+      <p style="margin:0 0 8px">2. Кодирование, шифрование или хеш — это разные вещи.</p>
+      <p style="margin:0 0 8px">3. Любой секрет из словаря уже известен атакующему.</p>
+      <p style="margin:0">4. В коде ищи, где ввод пользователя попадает в запрос или в HTML.</p>
+    </div>
+  </div>
+</div>

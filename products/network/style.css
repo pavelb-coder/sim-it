@@ -1,0 +1,19 @@
+.net-grid { display: flex; flex-direction: column; gap: 8px; max-height: 52vh; overflow: auto; }
+.net-dev { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: #0f141d; }
+.net-dev.router { border-color: #3a4f7a; background: #101827; }
+.net-dev.switch { opacity: .85; }
+.net-dev-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.net-dev-head b { font-size: 14px; }
+.net-dev-head .chip { font-size: 10px; }
+.net-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin: 3px 0; }
+.net-field input { flex: 1; min-width: 0; padding: 4px 8px; }
+.net-field select { padding: 4px 6px; }
+.net-iface { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+.net-iface-name { font: 11.5px/1.4 var(--mono); color: #7fd1ff; width: 42px; flex: 0 0 42px; }
+.net-iface input { flex: 1; min-width: 0; padding: 4px 8px; }
+.net-iface select { padding: 4px 6px; }
+.net-routes { margin-top: 6px; }
+.net-route { display: flex; gap: 5px; margin: 3px 0; }
+.net-route input { min-width: 0; padding: 4px 6px; font-size: 12px; }
+.net-route input:nth-child(1) { flex: 1.2; }
+.net-route input:nth-child(3) { flex: 1.4; }

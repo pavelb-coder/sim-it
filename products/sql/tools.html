@@ -1,0 +1,14 @@
+<div class="console" style="max-height:none">
+  <div class="prompt-line">Памятка по SQL</div>
+  <div class="out">SELECT * FROM ученики            — все столбцы и строки
+SELECT имя, балл FROM ученики    — только два столбца
+WHERE класс = 9                  — фильтр строк
+WHERE балл &gt;= 4 AND класс = 8    — несколько условий
+ORDER BY балл DESC               — сортировка по убыванию
+LIMIT 3                          — только первые 3 строки
+COUNT(*)  SUM(балл)  AVG(балл)   — агрегаты (одно число)
+
+Порядок частей: SELECT → FROM → WHERE → ORDER BY → LIMIT
+Текст в 'одинарных кавычках', числа — без кавычек.
+LIKE 'Сайт%' — поиск по началу строки.</div>
+</div>

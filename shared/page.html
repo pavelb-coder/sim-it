@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<style>/*__THEME__*/</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:{{LOGO_COLOR}}">
+    <span class="logo-mark">{{MARK}}</span>
+    <span>{{H1}}<small>{{SUBTITLE}}</small></span>
+  </a>
+  <div class="spacer"></div>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn ok" id="btnCheck">✔ Проверить</button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        {{TOOLS}}
+      </div>
+      <div class="workspace">
+        {{WORKSPACE}}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs"><button class="tab active"><span class="dot"></span>Проверка</button></div>
+      <div class="panel" id="panel-check"><pre class="out empty">Выполни задание и нажми «Проверить».</pre></div>
+    </section>
+
+    <div class="foot-note">{{FOOT}}</div>
+  </main>
+</div>
+
+<script>/*__SHELL__*/</script>
+<script>/*__TASKS__*/</script>
+<script>/*__APP__*/</script>
+</body>
+</html>

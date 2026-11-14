@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кибербезопасность · тренажёр для IT-квантума</title>
+<meta name="description" content="Безопасность для школьников: base64, Caesar, хеши, разбор HTTP-заголовков, разбор уязвимого кода.">
+<style>/* ======================= Python-класс · IT-квантум ======================= */
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel2: #171d29;
+  --line: #242c3c;
+  --text: #e7ecf6;
+  --muted: #8b97ad;
+  --accent: #5aa9ff;
+  --green: #37d67a;
+  --red: #ff6b6b;
+  --yellow: #ffcc55;
+  --violet: #a78bfa;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+/* ------------------------------- шапка ------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #121722, #0d111a);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, #2f6df6, #7bd88f);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.logo small { display: block; font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.spacer { flex: 1; }
+.badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #0f141d;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.badge b { color: var(--green); font-weight: 600; }
+.badge.engine { cursor: help; }
+.progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.progress {
+  width: 120px; height: 6px; border-radius: 999px; background: #1b2231; overflow: hidden;
+}
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6df6, #37d67a); transition: width .35s ease; }
+.progress-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.progress-text b { color: var(--text); }
+
+/* ------------------------------- каркас ------------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ---------------------------- список задач ---------------------------- */
+.sidebar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 92px);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-head {
+  padding: 12px 14px 8px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
+.task-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.task-item:hover:not(.locked) { background: var(--panel2); }
+.task-item.active { background: #17233a; border-color: #2a4b7d; }
+.task-item.locked { color: #5d6879; cursor: not-allowed; }
+.task-item .num {
+  flex: 0 0 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: #1b2333; color: var(--muted);
+}
+.task-item.done .num { background: rgba(55,214,122,.16); color: var(--green); }
+.task-item.active .num { background: #2f6df6; color: #fff; }
+.task-item .t-main { min-width: 0; display: block; }
+.task-item .t-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.task-item .t-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.mini-btn {
+  background: #1a2130; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.mini-btn:hover { color: var(--text); border-color: #33405a; }
+
+/* ------------------------------- рабочая ------------------------------- */
+.work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.task-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.task-head h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.task-head .sub { color: var(--muted); font-size: 12.5px; }
+.task-body { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.prompt { font-size: 15px; }
+.theory {
+  background: #0f141d;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #c3ccdb;
+}
+.theory p { margin: 0 0 6px; }
+.theory p:last-child { margin-bottom: 0; }
+.theory code, .prompt code { background: #1b2433; border-radius: 5px; padding: 1px 5px; color: #dfe8ff; }
+.examples { display: flex; gap: 10px; flex-wrap: wrap; }
+.example {
+  background: #0f141d; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; font-family: var(--mono); font-size: 12.5px; min-width: 150px;
+}
+.example .lbl { color: var(--muted); font-family: var(--sans); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.example pre { margin: 2px 0 0; white-space: pre-wrap; color: #cfe0ff; }
+.example .arrow { color: var(--muted); font-family: var(--sans); font-size: 11px; margin-top: 6px; }
+.hint-box {
+  display: none;
+  background: rgba(255,204,85,.08);
+  border: 1px solid rgba(255,204,85,.3);
+  color: #ffe6a8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+.hint-box.show { display: block; }
+
+/* ------------------------------- редактор ------------------------------- */
+.editor-card { display: flex; flex-direction: column; }
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: #101620;
+}
+.btn {
+  border-radius: 9px; border: 1px solid var(--line);
+  background: #1a2130; color: var(--text);
+  padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: #3a4a68; }
+.btn.primary { background: linear-gradient(180deg, #2f6df6, #2559d6); border-color: #2b62e0; color: #fff; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ok { background: linear-gradient(180deg, #2fbd6c, #22a05a); border-color: #26a860; color: #06220f; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn kbd {
+  background: rgba(255,255,255,.16); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-weight: 700;
+}
+.editor-shell {
+  position: relative;
+  display: flex;
+  background: #0c1119;
+  min-height: 250px;
+  max-height: 52vh;
+}
+.gutter-nums {
+  flex: 0 0 auto;
+  white-space: pre;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  font: 14px/1.55 var(--mono);
+  color: #3f4a5e;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  background: #0a0f16;
+  border-right: 1px solid #1a2130;
+}
+.code-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+.code-hl, #code {
+  position: absolute; inset: 0;
+  margin: 0; padding: 12px 14px;
+  font: 14px/1.55 var(--mono);
+  white-space: pre; tab-size: 4;
+  border: 0; overflow: auto;
+}
+.code-hl { color: #cbd5e6; pointer-events: none; z-index: 1; }
+#code {
+  color: transparent; caret-color: #fff; background: transparent;
+  resize: none; outline: none; z-index: 2;
+}
+#code::selection { background: rgba(90,169,255,.32); }
+.tok-kw { color: #c792ea; }
+.tok-bi { color: #82aaff; }
+.tok-str { color: #a5e075; }
+.tok-num { color: #f78c6c; }
+.tok-com { color: #5a6779; font-style: italic; }
+.tok-def { color: #ffcb6b; }
+.editor-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--line); background: #101620;
+}
+.stdin-label { font-size: 12px; color: var(--muted); }
+#stdin {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px;
+  color: #cfe0ff; font: 13px/1.4 var(--mono); padding: 6px 9px; width: 190px; height: 32px; resize: vertical;
+}
+.hint-inline { font-size: 11.5px; color: #5f6b80; }
+
+/* ------------------------------- консоль ------------------------------- */
+.tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); background: #101620; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  color: var(--muted); padding: 7px 13px; font-size: 13px; border-radius: 9px 9px 0 0;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+.tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #38445a; }
+.tab.active .dot { background: var(--accent); }
+.tab .count { font-size: 11px; color: var(--muted); }
+.panel { padding: 12px 14px; min-height: 150px; max-height: 40vh; overflow: auto; }
+.panel[hidden] { display: none; }
+.out {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: #d7e2f2;
+}
+.out.empty { color: #55617a; font-style: italic; }
+.err {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  background: rgba(255,107,107,.07);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 9px; padding: 10px 12px; color: #ffb3b3; margin-top: 10px;
+}
+.err b { color: var(--red); }
+.test-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: #0f141d; margin-bottom: 7px; font-size: 12.5px;
+}
+.test-row.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.test-row.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.test-row .mark { font-weight: 800; width: 14px; flex: 0 0 14px; }
+.test-row.pass .mark { color: var(--green); }
+.test-row.fail .mark { color: var(--red); }
+.test-row .io { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+.test-row .io .k { color: var(--muted); }
+.test-row .io .bad { color: #ffb3b3; }
+.test-row .io .good { color: #a5e075; }
+.summary { font-size: 13.5px; margin-bottom: 10px; }
+.summary.good { color: var(--green); }
+.summary.bad { color: var(--yellow); }
+.celebrate {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(55,214,122,.08); border: 1px solid rgba(55,214,122,.35);
+  color: #a7f3c8; font-size: 13.5px;
+}
+.celebrate button { margin-top: 8px; }
+.solution {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #0c1119; border: 1px dashed #2f4364;
+}
+.solution .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.solution pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; color: #cfe0ff; }
+.trace-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 10px; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.trace-row:hover { background: #10192a; border-color: #22304a; }
+.trace-row.sel { background: #142441; border-color: #2c548f; }
+.trace-line { color: var(--muted); font: 12px/1.4 var(--mono); }
+.trace-body { font: 12px/1.45 var(--mono); min-width: 0; }
+.trace-code { color: #8fa3c4; white-space: pre-wrap; }
+.trace-vars { color: #a5e075; margin-top: 2px; white-space: pre-wrap; }
+.trace-vars .none { color: #55617a; }
+.foot-note { color: #4f5a6e; font-size: 11.5px; text-align: center; padding: 6px 0 22px; }
+
+/* ------------------------------- адаптив ------------------------------- */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .sidebar { position: static; max-height: none; }
+  .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
+  .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
+  .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
+  .editor-shell { min-height: 200px; max-height: 46vh; }
+  .topbar { padding: 8px 12px; }
+  .progress-wrap { order: 3; width: 100%; }
+  .progress { flex: 1; width: auto; }
+  .panel { max-height: 46vh; }
+  #stdin { width: 100%; }
+  .editing-foot { display: block; }
+}
+
+
+/* ===================== общий каркас для продуктов ===================== */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hub-card {
+  display: block; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; transition: transform .12s ease, border-color .12s ease;
+}
+.hub-card:hover { border-color: #35507e; }
+.hub-card h3 { margin: 0 0 4px; font-size: 16px; }
+.hub-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.hub-card .tag {
+  display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: #9dc0ff; border: 1px solid #2b4470; border-radius: 999px;
+  padding: 2px 9px;
+}
+.hub-card.soon { opacity: .55; }
+.workspace { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ws-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-label { font-size: 12px; color: var(--muted); }
+.ws-input {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px; color: #cfe0ff;
+  font: 13px/1.4 var(--mono); padding: 7px 10px;
+}
+.ws-input:focus { outline: none; border-color: #35507e; }
+.console {
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  font: 13px/1.5 var(--mono); padding: 12px 14px; min-height: 260px; max-height: 46vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.console .cmd { color: #7fd1ff; }
+.console .err { color: #ff9c9c; }
+.console .ok { color: #a5e075; }
+.console .dim { color: #5f6b80; }
+.prompt-line { display: flex; gap: 8px; align-items: center; }
+.prompt-line .ps1 { color: var(--green); font: 13px/1.4 var(--mono); white-space: nowrap; }
+.prompt-line input {
+  flex: 1; min-width: 0; background: #0a0e15; border: 1px solid var(--line); border-radius: 8px;
+  color: #e7ecf6; font: 13px/1.4 var(--mono); padding: 8px 10px;
+}
+.prompt-line input:focus { outline: none; border-color: #35507e; }
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #0f141d;
+}
+.check-item.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.check-item.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.check-item .mark { font-weight: 800; }
+.check-item.pass .mark { color: var(--green); }
+.check-item.fail .mark { color: var(--red); }
+.check-item .note { color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+.code-area {
+  width: 100%; min-height: 130px; background: #0c1119; border: 1px solid var(--line);
+  border-radius: 10px; color: #cfe0ff; font: 13px/1.5 var(--mono); padding: 10px 12px; resize: vertical;
+}
+.code-area:focus { outline: none; border-color: #35507e; }
+.data-table { width: 100%; border-collapse: collapse; font: 12.5px/1.4 var(--mono); }
+.data-table th, .data-table td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.data-table th { background: #131a26; color: #9dc0ff; font-weight: 600; }
+.data-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark">🔐</span>
+    <span>Кибербезопасность<small>мини-лаборатории: кодировки, хеши, заголовки</small></span>
+  </a>
+  <div class="spacer"></div>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn ok" id="btnCheck">✔ Проверить</button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        
+      </div>
+      <div class="workspace">
+        <div class="two-col">
+  <div>
+    <div class="ws-label">Base64</div>
+    <div class="ws-panel">
+      <input id="b64Input" class="code-area" style="height:64px" placeholder="текст или base64-строка">
+      <div class="btn-row" style="margin-top:6px">
+        <button id="btnB64enc" class="btn">Закодировать</button>
+        <button id="btnB64dec" class="btn">Раскодировать</button>
+      </div>
+      <div id="b64Out" class="out" style="margin-top:6px;word-break:break-all"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Шифр Цезаря</div>
+    <div class="ws-panel">
+      <input id="cesarInput" class="code-area" style="height:56px" placeholder="шифротекст">
+      <div class="btn-row" style="margin-top:6px">
+        <label style="color:#8b97ad;font-size:13px">сдвиг&nbsp;<input id="cesarShift" type="number" value="3" min="1" max="25" style="width:60px;background:#0d1117;color:#e6edf3;border:1px solid #263041;border-radius:6px;padding:4px 6px"></label>
+        <button id="btnCesar" class="btn">Перебрать сдвиги</button>
+      </div>
+      <div id="cesarOut" style="margin-top:6px;max-height:210px;overflow:auto"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Хеш (FNV-1a)</div>
+    <div class="ws-panel">
+      <input id="hashInput" class="code-area" style="height:52px" placeholder="пароль">
+      <div class="btn-row" style="margin-top:6px"><button id="btnHash" class="btn">Хешировать</button></div>
+      <div id="hashOut" class="out" style="margin-top:6px"></div>
+      <div style="margin-top:8px;max-height:220px;overflow:auto" id="hashDict"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">HTTP-заголовки</div>
+    <div class="ws-panel">
+      <textarea id="hdrInput" class="code-area" rows="7" spellcheck="false" placeholder="Server: nginx"></textarea>
+      <div class="btn-row" style="margin-top:6px"><button id="btnParseHdr" class="btn">Разобрать</button></div>
+      <div id="hdrOut" style="margin-top:6px;overflow:auto"></div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Код на проверку</div>
+    <div class="ws-panel">
+      <div class="console" style="max-height:none;border:0;background:transparent;padding:0">
+        <div class="out" style="white-space:pre;font-family:ui-monospace,Consolas,monospace;font-size:13px">1  login = request.args.get('login')
+2  password = request.args.get('password')
+3  sql = "SELECT * FROM users WHERE login='" + login + "' AND password='" + password + "'"
+4  rows = db.execute(sql)
+5  if len(rows) > 0:
+6      session['user'] = login</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="ws-label">Ответ</div>
+    <div class="ws-panel">
+      <div id="ansTextWrap">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">впиши ответ (регистр не важен):</div>
+        <textarea id="ansText" class="code-area" rows="3" spellcheck="false" placeholder="ответ"></textarea>
+      </div>
+
+      <div id="ansRowsWrap" style="display:none">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">оцени каждый заголовок:</div>
+        <div id="ansRows"></div>
+      </div>
+
+      <div id="ansCodeWrap" style="display:none">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">номер строки:</div>
+        <input id="ansLine" class="code-area" style="height:44px" placeholder="например 3" inputmode="numeric">
+        <div style="color:#8b97ad;font-size:13px;margin:8px 0 6px">тип уязвимости:</div>
+        <select id="ansKind" style="width:100%;background:#0d1117;color:#e6edf3;border:1px solid #263041;border-radius:8px;padding:8px">
+          <option value="">— выбери —</option>
+          <option value="SQL-инъекция">SQL-инъекция</option>
+          <option value="XSS">XSS</option>
+          <option value="Слабый пароль">Слабый пароль</option>
+          <option value="Утечка версии сервера">Утечка версии сервера</option>
+        </select>
+      </div>
+
+      <div id="ansPassWrap" style="display:none">
+        <div style="color:#8b97ad;font-size:13px;margin-bottom:6px">твой пароль:</div>
+        <input id="ansPass" class="code-area" style="height:44px" spellcheck="false" placeholder="впиши пароль">
+        <div id="passRules" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Как думать</div>
+    <div class="ws-panel" style="color:#8b97ad;font-size:13px;line-height:1.55">
+      <p style="margin:0 0 8px">1. Что за данные перед тобой?</p>
+      <p style="margin:0 0 8px">2. Кодирование, шифрование или хеш — это разные вещи.</p>
+      <p style="margin:0 0 8px">3. Любой секрет из словаря уже известен атакующему.</p>
+      <p style="margin:0">4. В коде ищи, где ввод пользователя попадает в запрос или в HTML.</p>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs"><button class="tab active"><span class="dot"></span>Проверка</button></div>
+      <div class="panel" id="panel-check"><pre class="out empty">Выполни задание и нажми «Проверить».</pre></div>
+    </section>
+
+    <div class="foot-note">Работает без интернета и без установки · всё выполняется локально в браузере · прогресс хранится на этом устройстве</div>
+  </main>
+</div>
+
+<script>/* ==========================================================================
+   Shell — общий каркас тренажёров IT-квантума.
+   Даёт: список задач с прогрессом, карточку задания, кнопку проверки,
+   подсказку, разбор результатов и хранение прогресса в браузере.
+   Продукт подключает свои задачи и две функции: open(task) и check(task).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var cfg = null;
+  var st = { solved: {}, current: 0, showAll: false };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function save() {
+    try { localStorage.setItem(cfg.storageKey, JSON.stringify(st)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(cfg.storageKey);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      st.solved = d.solved || {};
+      st.showAll = !!d.showAll;
+    } catch (e) {}
+  }
+  function tasks() { return cfg.tasks; }
+  function task(i) { return cfg.tasks[i]; }
+  function unlocked(i) { return st.showAll || i === 0 || !!st.solved[cfg.tasks[i - 1].id]; }
+  function solvedCount() {
+    var n = 0;
+    cfg.tasks.forEach(function (t) { if (st.solved[t.id]) n++; });
+    return n;
+  }
+
+  function renderSidebar() {
+    var html = '';
+    cfg.tasks.forEach(function (t, i) {
+      var done = !!st.solved[t.id];
+      var lock = !unlocked(i);
+      html += '<button class="task-item' + (i === st.current ? ' active' : '') + (done ? ' done' : '') +
+        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
+        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+        '<span class="t-sub">' + esc(t.subtitle || '') + '</span></span></button>';
+    });
+    $('taskList').innerHTML = html;
+    Array.prototype.forEach.call($('taskList').querySelectorAll('.task-item'), function (b) {
+      b.addEventListener('click', function () {
+        var i = parseInt(b.getAttribute('data-i'), 10);
+        if (unlocked(i)) openTask(i);
+      });
+    });
+  }
+
+  function renderProgress() {
+    var n = solvedCount();
+    $('progressBar').style.width = (n / cfg.tasks.length * 100) + '%';
+    $('progressText').innerHTML = '<b>' + n + '</b> из ' + cfg.tasks.length + ' задач';
+  }
+
+  function openTask(i) {
+    st.current = i;
+    var t = tasks()[i];
+    $('taskTitle').textContent = t.title;
+    $('taskSub').textContent = t.subtitle || '';
+    $('taskModule').textContent = cfg.productTitle || '';
+    var lvl = $('taskLevel');
+    if (t.level) {
+      lvl.textContent = t.level;
+      lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard');
+    } else { lvl.textContent = ''; lvl.className = 'chip'; }
+
+    $('theory').innerHTML = t.theory || '';
+    $('prompt').innerHTML = t.prompt || '';
+    var ex = '';
+    (t.examples || []).forEach(function (e) {
+      ex += '<div class="example"><div class="lbl">' + esc(e.label || 'пример') + '</div><pre>' + esc(e.text) + '</pre></div>';
+    });
+    $('examples').innerHTML = ex;
+    var hint = $('hintBox');
+    hint.textContent = t.hint || 'Подсказки нет — попробуй сам.';
+    hint.classList.remove('show');
+
+    $('panel-check').innerHTML = '<pre class="out empty">Пока пусто. Выполни задание в рабочей области и нажми «Проверить».</pre>';
+    if (cfg.open) cfg.open(t, st);
+    renderSidebar();
+    renderProgress();
+    save();
+  }
+
+  function runCheck() {
+    var t = tasks()[st.current];
+    var results;
+    try {
+      results = cfg.check(t, st) || [];
+    } catch (e) {
+      results = [{ ok: false, label: 'Ошибка проверки: ' + (e && e.message ? e.message : e) }];
+    }
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var allOk = results.length > 0 && passed === results.length;
+
+    var html = '';
+    html += allOk
+      ? '<div class="summary good">✔ Готово: все ' + results.length + ' проверок пройдены.</div>'
+      : '<div class="summary bad">Пройдено ' + passed + ' из ' + results.length + ' проверок. Ниже видно, что именно не так.</div>';
+    html += '<div class="check-list">';
+    results.forEach(function (r) {
+      html += '<div class="check-item ' + (r.ok ? 'pass' : 'fail') + '">' +
+        '<span class="mark">' + (r.ok ? '✔' : '✕') + '</span><div>' + esc(r.label) +
+        (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</div></div>';
+    });
+    html += '</div>';
+
+    if (allOk) {
+      var first = !st.solved[t.id];
+      st.solved[t.id] = true;
+      save();
+      if (first) html += '<div class="celebrate">Задача закрыта — прогресс сохранён.</div>';
+      if (st.current + 1 < tasks().length) {
+        html += '<div class="celebrate"><button class="btn ok" id="goNext">Следующая задача →</button></div>';
+      } else {
+        html += '<div class="celebrate"><b>Это последняя задача продукта.</b> Возвращайся на главную и пробуй другой тренажёр.</div>';
+      }
+      renderSidebar();
+      renderProgress();
+    }
+    $('panel-check').innerHTML = html;
+    var next = $('goNext');
+    if (next) next.addEventListener('click', function () { openTask(st.current + 1); });
+    $('panel-check').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function init(config) {
+    cfg = config;
+    load();
+    if ($('productTitle')) $('productTitle').textContent = cfg.productTitle || '';
+    if ($('productSub')) $('productSub').textContent = cfg.productSubtitle || '';
+
+    $('btnCheck').addEventListener('click', runCheck);
+    $('btnHint').addEventListener('click', function () { $('hintBox').classList.toggle('show'); });
+    $('btnShowAll').addEventListener('click', function () {
+      st.showAll = !st.showAll;
+      save();
+      this.textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+      renderSidebar();
+    });
+    $('btnResetProgress').addEventListener('click', function () {
+      if (!confirm('Сбросить прогресс продукта?')) return;
+      st.solved = {};
+      st.showAll = false;
+      save();
+      $('btnShowAll').textContent = 'Открыть все задачи';
+      openTask(0);
+    });
+    $('btnShowAll').textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+
+    var start = 0;
+    for (var i = 0; i < tasks().length; i++) { if (!st.solved[tasks()[i].id]) { start = i; break; } }
+    openTask(unlocked(start) ? start : 0);
+    if (cfg.onReady) cfg.onReady(st);
+  }
+
+  global.Shell = {
+    init: init,
+    state: st,
+    openTask: openTask,
+    runCheck: runCheck,
+    unlocked: unlocked,
+    esc: esc,
+    save: save
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>window.SEC_TASKS = [
+  {
+    id: 'sec1', level: 1,
+    title: 'Base64 — не шифр',
+    subtitle: 'разведка перехваченной строки',
+    theory: '<p><b>Base64</b> — это кодирование, а не шифрование. Оно переводит любые байты в 64 «безопасных» символа, чтобы передать данные по текстовому каналу.</p>' +
+      '<p>Защиты тут нет никакой: любой, кто перехватил строку, раскодирует её обратно. Именно поэтому пароли и токены нельзя «прятать» в base64.</p>' +
+      '<p>Признак base64 — набор из букв, цифр, <code>+</code>, <code>/</code> и <code>=</code> в конце.</p>',
+    prompt: 'В логе нашлась строка <code>ZmxhZ3tiYXNlNjRfZXRvX25lemF2aXNpbW99</code>. Раскодируй её инструментом справа и впиши получившийся текст целиком.',
+    examples: [{ label: 'Инструменты', text: 'Base64 — закодировать / раскодировать' }],
+    hint: 'Вставь строку в поле Base64 и нажми «Раскодировать».',
+    answer: 'text',
+    expected: 'flag{base64_eto_nezavisimo}'
+  },
+  {
+    id: 'sec2', level: 1,
+    title: 'Шифр Цезаря',
+    subtitle: 'перебор всех сдвигов',
+    theory: '<p>Шифр Цезаря сдвигает каждую букву на N позиций по алфавиту. Ключ — это число N.</p>' +
+      '<p>Всего 25 вариантов сдвига. Значит, взлом — это не «взлом», а перебор: смотрим все 25 строк и глазами находим осмысленную. Такой перебор называется <b>brute force</b>.</p>' +
+      '<p>Вывод: короткий ключ не защищает. Современные шифры используют ключи в сотни бит, чтобы перебор был невозможен.</p>',
+    prompt: 'Перехвачено сообщение <code>VFKRRO LV IXQ LI BRX GHFRGH WKLV</code>. Подбери сдвиг и впиши расшифрованный текст.',
+    examples: [{ label: 'Подсказка', text: 'Сдвиг небольшой: 1…5' }],
+    hint: 'Нажми «Перебрать сдвиги» — все 25 вариантов появятся списком.',
+    answer: 'text',
+    expected: 'SCHOOL IS FUN IF YOU DECODE THIS'
+  },
+  {
+    id: 'sec3', level: 2,
+    title: 'Хеш и словарь',
+    subtitle: 'почему «qwerty» — плохой пароль',
+    theory: '<p><b>Хеш</b> — отпечаток данных: из пароля получается короткая строка, но обратно пароль не восстанавливается. Серверы хранят именно хеши.</p>' +
+      '<p>Но если пароль из списка популярных, злоумышленнику не нужно ничего взламывать: он хеширует весь словарь и сравнивает отпечатки. Набор заранее посчитанных паролей называется <b>радужной таблицей</b>.</p>' +
+      '<p>Защита: длинный уникальный пароль + <b>соль</b> (случайная добавка к каждому паролю перед хешированием).</p>',
+    prompt: 'В утёкшей базе найден хеш <code>fa3a38dd</code>. Пользуясь инструментом «Хеш» и списком популярных паролей, определи пароль и впиши его.',
+    examples: [{ label: 'Хеш-функция', text: 'FNV-1a, 8 шестнадцатеричных знаков' }],
+    hint: 'Хешируй пароли из списка по одному или сравни готовую таблицу.',
+    answer: 'text',
+    expected: 'school2019'
+  },
+  {
+    id: 'sec4', level: 3,
+    title: 'Аудит HTTP-заголовков',
+    subtitle: 'что сервер рассказал лишнего',
+    theory: '<p>Заголовки ответа сервера — это его «визитка». Одни помогают браузеру защищать пользователя, другие выдают информацию атакующему.</p>' +
+      '<ul><li><code>Server: Apache/2.4.29</code> — раскрывает ПО и версию, по ней ищут известные дыры;</li>' +
+      '<li><code>Set-Cookie</code> без <code>HttpOnly</code> и <code>Secure</code> — cookie украдут скриптом или по HTTP;</li>' +
+      '<li><code>Strict-Transport-Security</code> — заставляет браузер работать только по HTTPS, это хорошо;</li>' +
+      '<li><code>X-Frame-Options</code> — запрещает встраивать сайт в чужой iframe, защита от кликджекинга;</li>' +
+      '<li><code>Access-Control-Allow-Origin: *</code> — разрешает читать ответ любому сайту.</li></ul>',
+    prompt: 'Разбери ответ сервера инструментом справа и оцени каждый заголовок: <b>безопасно</b> или <b>проблема</b>.',
+    examples: [{ label: 'Инструмент', text: 'HTTP-заголовки → Разобрать' }],
+    hint: 'Спрашивай себя: помогает ли заголовок защите или, наоборот, раздаёт информацию и доступ?',
+    answer: 'rows',
+    headers: [
+      { name: 'Server', value: 'Apache/2.4.29 (Ubuntu)', verdict: 'bad' },
+      { name: 'Content-Type', value: 'text/html; charset=utf-8', verdict: 'ok' },
+      { name: 'Set-Cookie', value: 'session=abc123; Path=/', verdict: 'bad' },
+      { name: 'Strict-Transport-Security', value: 'max-age=31536000', verdict: 'ok' },
+      { name: 'X-Frame-Options', value: 'SAMEORIGIN', verdict: 'ok' },
+      { name: 'Access-Control-Allow-Origin', value: '*', verdict: 'bad' }
+    ]
+  },
+  {
+    id: 'sec5', level: 3,
+    title: 'Code review',
+    subtitle: 'найди дыру в чужом коде',
+    theory: '<p>Самая частая уязвимость школьных проектов — <b>SQL-инъекция</b>: строка запроса склеивается из пользовательского ввода.</p>' +
+      '<p>Если в поле логина ввести <code>\' OR \'1\'=\'1</code>, запрос станет всегда истинным и пустит без пароля. Похожая беда — <b>XSS</b>: пользовательский текст вставляется в HTML без экранирования, и чужой скрипт исполняется у всех посетителей.</p>' +
+      '<p>Лечится не проверкой «плохих символов», а правильной сборкой: параметризованные запросы и экранирование вывода.</p>',
+    prompt: 'Перед тобой код входа на сайт. Укажи <b>номер уязвимой строки</b> и <b>тип уязвимости</b>.',
+    examples: [{ label: 'Код', text: 'смотри панель «Код на проверку» слева' }],
+    hint: 'Ищи место, где ввод пользователя попадает прямо в запрос к базе.',
+    answer: 'code',
+    vulnLine: 3,
+    vulnKind: 'SQL-инъекция'
+  },
+  {
+    id: 'sec6', level: 4,
+    title: 'Стойкий пароль',
+    subtitle: 'правила вместо «сложного на вид»',
+    theory: '<p>Стойкость пароля — это сколько вариантов нужно перебрать. Она растёт от <b>длины</b> быстрее, чем от «страшных» символов.</p>' +
+      '<p>Плохо: словарное слово, дата рождения, ряд клавиш, повторы. Хорошо: длинная фраза или случайный набор из 12+ символов разных типов.</p>' +
+      '<p>И главное: один пароль — один сервис. Утечка на одном сайте не должна открывать остальные.</p>',
+    prompt: 'Придумай пароль, который проходит <b>все правила</b> из панели ответа, и впиши его.',
+    examples: [{ label: 'Плохо', text: 'qwerty2019, 12345678, password' }],
+    hint: '12+ символов, строчная и заглавная буквы, цифра, спецсимвол, без словарных слов и дат.',
+    answer: 'password',
+    samplePassword: 'Kvantum#7Most'
+  }
+];
+</script>
+<script>/* ==========================================================================
+   Кибербезопасность: base64, шифр Цезаря, хеши, разбор HTTP-заголовков.
+   ========================================================================== */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  /* ---- кодировки ---- */
+  function b64enc(s) { return btoa(unescape(encodeURIComponent(String(s)))); }
+  function b64dec(s) {
+    try { return decodeURIComponent(escape(atob(String(s).replace(/\s+/g, '')))); }
+    catch (e) { return null; }
+  }
+  function caesar(text, k) {
+    return String(text).replace(/[a-z]/gi, function (c) {
+      var base = c === c.toLowerCase() ? 97 : 65;
+      return String.fromCharCode((c.charCodeAt(0) - base + k + 26 * 4) % 26 + base);
+    });
+  }
+  function fnv(s) {
+    var h = 0x811c9dc5 >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return ('00000000' + h.toString(16)).slice(-8);
+  }
+  var DICT = ['123456', 'qwerty', 'password', 'letmein', 'school2019', 'sunshine', 'football', 'iloveyou'];
+
+  /* ---- разбор заголовков ---- */
+  function parseHeaders(text) {
+    var lines = String(text).replace(/\r/g, '').split('\n');
+    var out = [];
+    lines.forEach(function (line) {
+      var m = /^\s*([A-Za-z0-9-]+)\s*:\s*(.*)$/.exec(line);
+      if (m) out.push({ name: m[1], value: m[2] });
+    });
+    return out;
+  }
+
+  /* ---- правила пароля ---- */
+  function passRules(p) {
+    p = String(p || '');
+    var low = p.toLowerCase();
+    return [
+      { key: 'len', label: 'длина не меньше 12 символов', ok: p.length >= 12 },
+      { key: 'lower', label: 'есть строчная буква', ok: /[a-zа-я]/.test(p) },
+      { key: 'upper', label: 'есть заглавная буква', ok: /[A-ZА-Я]/.test(p) },
+      { key: 'digit', label: 'есть цифра', ok: /\d/.test(p) },
+      { key: 'spec', label: 'есть спецсимвол (!@#$%^&*_-+=?)', ok: /[!@#$%^&*_\-+=?]/.test(p) },
+      { key: 'nodict', label: 'нет простых слов и дат (123456, qwerty, password, 2019…)', ok: !DICT.some(function (w) { return low.indexOf(w) >= 0; }) && !/(19|20)\d\d/.test(p) },
+      { key: 'norepeat', label: 'нет повторов вида aaa / 111', ok: !/(.)\1\1/.test(p) }
+    ];
+  }
+
+  /* ---- колонка инструментов ---- */
+  function renderDict() {
+    var rows = DICT.map(function (p) { return '<tr><td>' + esc(p) + '</td><td><code>' + fnv(p) + '</code></td></tr>'; }).join('');
+    $('hashDict').innerHTML = '<table class="data-table"><thead><tr><th>пароль</th><th>хеш</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  function bindTools() {
+    $('btnB64enc').addEventListener('click', function () {
+      var r = b64enc($('b64Input').value);
+      $('b64Out').textContent = r;
+    });
+    $('btnB64dec').addEventListener('click', function () {
+      var r = b64dec($('b64Input').value);
+      $('b64Out').textContent = r === null ? 'не получиется: это не корректный base64' : r;
+    });
+
+    $('btnCesar').addEventListener('click', function () {
+      var text = $('cesarInput').value, k = parseInt($('cesarShift').value, 10) || 0;
+      var html = '';
+      for (var i = 1; i <= 25; i++) {
+        html += '<div class="prompt-line" style="padding:2px 0"><span style="color:#6b7a94">сдвиг ' + (i < 10 ? ' ' : '') + i + ' →</span> ' +
+          esc(caesar(text, -i)) + '</div>';
+      }
+      $('cesarOut').innerHTML = '<div style="color:#8b97ad;margin-bottom:6px">заданный сдвиг ' + k + ' (расшифровка −' + k + '): <b style="color:#7ee787">' + esc(caesar(text, -k)) + '</b></div>' + html;
+    });
+
+    $('btnHash').addEventListener('click', function () {
+      var v = $('hashInput').value;
+      $('hashOut').textContent = fnv(v);
+    });
+
+    $('btnParseHdr').addEventListener('click', function () {
+      var list = parseHeaders($('hdrInput').value);
+      if (!list.length) { $('hdrOut').textContent = 'заголовки не найдены'; return; }
+      $('hdrOut').innerHTML = '<table class="data-table"><thead><tr><th>заголовок</th><th>значение</th></tr></thead><tbody>' +
+        list.map(function (h) { return '<tr><td><code>' + esc(h.name) + '</code></td><td>' + esc(h.value) + '</td></tr>'; }).join('') + '</tbody></table>';
+    });
+  }
+
+  /* ---- панель ответа ---- */
+  function setAnswerMode(task) {
+    ['ansTextWrap', 'ansRowsWrap', 'ansCodeWrap', 'ansPassWrap'].forEach(function (id) { $(id).style.display = 'none'; });
+    if (task.answer === 'rows') {
+      $('ansRowsWrap').style.display = '';
+      var html = '<table class="data-table"><thead><tr><th>#</th><th>заголовок</th><th>оценка</th></tr></thead><tbody>';
+      task.headers.forEach(function (h, i) {
+        html += '<tr><td>' + (i + 1) + '</td><td><code>' + esc(h.name) + '</code></td><td>' +
+          '<select class="hdr-sel" data-i="' + i + '"><option value="">— выбери —</option>' +
+          '<option value="ok">безопасно</option><option value="bad">проблема</option></select></td></tr>';
+      });
+      $('ansRows').innerHTML = html + '</tbody></table>';
+      Array.prototype.forEach.call(document.querySelectorAll('.hdr-sel'), function (s) { s.value = ''; });
+    } else if (task.answer === 'code') {
+      $('ansCodeWrap').style.display = '';
+      $('ansLine').value = '';
+      $('ansKind').value = '';
+    } else if (task.answer === 'password') {
+      $('ansPassWrap').style.display = '';
+      $('ansPass').value = '';
+      renderPassRules();
+    } else {
+      $('ansTextWrap').style.display = '';
+      $('ansText').value = '';
+    }
+  }
+
+  function renderPassRules() {
+    var rules = passRules($('ansPass').value);
+    $('passRules').innerHTML = rules.map(function (r) {
+      return '<div class="check-item ' + (r.ok ? 'ok' : '') + '"><span class="mark">' + (r.ok ? '✓' : '·') + '</span><span>' + esc(r.label) + '</span></div>';
+    }).join('');
+  }
+
+  window.SECAPI = {
+    b64enc: b64enc, b64dec: b64dec, caesar: caesar, hash: fnv,
+    parseHeaders: parseHeaders, dict: DICT, passRules: passRules
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    renderDict();
+    bindTools();
+    $('ansPass').addEventListener('input', renderPassRules);
+
+    window.Shell.init({
+      storageKey: 'security.v1',
+      productTitle: 'Кибербезопасность',
+      productSubtitle: 'шифры, хеши, заголовки, уязвимости',
+      tasks: window.SEC_TASKS,
+      open: function (task) {
+        setAnswerMode(task);
+        if (task.headers) {
+          $('hdrInput').value = task.headers.map(function (h) { return h.name + ': ' + h.value; }).join('\n');
+        }
+      },
+      check: function (task) {
+        var out = [];
+        if (task.answer === 'rows') {
+          var sels = document.querySelectorAll('.hdr-sel');
+          var right = 0;
+          task.headers.forEach(function (h, i) {
+            var v = sels[i] ? sels[i].value : '';
+            if (v === h.verdict) { right++; out.push({ ok: true, label: 'заголовок ' + h.name + ' — верно' }); }
+            else out.push({ ok: false, label: 'заголовок ' + h.name, note: v ? 'оценка неверная' : 'оценка не выбрана' });
+          });
+          return [{ ok: right === task.headers.length, label: 'все ' + task.headers.length + ' заголовков оценены верно', note: 'верно: ' + right }].concat(out);
+        }
+        if (task.answer === 'code') {
+          var line = String($('ansLine').value).trim().replace(/\D/g, '');
+          var kind = $('ansKind').value;
+          out.push({ ok: line === String(task.vulnLine), label: 'номер уязвимой строки: ' + task.vulnLine, note: line ? 'твой ответ: ' + line : 'укажи номер' });
+          out.push({ ok: kind === task.vulnKind, label: 'тип уязвимости: ' + task.vulnKind, note: kind ? 'твой ответ: ' + kind : 'выбери тип из списка' });
+          return out;
+        }
+        if (task.answer === 'password') {
+          var rules = passRules($('ansPass').value);
+          var bad = rules.filter(function (r) { return !r.ok; });
+          return rules.map(function (r) { return { ok: r.ok, label: r.label }; })
+            .concat([{ ok: bad.length === 0, label: 'пароль проходит все правила', note: bad.length ? 'не выполнено: ' + bad.length : '' }]);
+        }
+        var val = String($('ansText').value || '').trim();
+        var norm = function (s) { return s.toLowerCase().replace(/\s+/g, ' ').trim(); };
+        return [{ ok: norm(val) === norm(task.expected), label: 'верный ответ', note: val ? '' : 'впиши ответ в поле справа' }];
+      }
+    });
+
+    window.__solve = function (i) {
+      var task = window.SEC_TASKS[i];
+      setAnswerMode(task);
+      if (task.answer === 'rows') {
+        Array.prototype.forEach.call(document.querySelectorAll('.hdr-sel'), function (s) {
+          s.value = task.headers[parseInt(s.getAttribute('data-i'), 10)].verdict;
+        });
+      } else if (task.answer === 'code') {
+        $('ansLine').value = String(task.vulnLine);
+        $('ansKind').value = task.vulnKind;
+      } else if (task.answer === 'password') {
+        $('ansPass').value = task.samplePassword;
+        renderPassRules();
+      } else {
+        $('ansText').value = task.expected;
+      }
+    };
+  });
+})();
+</script>
+</body>
+</html>

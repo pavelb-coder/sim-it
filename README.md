@@ -6,6 +6,22 @@
 
 ## Что уже работает
 
+**7 тренажёров, 77 задач.** Каталог: **https://pavelb-coder.github.io/sim-it/** — оттуда открывается
+любой продукт. Каждый тренажёр — отдельный автономный HTML-файл со своей теорией, рабочей областью,
+автопроверкой и сохранением прогресса.
+
+| Продукт | Что внутри | Задач | Файл |
+|---|---|---|---|
+| **Python-класс** | свой интерпретатор Python в браузере, 6 модулей от `print` до CSV | 39 | [`python/index.html`](python/index.html) |
+| **Терминал Linux** | виртуальная файловая система, 20+ команд, конвейеры и редиректы | 8 | [`terminal/index.html`](terminal/index.html) |
+| **Кибербезопасность** | base64, шифр Цезаря, хеши, аудит HTTP-заголовков, code review | 6 | [`security/index.html`](security/index.html) |
+| **Нейросети** | обучение перцептрона и мини-сети на canvas, граница решения, XOR | 6 | [`ai/index.html`](ai/index.html) |
+| **Сеть** | модель IPv4: подсети, шлюзы, таблицы маршрутов, настоящий `ping` | 6 | [`network/index.html`](network/index.html) |
+| **SQL** | настоящий движок запросов: SELECT/WHERE/ORDER BY/LIMIT и агрегаты | 6 | [`sql/index.html`](sql/index.html) |
+| **Веб-студия** | HTML/CSS с живым превью и проверкой вёрстки | 6 | [`web/index.html`](web/index.html) |
+
+Все продукты работают офлайн: достаточно скачать один `index.html` и открыть двойным щелчком.
+
 ### [`python-class/`](python-class/) — Python-класс (готовый прототип)
 
 Один автономный HTML-файл [`python-class/dist/python-class.html`](python-class/dist/python-class.html) (~113 КБ):
@@ -29,7 +45,8 @@
 ## Проверки
 
 ```bash
-cd python-class && ./test.sh
+python3 build_site.py      # пересобрать все продукты и каталог
+cd python-class && ./test.sh   # тесты движка Python
 ```
 
 * 48 конструкций языка сверяются с настоящим CPython — совпадение построчное;
@@ -46,8 +63,9 @@ GitHub Pages отдаёт тренажёр как обычный сайт:
 
 **https://pavelb-coder.github.io/sim-it/** — открыть в любом браузере, в том числе на планшете.
 
-Публикуется автоматически из ветки `main`: файл `index.html` в корне — это и есть
-собранный тренажёр (его обновляет `python-class/build.py`).
+Публикуется автоматически из ветки `main`. `index.html` в корне — каталог линейки, а каждый
+продукт лежит в своей папке (`python/`, `terminal/`, `network/`, `web/`, `sql/`, `security/`, `ai/`).
+Всё это собирается командой `python3 build_site.py`.
 
 ### 2. Windows
 
@@ -71,8 +89,8 @@ GitHub Pages отдаёт тренажёр как обычный сайт:
 
 ### 4. Без сервера вообще
 
-Открыть файл `python-class/dist/python-class.html` двойным щелчком — он полностью автономный,
-интернет и сервер не нужны.
+Открыть любой собранный файл двойным щелчком: `python/index.html`, `terminal/index.html`,
+`sql/index.html` … — они полностью автономные, интернет и сервер не нужны.
 
 ### Порт
 
@@ -101,15 +119,28 @@ python3 tools/serve.py --port 8087 --host 0.0.0.0 --no-open
 
 ```
 sim-it/
-├── index.html        собранный тренажёр — его отдаёт GitHub Pages
+├── index.html        каталог линейки — его отдаёт GitHub Pages
+├── build_site.py     сборщик: shared/ + products/* → <продукт>/index.html
+├── shared/           общая тема, шаблон страницы, каркас задач и автопроверки
+├── products/         исходники продуктов: workspace.html, tasks.js, app.js, style.css
+├── python/  terminal/  network/  web/  sql/  security/  ai/     собранные тренажёры
+├── python-class/     движок Python: src → build.py → dist/один файл
 ├── start.bat         запуск на Windows (порт 8087)
 ├── start.sh          запуск на Ubuntu/Linux/macOS (порт 8087)
 ├── tools/serve.py    локальный сервер (Python 3), порт 8087
 ├── tools/serve.ps1   сервер для Windows без Python
-├── python-class/     исходники: src → build.py → dist/один файл
 ├── docs/             концепция, планы, пример CI
 └── scripts/sync.sh   сборка + коммит + push одной командой
 ```
+
+### Как добавить свой продукт
+
+1. Создать папку `products/<slug>/` с обязательным `workspace.html` (разметка рабочей области),
+   плюс `tasks.js` (массив задач) и `app.js` (логика + `Shell.init`).
+2. В `app.js` вызвать `Shell.init({storageKey, productTitle, productSubtitle, tasks, open, check})` —
+   каркас сам нарисует список задач, прогресс, подсказки и кнопку проверки.
+3. Запустить `python3 build_site.py` — появятся `<slug>/index.html` и карточка в каталоге.
+   Пока нет `workspace.html`, продукт в каталоге помечен «скоро».
 
 ## Программа курса Python
 
@@ -126,7 +157,7 @@ sim-it/
 
 1. Кабинет педагога: кто что сдал, где застрял класс.
 2. ИИ-ассистент, который объясняет ошибку из traceback, но не выдаёт решение.
-3. Следующий продукт линейки — терминал Linux и симулятор сети в браузере.
+3. Единый профиль ученика: прогресс по всем семи продуктам в одном месте.
 
 ## Лицензия и статус
 

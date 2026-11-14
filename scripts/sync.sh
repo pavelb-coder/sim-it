@@ -10,9 +10,14 @@ fi
 
 MSG="${1:-sync: обновление проекта}"
 
-# пересобрать однофайловый тренажёр, если менялись исходники
+# пересобрать тренажёр Python (он собирается своим build.py)
 if [ -f python-class/build.py ]; then
   python3 python-class/build.py >/dev/null
+fi
+
+# пересобрать остальные продукты и каталог
+if [ -f build_site.py ]; then
+  python3 build_site.py
 fi
 
 git add -A

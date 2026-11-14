@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Нейросеть изнутри · тренажёр для IT-квантума</title>
+<meta name="description" content="Нейросеть изнутри: перцептрон, обучение на глазах, веса, потери, решение задач AND/OR/XOR.">
+<style>/* ======================= Python-класс · IT-квантум ======================= */
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --panel2: #171d29;
+  --line: #242c3c;
+  --text: #e7ecf6;
+  --muted: #8b97ad;
+  --accent: #5aa9ff;
+  --green: #37d67a;
+  --red: #ff6b6b;
+  --yellow: #ffcc55;
+  --violet: #a78bfa;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+/* ------------------------------- шапка ------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #121722, #0d111a);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.logo-mark {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(135deg, #2f6df6, #7bd88f);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.logo small { display: block; font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.spacer { flex: 1; }
+.badge {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: #0f141d;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.badge b { color: var(--green); font-weight: 600; }
+.badge.engine { cursor: help; }
+.progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.progress {
+  width: 120px; height: 6px; border-radius: 999px; background: #1b2231; overflow: hidden;
+}
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2f6df6, #37d67a); transition: width .35s ease; }
+.progress-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.progress-text b { color: var(--text); }
+
+/* ------------------------------- каркас ------------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ---------------------------- список задач ---------------------------- */
+.sidebar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 92px);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-head {
+  padding: 12px 14px 8px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.task-list { overflow-y: auto; padding: 8px; }
+.module-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 10px 4px; margin-top: 4px;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  border-top: 1px solid #1b2230;
+}
+.module-head:first-child { border-top: none; margin-top: 0; }
+.module-head.active { color: var(--accent); }
+.module-head .m-title { font-weight: 600; letter-spacing: .04em; }
+.module-head .m-count { font-variant-numeric: tabular-nums; color: #5f6b80; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chip {
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted);
+  background: #0f141d;
+}
+.chip:empty { display: none; }
+.chip.module { color: #9dc0ff; border-color: #2b4470; }
+.chip.level-easy { color: #7ee0a5; border-color: rgba(55,214,122,.35); }
+.chip.level-mid { color: #ffd580; border-color: rgba(255,204,85,.35); }
+.chip.level-hard { color: #ff9c9c; border-color: rgba(255,107,107,.35); }
+.task-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.task-item:hover:not(.locked) { background: var(--panel2); }
+.task-item.active { background: #17233a; border-color: #2a4b7d; }
+.task-item.locked { color: #5d6879; cursor: not-allowed; }
+.task-item .num {
+  flex: 0 0 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: #1b2333; color: var(--muted);
+}
+.task-item.done .num { background: rgba(55,214,122,.16); color: var(--green); }
+.task-item.active .num { background: #2f6df6; color: #fff; }
+.task-item .t-main { min-width: 0; display: block; }
+.task-item .t-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.task-item .t-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+.sidebar-foot {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.mini-btn {
+  background: #1a2130; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.mini-btn:hover { color: var(--text); border-color: #33405a; }
+
+/* ------------------------------- рабочая ------------------------------- */
+.work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.task-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.task-head h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+.task-head .sub { color: var(--muted); font-size: 12.5px; }
+.task-body { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.prompt { font-size: 15px; }
+.theory {
+  background: #0f141d;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #c3ccdb;
+}
+.theory p { margin: 0 0 6px; }
+.theory p:last-child { margin-bottom: 0; }
+.theory code, .prompt code { background: #1b2433; border-radius: 5px; padding: 1px 5px; color: #dfe8ff; }
+.examples { display: flex; gap: 10px; flex-wrap: wrap; }
+.example {
+  background: #0f141d; border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; font-family: var(--mono); font-size: 12.5px; min-width: 150px;
+}
+.example .lbl { color: var(--muted); font-family: var(--sans); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.example pre { margin: 2px 0 0; white-space: pre-wrap; color: #cfe0ff; }
+.example .arrow { color: var(--muted); font-family: var(--sans); font-size: 11px; margin-top: 6px; }
+.hint-box {
+  display: none;
+  background: rgba(255,204,85,.08);
+  border: 1px solid rgba(255,204,85,.3);
+  color: #ffe6a8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+.hint-box.show { display: block; }
+
+/* ------------------------------- редактор ------------------------------- */
+.editor-card { display: flex; flex-direction: column; }
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  background: #101620;
+}
+.btn {
+  border-radius: 9px; border: 1px solid var(--line);
+  background: #1a2130; color: var(--text);
+  padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: #3a4a68; }
+.btn.primary { background: linear-gradient(180deg, #2f6df6, #2559d6); border-color: #2b62e0; color: #fff; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ok { background: linear-gradient(180deg, #2fbd6c, #22a05a); border-color: #26a860; color: #06220f; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn kbd {
+  background: rgba(255,255,255,.16); border-radius: 4px; padding: 0 4px; font-size: 10.5px; font-weight: 700;
+}
+.editor-shell {
+  position: relative;
+  display: flex;
+  background: #0c1119;
+  min-height: 250px;
+  max-height: 52vh;
+}
+.gutter-nums {
+  flex: 0 0 auto;
+  white-space: pre;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  font: 14px/1.55 var(--mono);
+  color: #3f4a5e;
+  text-align: right;
+  user-select: none;
+  overflow: hidden;
+  background: #0a0f16;
+  border-right: 1px solid #1a2130;
+}
+.code-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+.code-hl, #code {
+  position: absolute; inset: 0;
+  margin: 0; padding: 12px 14px;
+  font: 14px/1.55 var(--mono);
+  white-space: pre; tab-size: 4;
+  border: 0; overflow: auto;
+}
+.code-hl { color: #cbd5e6; pointer-events: none; z-index: 1; }
+#code {
+  color: transparent; caret-color: #fff; background: transparent;
+  resize: none; outline: none; z-index: 2;
+}
+#code::selection { background: rgba(90,169,255,.32); }
+.tok-kw { color: #c792ea; }
+.tok-bi { color: #82aaff; }
+.tok-str { color: #a5e075; }
+.tok-num { color: #f78c6c; }
+.tok-com { color: #5a6779; font-style: italic; }
+.tok-def { color: #ffcb6b; }
+.editor-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--line); background: #101620;
+}
+.stdin-label { font-size: 12px; color: var(--muted); }
+#stdin {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px;
+  color: #cfe0ff; font: 13px/1.4 var(--mono); padding: 6px 9px; width: 190px; height: 32px; resize: vertical;
+}
+.hint-inline { font-size: 11.5px; color: #5f6b80; }
+
+/* ------------------------------- консоль ------------------------------- */
+.tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); background: #101620; }
+.tab {
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  color: var(--muted); padding: 7px 13px; font-size: 13px; border-radius: 9px 9px 0 0;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--panel); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+.tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #38445a; }
+.tab.active .dot { background: var(--accent); }
+.tab .count { font-size: 11px; color: var(--muted); }
+.panel { padding: 12px 14px; min-height: 150px; max-height: 40vh; overflow: auto; }
+.panel[hidden] { display: none; }
+.out {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: #d7e2f2;
+}
+.out.empty { color: #55617a; font-style: italic; }
+.err {
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  background: rgba(255,107,107,.07);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 9px; padding: 10px 12px; color: #ffb3b3; margin-top: 10px;
+}
+.err b { color: var(--red); }
+.test-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: #0f141d; margin-bottom: 7px; font-size: 12.5px;
+}
+.test-row.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.test-row.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.test-row .mark { font-weight: 800; width: 14px; flex: 0 0 14px; }
+.test-row.pass .mark { color: var(--green); }
+.test-row.fail .mark { color: var(--red); }
+.test-row .io { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+.test-row .io .k { color: var(--muted); }
+.test-row .io .bad { color: #ffb3b3; }
+.test-row .io .good { color: #a5e075; }
+.summary { font-size: 13.5px; margin-bottom: 10px; }
+.summary.good { color: var(--green); }
+.summary.bad { color: var(--yellow); }
+.celebrate {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(55,214,122,.08); border: 1px solid rgba(55,214,122,.35);
+  color: #a7f3c8; font-size: 13.5px;
+}
+.celebrate button { margin-top: 8px; }
+.solution {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #0c1119; border: 1px dashed #2f4364;
+}
+.solution .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 4px; }
+.solution pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; color: #cfe0ff; }
+.trace-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 10px; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.trace-row:hover { background: #10192a; border-color: #22304a; }
+.trace-row.sel { background: #142441; border-color: #2c548f; }
+.trace-line { color: var(--muted); font: 12px/1.4 var(--mono); }
+.trace-body { font: 12px/1.45 var(--mono); min-width: 0; }
+.trace-code { color: #8fa3c4; white-space: pre-wrap; }
+.trace-vars { color: #a5e075; margin-top: 2px; white-space: pre-wrap; }
+.trace-vars .none { color: #55617a; }
+.foot-note { color: #4f5a6e; font-size: 11.5px; text-align: center; padding: 6px 0 22px; }
+
+/* ------------------------------- адаптив ------------------------------- */
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .sidebar { position: static; max-height: none; }
+  .task-list { display: flex; overflow-x: auto; gap: 6px; padding: 10px; }
+  .task-item { flex: 0 0 auto; width: auto; max-width: 210px; margin: 0; }
+  .task-item .t-sub { display: none; }
+  .module-head { flex: 0 0 auto; border-top: none; margin: 0; padding: 0 8px; }
+  .editor-shell { min-height: 200px; max-height: 46vh; }
+  .topbar { padding: 8px 12px; }
+  .progress-wrap { order: 3; width: 100%; }
+  .progress { flex: 1; width: auto; }
+  .panel { max-height: 46vh; }
+  #stdin { width: 100%; }
+  .editing-foot { display: block; }
+}
+
+
+/* ===================== общий каркас для продуктов ===================== */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hub-card {
+  display: block; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; transition: transform .12s ease, border-color .12s ease;
+}
+.hub-card:hover { border-color: #35507e; }
+.hub-card h3 { margin: 0 0 4px; font-size: 16px; }
+.hub-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.hub-card .tag {
+  display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: #9dc0ff; border: 1px solid #2b4470; border-radius: 999px;
+  padding: 2px 9px;
+}
+.hub-card.soon { opacity: .55; }
+.workspace { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ws-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-label { font-size: 12px; color: var(--muted); }
+.ws-input {
+  background: #0c1119; border: 1px solid var(--line); border-radius: 8px; color: #cfe0ff;
+  font: 13px/1.4 var(--mono); padding: 7px 10px;
+}
+.ws-input:focus { outline: none; border-color: #35507e; }
+.console {
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  font: 13px/1.5 var(--mono); padding: 12px 14px; min-height: 260px; max-height: 46vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.console .cmd { color: #7fd1ff; }
+.console .err { color: #ff9c9c; }
+.console .ok { color: #a5e075; }
+.console .dim { color: #5f6b80; }
+.prompt-line { display: flex; gap: 8px; align-items: center; }
+.prompt-line .ps1 { color: var(--green); font: 13px/1.4 var(--mono); white-space: nowrap; }
+.prompt-line input {
+  flex: 1; min-width: 0; background: #0a0e15; border: 1px solid var(--line); border-radius: 8px;
+  color: #e7ecf6; font: 13px/1.4 var(--mono); padding: 8px 10px;
+}
+.prompt-line input:focus { outline: none; border-color: #35507e; }
+.check-list { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #0f141d;
+}
+.check-item.pass { border-color: rgba(55,214,122,.35); background: rgba(55,214,122,.06); }
+.check-item.fail { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+.check-item .mark { font-weight: 800; }
+.check-item.pass .mark { color: var(--green); }
+.check-item.fail .mark { color: var(--red); }
+.check-item .note { color: var(--muted); font-size: 12px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+.code-area {
+  width: 100%; min-height: 130px; background: #0c1119; border: 1px solid var(--line);
+  border-radius: 10px; color: #cfe0ff; font: 13px/1.5 var(--mono); padding: 10px 12px; resize: vertical;
+}
+.code-area:focus { outline: none; border-color: #35507e; }
+.data-table { width: 100%; border-collapse: collapse; font: 12.5px/1.4 var(--mono); }
+.data-table th, .data-table td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; }
+.data-table th { background: #131a26; color: #9dc0ff; font-weight: 600; }
+.data-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+.ai-canvas{width:100%;max-width:460px;border:1px solid #263041;border-radius:10px;background:#0d1117;display:block}
+.ai-field{display:flex;flex-direction:column;gap:4px;color:#8b97ad;font-size:12px}
+.ai-field select,.ai-field input[type="number"]{background:#0d1117;color:#e6edf3;border:1px solid #263041;border-radius:8px;padding:6px 8px;font-size:13px}
+.ai-field input[type="number"]{width:90px}
+.ai-field input[type="range"]{width:120px;accent-color:#58a6ff}
+.ai-badge{font-size:13px;color:#8b97ad;background:#0d1117;border:1px solid #263041;border-radius:8px;padding:6px 10px}
+.ai-badge b{color:#7ee787}
+.ai-slider{display:flex;align-items:center;gap:10px;margin:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#8b97ad}
+.ai-slider span{width:22px;color:#e6edf3}
+.ai-slider input{flex:1;accent-color:#f0883e}
+.ai-slider b{width:46px;text-align:right;color:#f0883e}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="../" style="text-decoration:none;color:#e7ecf6">
+    <span class="logo-mark">AI</span>
+    <span>Нейросеть изнутри<small>перцептрон, который обучается прямо в браузере</small></span>
+  </a>
+  <div class="spacer"></div>
+  <a class="badge" href="../" style="text-decoration:none">← все тренажёры</a>
+  <div class="progress-wrap">
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-head">Задачи</div>
+    <div class="task-list" id="taskList"></div>
+    <div class="sidebar-foot">
+      <button class="mini-btn" id="btnShowAll">Открыть все задачи</button>
+      <button class="mini-btn" id="btnResetProgress">Сбросить прогресс</button>
+    </div>
+  </aside>
+
+  <main class="work">
+    <section class="card">
+      <div class="task-head">
+        <div class="chips"><span class="chip module" id="taskModule"></span><span class="chip" id="taskLevel"></span></div>
+        <h1 id="taskTitle"></h1>
+        <div class="sub" id="taskSub"></div>
+      </div>
+      <div class="task-body">
+        <div class="theory" id="theory"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="examples" id="examples"></div>
+        <div class="hint-box" id="hintBox"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="editor-toolbar">
+        <button class="btn ok" id="btnCheck">✔ Проверить</button>
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <div class="spacer"></div>
+        
+      </div>
+      <div class="workspace">
+        <div class="two-col" style="grid-template-columns:1.15fr 1fr">
+  <div>
+    <div class="ws-panel" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+      <label class="ai-field">набор данных
+        <select id="dsSelect"></select>
+      </label>
+      <label class="ai-field">скрытый слой
+        <select id="hiddenSelect">
+          <option value="0">без скрытого слоя</option>
+          <option value="2">2 нейрона</option>
+          <option value="4">4 нейрона</option>
+        </select>
+      </label>
+      <label class="ai-field">эпох
+        <input id="epochsInput" type="number" value="300" min="10" max="5000" step="50">
+      </label>
+      <label class="ai-field">скорость <span id="lrV">0.60</span>
+        <input id="lrInput" type="range" min="0.05" max="1.5" step="0.05" value="0.6">
+      </label>
+    </div>
+
+    <div class="btn-row" style="margin-top:10px">
+      <button id="btnTrain" class="btn btn-primary">Обучить</button>
+      <button id="btnTrainFast" class="btn">Обучить сразу</button>
+      <button id="btnReset" class="btn">Сбросить веса</button>
+      <span class="ai-badge">точность: <b id="accOut">—</b></span>
+      <span class="ai-badge">эпох: <b id="epochOut">0</b></span>
+    </div>
+
+    <div class="ws-label" style="margin-top:12px">Граница решения</div>
+    <canvas id="aiCanvas" width="460" height="380" class="ai-canvas"></canvas>
+    <div id="hintOut" style="color:#8b97ad;font-size:12px;margin-top:6px"></div>
+  </div>
+
+  <div>
+    <div class="ws-label">Ошибка по эпохам</div>
+    <canvas id="aiChart" width="420" height="150" class="ai-canvas"></canvas>
+
+    <div class="ws-label" style="margin-top:14px">Веса вручную (без обучения)</div>
+    <div class="ws-panel">
+      <div class="ai-slider"><span>w1</span><input id="w1S" type="range" min="-4" max="4" step="0.1" value="0"><b id="w1V">0.00</b></div>
+      <div class="ai-slider"><span>w2</span><input id="w2S" type="range" min="-4" max="4" step="0.1" value="0"><b id="w2V">0.00</b></div>
+      <div class="ai-slider"><span>b</span><input id="bS" type="range" min="-4" max="4" step="0.1" value="0"><b id="bV">0.00</b></div>
+      <div style="color:#6b7a94;font-size:12px;margin-top:6px">слайдеры работают, когда скрытого слоя нет</div>
+    </div>
+
+    <div class="ws-label" style="margin-top:14px">Как это работает</div>
+    <div class="ws-panel" style="color:#8b97ad;font-size:13px;line-height:1.6">
+      <p style="margin:0 0 6px"><b style="color:#e6edf3">1.</b> Входы умножаются на веса и складываются со смещением.</p>
+      <p style="margin:0 0 6px"><b style="color:#e6edf3">2.</b> Функция активации превращает сумму в число от 0 до 1.</p>
+      <p style="margin:0 0 6px"><b style="color:#e6edf3">3.</b> Ошибка = насколько ответ отличается от правильного.</p>
+      <p style="margin:0"><b style="color:#e6edf3">4.</b> Веса сдвигаются в сторону меньшей ошибки. Повторить 1000 раз.</p>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="tabs"><button class="tab active"><span class="dot"></span>Проверка</button></div>
+      <div class="panel" id="panel-check"><pre class="out empty">Выполни задание и нажми «Проверить».</pre></div>
+    </section>
+
+    <div class="foot-note">Работает без интернета и без установки · всё выполняется локально в браузере · прогресс хранится на этом устройстве</div>
+  </main>
+</div>
+
+<script>/* ==========================================================================
+   Shell — общий каркас тренажёров IT-квантума.
+   Даёт: список задач с прогрессом, карточку задания, кнопку проверки,
+   подсказку, разбор результатов и хранение прогресса в браузере.
+   Продукт подключает свои задачи и две функции: open(task) и check(task).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  var cfg = null;
+  var st = { solved: {}, current: 0, showAll: false };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function save() {
+    try { localStorage.setItem(cfg.storageKey, JSON.stringify(st)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(cfg.storageKey);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      st.solved = d.solved || {};
+      st.showAll = !!d.showAll;
+    } catch (e) {}
+  }
+  function tasks() { return cfg.tasks; }
+  function task(i) { return cfg.tasks[i]; }
+  function unlocked(i) { return st.showAll || i === 0 || !!st.solved[cfg.tasks[i - 1].id]; }
+  function solvedCount() {
+    var n = 0;
+    cfg.tasks.forEach(function (t) { if (st.solved[t.id]) n++; });
+    return n;
+  }
+
+  function renderSidebar() {
+    var html = '';
+    cfg.tasks.forEach(function (t, i) {
+      var done = !!st.solved[t.id];
+      var lock = !unlocked(i);
+      html += '<button class="task-item' + (i === st.current ? ' active' : '') + (done ? ' done' : '') +
+        (lock ? ' locked' : '') + '" data-i="' + i + '">' +
+        '<span class="num">' + (done ? '✓' : (lock ? '🔒' : (i + 1))) + '</span>' +
+        '<span class="t-main"><span class="t-title">' + esc(t.title) + '</span>' +
+        '<span class="t-sub">' + esc(t.subtitle || '') + '</span></span></button>';
+    });
+    $('taskList').innerHTML = html;
+    Array.prototype.forEach.call($('taskList').querySelectorAll('.task-item'), function (b) {
+      b.addEventListener('click', function () {
+        var i = parseInt(b.getAttribute('data-i'), 10);
+        if (unlocked(i)) openTask(i);
+      });
+    });
+  }
+
+  function renderProgress() {
+    var n = solvedCount();
+    $('progressBar').style.width = (n / cfg.tasks.length * 100) + '%';
+    $('progressText').innerHTML = '<b>' + n + '</b> из ' + cfg.tasks.length + ' задач';
+  }
+
+  function openTask(i) {
+    st.current = i;
+    var t = tasks()[i];
+    $('taskTitle').textContent = t.title;
+    $('taskSub').textContent = t.subtitle || '';
+    $('taskModule').textContent = cfg.productTitle || '';
+    var lvl = $('taskLevel');
+    if (t.level) {
+      lvl.textContent = t.level;
+      lvl.className = 'chip level-' + (t.level === 'легко' ? 'easy' : t.level === 'средне' ? 'mid' : 'hard');
+    } else { lvl.textContent = ''; lvl.className = 'chip'; }
+
+    $('theory').innerHTML = t.theory || '';
+    $('prompt').innerHTML = t.prompt || '';
+    var ex = '';
+    (t.examples || []).forEach(function (e) {
+      ex += '<div class="example"><div class="lbl">' + esc(e.label || 'пример') + '</div><pre>' + esc(e.text) + '</pre></div>';
+    });
+    $('examples').innerHTML = ex;
+    var hint = $('hintBox');
+    hint.textContent = t.hint || 'Подсказки нет — попробуй сам.';
+    hint.classList.remove('show');
+
+    $('panel-check').innerHTML = '<pre class="out empty">Пока пусто. Выполни задание в рабочей области и нажми «Проверить».</pre>';
+    if (cfg.open) cfg.open(t, st);
+    renderSidebar();
+    renderProgress();
+    save();
+  }
+
+  function runCheck() {
+    var t = tasks()[st.current];
+    var results;
+    try {
+      results = cfg.check(t, st) || [];
+    } catch (e) {
+      results = [{ ok: false, label: 'Ошибка проверки: ' + (e && e.message ? e.message : e) }];
+    }
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    var allOk = results.length > 0 && passed === results.length;
+
+    var html = '';
+    html += allOk
+      ? '<div class="summary good">✔ Готово: все ' + results.length + ' проверок пройдены.</div>'
+      : '<div class="summary bad">Пройдено ' + passed + ' из ' + results.length + ' проверок. Ниже видно, что именно не так.</div>';
+    html += '<div class="check-list">';
+    results.forEach(function (r) {
+      html += '<div class="check-item ' + (r.ok ? 'pass' : 'fail') + '">' +
+        '<span class="mark">' + (r.ok ? '✔' : '✕') + '</span><div>' + esc(r.label) +
+        (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</div></div>';
+    });
+    html += '</div>';
+
+    if (allOk) {
+      var first = !st.solved[t.id];
+      st.solved[t.id] = true;
+      save();
+      if (first) html += '<div class="celebrate">Задача закрыта — прогресс сохранён.</div>';
+      if (st.current + 1 < tasks().length) {
+        html += '<div class="celebrate"><button class="btn ok" id="goNext">Следующая задача →</button></div>';
+      } else {
+        html += '<div class="celebrate"><b>Это последняя задача продукта.</b> Возвращайся на главную и пробуй другой тренажёр.</div>';
+      }
+      renderSidebar();
+      renderProgress();
+    }
+    $('panel-check').innerHTML = html;
+    var next = $('goNext');
+    if (next) next.addEventListener('click', function () { openTask(st.current + 1); });
+    $('panel-check').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function init(config) {
+    cfg = config;
+    load();
+    if ($('productTitle')) $('productTitle').textContent = cfg.productTitle || '';
+    if ($('productSub')) $('productSub').textContent = cfg.productSubtitle || '';
+
+    $('btnCheck').addEventListener('click', runCheck);
+    $('btnHint').addEventListener('click', function () { $('hintBox').classList.toggle('show'); });
+    $('btnShowAll').addEventListener('click', function () {
+      st.showAll = !st.showAll;
+      save();
+      this.textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+      renderSidebar();
+    });
+    $('btnResetProgress').addEventListener('click', function () {
+      if (!confirm('Сбросить прогресс продукта?')) return;
+      st.solved = {};
+      st.showAll = false;
+      save();
+      $('btnShowAll').textContent = 'Открыть все задачи';
+      openTask(0);
+    });
+    $('btnShowAll').textContent = st.showAll ? 'Обычный режим' : 'Открыть все задачи';
+
+    var start = 0;
+    for (var i = 0; i < tasks().length; i++) { if (!st.solved[tasks()[i].id]) { start = i; break; } }
+    openTask(unlocked(start) ? start : 0);
+    if (cfg.onReady) cfg.onReady(st);
+  }
+
+  global.Shell = {
+    init: init,
+    state: st,
+    openTask: openTask,
+    runCheck: runCheck,
+    unlocked: unlocked,
+    esc: esc,
+    save: save
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>window.AI_TASKS = [
+  {
+    id: 'ai1', level: 1,
+    title: 'Первое обучение: AND',
+    subtitle: 'нейрон учится логике «И»',
+    theory: '<p>Искусственный нейрон считает взвешенную сумму входов и пропускает её через функцию-«сглаживание»:</p>' +
+      '<p><code>выход = sigmoid(w1·x1 + w2·x2 + b)</code></p>' +
+      '<p><b>Веса</b> w1, w2 показывают важность входов, <b>смещение</b> b сдвигает порог срабатывания. Выход близок к 1 — «да», к 0 — «нет».</p>' +
+      '<p>Обучение — это подбор весов: сеть смотрит на примеры, считает ошибку и чуть-чуть двигает веса в сторону её уменьшения (метод градиентного спуска). Одна полная прокрутка всех примеров — <b>эпоха</b>.</p>',
+    prompt: 'Выбери набор <b>AND</b>, оставь <b>без скрытого слоя</b>, поставь 300 эпох и нажми «Обучить». Добейся точности <b>100%</b> — все четыре примера верны.',
+    examples: [{ label: 'AND', text: '0·0→0, 0·1→0, 1·0→0, 1·1→1' }],
+    hint: 'Если точность застряла, нажми «Сбросить веса» и обучи снова — старт бывает неудачным.',
+    dataset: 'and', hidden: 0, lr: 0.6, seed: 7, minEpochs: 100, minAccuracy: 100
+  },
+  {
+    id: 'ai2', level: 1,
+    title: 'Логика «ИЛИ»',
+    subtitle: 'OR',
+    theory: '<p>В OR достаточно одного активного входа. Для нейрона это значит, что порог ниже: срабатывает уже при сумме 1, а не 2.</p>' +
+      '<p>Смотри на картинку: граница решения — прямая линия, она отделяет одну точку класса 0 от трёх точек класса 1. Такую задачу один нейрон решает всегда.</p>',
+    prompt: 'Обучи сеть на наборе <b>OR</b> (без скрытого слоя) до точности <b>100%</b>.',
+    examples: [{ label: 'OR', text: '0·0→0, 0·1→1, 1·0→1, 1·1→1' }],
+    hint: 'Нужно не меньше 100 эпох и точность 100%.',
+    dataset: 'or', hidden: 0, lr: 0.6, seed: 7, minEpochs: 100, minAccuracy: 100
+  },
+  {
+    id: 'ai3', level: 3,
+    title: 'Предел одного нейрона',
+    subtitle: 'XOR не решается',
+    theory: '<p>XOR — «или, но не оба»: единица там, где входы разные. Точки классов стоят по диагонали, и <b>никакая одна прямая</b> не разделит их на две группы.</p>' +
+      '<p>В 1969 году Минский и Пайперт показали это строго. Один нейрон рисует только прямую, значит 100% на XOR недостижимы — максимум 75%.</p>' +
+      '<p>Именно из-за этого «зима ИИ» длилась до появления многослойных сетей: два слоя нейронов ломают прямую и складывают её из кусков.</p>',
+    prompt: 'Поставь набор <b>XOR</b>, <b>без скрытого слоя</b>, 300 эпох и обучи. Задача считается выполненной, когда точность <b>не превышает 75%</b> — то есть ты убедился в ограничении.',
+    examples: [{ label: 'XOR', text: '0·0→0, 0·1→1, 1·0→1, 1·1→0' }],
+    hint: 'Обучи честно 300 эпох. Если точность вдруг 100% — проверь, что скрытый слой выключен.',
+    dataset: 'xor', hidden: 0, lr: 0.6, seed: 7, minEpochs: 300, maxAccuracy: 75
+  },
+  {
+    id: 'ai4', level: 4,
+    title: 'Скрытый слой спасает',
+    subtitle: 'XOR через два нейрона',
+    theory: '<p>Добавим <b>скрытый слой</b> из двух нейронов. Каждый из них строит свою прямую, а выходной нейрон комбинирует их ответы — получается «изломанная» граница, которая огибает точки XOR.</p>' +
+      '<p>Это и есть глубинная идея нейросетей: слои не «знают» больше, они видят задачу под разными углами, а следующий слой собирает из этого сложное решение.</p>',
+    prompt: 'Поставь набор <b>XOR</b>, <b>2 скрытых нейрона</b>, скорость 0.6, 600 эпох. Добейся точности <b>100%</b>.',
+    examples: [{ label: 'Структура', text: '2 входа → 2 скрытых (tanh) → 1 выход' }],
+    hint: 'Если застряло на 75%, нажми «Сбросить веса» — другой старт иногда решает.',
+    dataset: 'xor', hidden: 2, lr: 0.6, seed: 2, minEpochs: 600, minAccuracy: 100
+  },
+  {
+    id: 'ai5', level: 2,
+    title: 'Веса руками',
+    subtitle: 'почувствуй нейрон',
+    theory: '<p>Прежде чем доверять обучению, полезно выставить веса самому и увидеть, как ездит граница решения.</p>' +
+      '<p>Для AND нужно, чтобы нейрон «загорался» только при двух единицах: например w1 = 1.5, w2 = 1.5 и порог b = −2.2. Сумма 1.5+1.5−2.2 = 0.8 → sigmoid ≈ 0.69 → «да». А при одном входе 1.5−2.2 = −0.7 → ≈ 0.33 → «нет».</p>',
+    prompt: 'На наборе <b>AND</b>, без скрытого слоя, подбери слайдерами <b>w1, w2 и b</b> так, чтобы все четыре примера были верны. Обучение не использовать.',
+    examples: [{ label: 'Слайдеры', text: 'w1, w2, b — под графиком' }],
+    hint: 'Оба веса положительные и большие, смещение — отрицательное и по модулю больше веса.',
+    dataset: 'and', hidden: 0, lr: 0.6, seed: 7, manual: true, minEpochs: 0
+  },
+  {
+    id: 'ai6', level: 3,
+    title: 'Настоящая задача',
+    subtitle: 'прогноз экзамена',
+    theory: '<p>Данные из жизни редко бывают красивыми четвёрками точек. Набор <b>Экзамен</b> — это 11 учеников: вход 1 — часы подготовки, вход 2 — посещаемость, ответ — сдал или нет.</p>' +
+      '<p>Нейрон ищет прямую, которая лучше всего разделяет две группы. Точность 90% и выше означает, что закономерность найдена, а не заучена.</p>' +
+      '<p>Важно: сеть не «понимает» смысл признаков, она просто минимизирует ошибку. Проверять такие модели надо на новых данных, которых не было при обучении.</p>',
+    prompt: 'Обучи сеть на наборе <b>Экзамен</b> без скрытого слоя до точности <b>не ниже 90%</b>.',
+    examples: [{ label: 'Точность', text: 'верных ответов / всего примеров' }],
+    hint: 'Хватит 300–500 эпох со скоростью 0.6.',
+    dataset: 'exam', hidden: 0, lr: 0.6, seed: 7, minEpochs: 300, minAccuracy: 90
+  }
+];
+</script>
+<script>/* ==========================================================================
+   Нейросети: перцептрон / мини-сеть с одним скрытым слоем, обучение на canvas.
+   Без библиотек: forward, обратное распространение, граница решения.
+   ========================================================================== */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function sig(x) { return 1 / (1 + Math.exp(-x)); }
+  function tanh(x) { return Math.tanh(x); }
+
+  var DATASETS = {
+    and: { title: 'AND (И)', points: [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 1]] },
+    or: { title: 'OR (ИЛИ)', points: [[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]] },
+    xor: { title: 'XOR (исключающее ИЛИ)', points: [[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 0]] },
+    exam: {
+      title: 'Экзамен (подготовка + посещаемость)',
+      points: [
+        [0.2, 0.3, 0], [0.1, 0.5, 0], [0.3, 0.2, 0], [0.4, 0.35, 0], [0.45, 0.4, 0],
+        [0.5, 0.5, 1], [0.6, 0.4, 1], [0.7, 0.6, 1], [0.9, 0.2, 1], [0.8, 0.9, 1], [0.3, 0.7, 1]
+      ]
+    }
+  };
+
+  function rng(seed) {
+    var s = seed >>> 0;
+    return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  }
+
+  var state = {
+    dataset: 'and',
+    hidden: 0,
+    lr: 0.6,
+    epochs: 0,
+    seed: 7,
+    manual: false,
+    net: null,
+    loss: [],
+    training: false
+  };
+
+  function buildNet() {
+    var r = rng(state.seed);
+    var net = { hidden: state.hidden, w1: [], b1: [], w2: [], b2: 0 };
+    if (state.hidden > 0) {
+      for (var j = 0; j < state.hidden; j++) {
+        net.w1.push([r() - 0.5, r() - 0.5]);
+        net.b1.push(r() - 0.5);
+        net.w2.push(r() - 0.5);
+      }
+      net.b2 = r() - 0.5;
+    } else {
+      // один нейрон: веса доступны слайдерами
+      net.w1 = [[]]; // заглушка, используем wSimple
+      net.wSimple = [r() - 0.5, r() - 0.5];
+      net.bSimple = r() - 0.5;
+    }
+    state.net = net;
+    state.epochs = 0;
+    state.loss = [];
+    state.manual = false;
+    return net;
+  }
+
+  function forward(net, x1, x2) {
+    if (net.hidden > 0) {
+      var a1 = [];
+      for (var j = 0; j < net.hidden; j++) a1.push(tanh(net.w1[j][0] * x1 + net.w1[j][1] * x2 + net.b1[j]));
+      var z = net.b2;
+      for (var k = 0; k < net.hidden; k++) z += net.w2[k] * a1[k];
+      return { out: sig(z), a1: a1 };
+    }
+    var zs = net.wSimple[0] * x1 + net.wSimple[1] * x2 + net.bSimple;
+    return { out: sig(zs), a1: [] };
+  }
+
+  function trainEpoch(net, points, lr) {
+    var loss = 0;
+    if (net.hidden > 0) {
+      var gw1 = [], gb1 = [], gw2 = [], gb2 = 0;
+      for (var j = 0; j < net.hidden; j++) { gw1.push([0, 0]); gb1.push(0); gw2.push(0); }
+      points.forEach(function (p) {
+        var f = forward(net, p[0], p[1]);
+        var err = f.out - p[2];
+        loss += err * err;
+        var dOut = err * f.out * (1 - f.out);
+        for (var j = 0; j < net.hidden; j++) {
+          gw2[j] += dOut * f.a1[j];
+          var dH = dOut * net.w2[j] * (1 - f.a1[j] * f.a1[j]);
+          gw1[j][0] += dH * p[0];
+          gw1[j][1] += dH * p[1];
+          gb1[j] += dH;
+        }
+        gb2 += dOut;
+      });
+      var n = points.length;
+      for (var j2 = 0; j2 < net.hidden; j2++) {
+        net.w2[j2] -= lr * gw2[j2] / n;
+        net.w1[j2][0] -= lr * gw1[j2][0] / n;
+        net.w1[j2][1] -= lr * gw1[j2][1] / n;
+        net.b1[j2] -= lr * gb1[j2] / n;
+      }
+      net.b2 -= lr * gb2 / n;
+    } else {
+      var g1 = 0, g2 = 0, gb = 0;
+      points.forEach(function (p) {
+        var f = forward(net, p[0], p[1]);
+        var err = f.out - p[2];
+        loss += err * err;
+        var d = err * f.out * (1 - f.out);
+        g1 += d * p[0]; g2 += d * p[1]; gb += d;
+      });
+      var m = points.length;
+      net.wSimple[0] -= lr * g1 / m;
+      net.wSimple[1] -= lr * g2 / m;
+      net.bSimple -= lr * gb / m;
+    }
+    return loss / points.length;
+  }
+
+  function accuracy() {
+    var pts = DATASETS[state.dataset].points, right = 0;
+    pts.forEach(function (p) {
+      var out = forward(state.net, p[0], p[1]).out;
+      if ((out > 0.5 ? 1 : 0) === p[2]) right++;
+    });
+    return Math.round(right * 1000 / pts.length) / 10;
+  }
+
+  /* ------------------------------ рисование ------------------------------ */
+  function drawPlane() {
+    var cv = $('aiCanvas'), ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height, pad = 34;
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, W, H);
+    var lo = -0.3, hi = 1.3, span = hi - lo;
+    function px(v) { return pad + (v - lo) / span * (W - pad - 8); }
+    function py(v) { return H - pad - (v - lo) / span * (H - pad - 8); }
+
+    // сетка предсказаний
+    var step = 6;
+    for (var x = 0; x < W; x += step) {
+      for (var y = 0; y < H; y += step) {
+        var v1 = lo + (x - pad) / (W - pad - 8) * span;
+        var v2 = lo + (H - pad - y) / (H - pad - 8) * span;
+        if (x < pad || y < pad || x > W - 8 || y > H - pad) continue;
+        var o = forward(state.net, v1, v2).out;
+        var a = Math.abs(o - 0.5) * 2;
+        ctx.fillStyle = o > 0.5 ? 'rgba(126,231,135,' + (0.06 + a * 0.22).toFixed(3) + ')' : 'rgba(88,166,255,' + (0.06 + a * 0.22).toFixed(3) + ')';
+        ctx.fillRect(x, y, step, step);
+      }
+    }
+    // оси
+    ctx.strokeStyle = '#263041'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - 8, H - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.stroke();
+    ctx.fillStyle = '#6b7a94'; ctx.font = '11px system-ui';
+    ctx.fillText('вход 1 →', W - 70, H - pad + 16);
+    ctx.save(); ctx.translate(12, pad + 60); ctx.rotate(-Math.PI / 2); ctx.fillText('вход 2 →', 0, 0); ctx.restore();
+    ctx.fillText('0', pad - 4, H - pad + 14); ctx.fillText('1', px(1) - 3, H - pad + 14);
+    ctx.fillText('1', pad - 12, py(1) + 4);
+
+    // точки
+    DATASETS[state.dataset].points.forEach(function (p) {
+      ctx.beginPath();
+      ctx.arc(px(p[0]), py(p[1]), 6, 0, Math.PI * 2);
+      ctx.fillStyle = p[2] ? '#7ee787' : '#58a6ff';
+      ctx.fill();
+      ctx.strokeStyle = '#0d1117'; ctx.lineWidth = 2; ctx.stroke();
+    });
+
+    // подписи
+    ctx.fillStyle = '#8b97ad'; ctx.font = '12px system-ui';
+    ctx.fillText('зелёные — класс 0, синие — класс 1', pad, 16);
+  }
+
+  function drawChart() {
+    var cv = $('aiChart'), ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, W, H);
+    var L = state.loss;
+    ctx.strokeStyle = '#263041'; ctx.beginPath(); ctx.moveTo(0, H - 4); ctx.lineTo(W, H - 4); ctx.stroke();
+    if (L.length < 2) {
+      ctx.fillStyle = '#6b7a94'; ctx.font = '12px system-ui';
+      ctx.fillText('нажми «Обучить» — здесь появится ошибка по эпохам', 8, H / 2);
+      return;
+    }
+    var max = Math.max.apply(null, L) || 1;
+    ctx.strokeStyle = '#f0883e'; ctx.lineWidth = 1.5; ctx.beginPath();
+    L.forEach(function (v, i) {
+      var x = i / (L.length - 1) * (W - 4) + 2;
+      var y = H - 6 - (v / max) * (H - 14);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = '#6b7a94'; ctx.font = '11px system-ui';
+    ctx.fillText('ошибка: ' + L[L.length - 1].toFixed(4) + '   эпох: ' + state.epochs, 6, 12);
+  }
+
+  function syncSliders() {
+    var on = state.net.hidden === 0;
+    ['w1S', 'w2S', 'bS'].forEach(function (id) { $(id).disabled = !on; });
+    if (!on) return;
+    $('w1S').value = state.net.wSimple[0].toFixed(2);
+    $('w2S').value = state.net.wSimple[1].toFixed(2);
+    $('bS').value = state.net.bSimple.toFixed(2);
+    $('w1V').textContent = state.net.wSimple[0].toFixed(2);
+    $('w2V').textContent = state.net.wSimple[1].toFixed(2);
+    $('bV').textContent = state.net.bSimple.toFixed(2);
+  }
+
+  function refresh() {
+    drawPlane();
+    drawChart();
+    syncSliders();
+    $('accOut').textContent = accuracy().toFixed(1) + '%';
+    $('epochOut').textContent = state.epochs;
+    $('hintOut').textContent = state.net.hidden > 0
+      ? 'скрытых нейронов: ' + state.net.hidden + ' (граница решения может быть кривой)'
+      : 'один нейрон: граница решения — прямая линия';
+  }
+
+  /* ------------------------------- обучение ------------------------------- */
+  function train(totalEpochs, animate) {
+    if (state.training) return;
+    var pts = DATASETS[state.dataset].points;
+    state.manual = false;
+    if (!animate) {
+      for (var i = 0; i < totalEpochs; i++) {
+        var l = trainEpoch(state.net, pts, state.lr);
+        if (i % 5 === 0 || i === totalEpochs - 1) state.loss.push(l);
+      }
+      state.epochs += totalEpochs;
+      refresh();
+      return;
+    }
+    state.training = true;
+    $('btnTrain').disabled = true;
+    var left = totalEpochs;
+    function chunk() {
+      var n = Math.min(25, left);
+      for (var i = 0; i < n; i++) {
+        var l = trainEpoch(state.net, pts, state.lr);
+        if (state.epochs % 5 === 0) state.loss.push(l);
+        state.epochs++;
+      }
+      left -= n;
+      refresh();
+      if (left > 0) requestAnimationFrame(chunk);
+      else { state.training = false; $('btnTrain').disabled = false; }
+    }
+    requestAnimationFrame(chunk);
+  }
+
+  window.AIAPI = {
+    state: state, datasets: DATASETS, forward: function (x1, x2) { return forward(state.net, x1, x2).out; },
+    accuracy: accuracy, train: train
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    buildNet();
+
+    var sel = $('dsSelect');
+    Object.keys(DATASETS).forEach(function (k) {
+      var o = document.createElement('option');
+      o.value = k; o.textContent = DATASETS[k].title;
+      sel.appendChild(o);
+    });
+    sel.value = state.dataset;
+    sel.addEventListener('change', function () {
+      state.dataset = sel.value;
+      state.loss = []; state.epochs = 0;
+      buildNet(); refresh();
+    });
+
+    $('hiddenSelect').addEventListener('change', function () {
+      state.hidden = parseInt($('hiddenSelect').value, 10);
+      buildNet(); refresh();
+    });
+    $('lrInput').addEventListener('input', function () {
+      state.lr = parseFloat($('lrInput').value);
+      $('lrV').textContent = state.lr.toFixed(2);
+    });
+
+    $('btnTrain').addEventListener('click', function () {
+      train(parseInt($('epochsInput').value, 10) || 300, true);
+    });
+    $('btnTrainFast').addEventListener('click', function () {
+      train(parseInt($('epochsInput').value, 10) || 300, false);
+    });
+    $('btnReset').addEventListener('click', function () {
+      buildNet(); refresh();
+    });
+
+    ['w1S', 'w2S', 'bS'].forEach(function (id) {
+      $(id).addEventListener('input', function () {
+        if (state.net.hidden !== 0) return;
+        state.net.wSimple[0] = parseFloat($('w1S').value);
+        state.net.wSimple[1] = parseFloat($('w2S').value);
+        state.net.bSimple = parseFloat($('bS').value);
+        state.manual = true;
+        $('w1V').textContent = state.net.wSimple[0].toFixed(2);
+        $('w2V').textContent = state.net.wSimple[1].toFixed(2);
+        $('bV').textContent = state.net.bSimple.toFixed(2);
+        drawPlane();
+        $('accOut').textContent = accuracy().toFixed(1) + '%';
+      });
+    });
+
+    window.Shell.init({
+      storageKey: 'ai.v1',
+      productTitle: 'Нейросети',
+      productSubtitle: 'обучение с нуля на canvas',
+      tasks: window.AI_TASKS,
+      open: function (task) {
+        state.dataset = task.dataset;
+        $('dsSelect').value = task.dataset;
+        state.hidden = task.hidden;
+        $('hiddenSelect').value = String(task.hidden);
+        state.lr = task.lr;
+        $('lrInput').value = String(task.lr);
+        $('lrV').textContent = task.lr.toFixed(2);
+        state.seed = task.seed;
+        buildNet();
+        refresh();
+      },
+      check: function (task) {
+        var out = [];
+        out.push({
+          ok: state.dataset === task.dataset,
+          label: 'выбран набор данных «' + DATASETS[task.dataset].title + '»',
+          note: 'сейчас выбран «' + DATASETS[state.dataset].title + '»'
+        });
+        out.push({
+          ok: state.hidden === task.hidden,
+          label: 'сеть собрана так, как требует задача: ' + (task.hidden ? task.hidden + ' скрытых нейрона' : 'без скрытого слоя'),
+          note: 'сейчас: ' + (state.hidden ? state.hidden + ' скрытых' : 'без скрытого слоя')
+        });
+        var acc = accuracy();
+        if (task.manual) {
+          out.push({
+            ok: state.manual === true,
+            label: 'веса выставлены вручную (слайдеры), а не обучением',
+            note: state.manual ? '' : 'подвигай слайдеры w1, w2 и порог b'
+          });
+          out.push({
+            ok: acc === 100,
+            label: 'все 4 примера классифицированы верно',
+            note: 'точность ' + acc.toFixed(1) + '%'
+          });
+        } else {
+          out.push({
+            ok: state.epochs >= task.minEpochs,
+            label: 'обучение выполнено: не меньше ' + task.minEpochs + ' эпох',
+            note: 'прошло эпох: ' + state.epochs
+          });
+          if (task.maxAccuracy != null) {
+            out.push({
+              ok: acc <= task.maxAccuracy,
+              label: 'точность не выше ' + task.maxAccuracy + '% — потолок одного нейрона',
+              note: 'сейчас ' + acc.toFixed(1) + '%'
+            });
+          } else {
+            out.push({
+              ok: acc >= task.minAccuracy,
+              label: 'точность не ниже ' + task.minAccuracy + '%',
+              note: 'сейчас ' + acc.toFixed(1) + '%'
+            });
+          }
+        }
+        return out;
+      }
+    });
+
+    window.__solve = function (i) {
+      var t = window.AI_TASKS[i];
+      state.dataset = t.dataset; $('dsSelect').value = t.dataset;
+      state.hidden = t.hidden; $('hiddenSelect').value = String(t.hidden);
+      state.lr = t.lr; $('lrInput').value = String(t.lr);
+      state.seed = t.seed;
+      buildNet();
+      if (t.manual) {
+        state.net.wSimple = [1.5, 1.5];
+        state.net.bSimple = -2.2;
+        state.manual = true;
+      } else {
+        train(Math.max(t.minEpochs, 300), false);
+      }
+      refresh();
+    };
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<div class="ws-toolbar" style="margin-bottom:10px">
+  <span class="ws-label">Ping:</span>
+  <select class="ws-input" id="pingSrc"></select>
+  <span class="ws-label">→</span>
+  <select class="ws-input" id="pingDst"></select>
+  <button class="btn primary" id="btnPing">Пинговать</button>
+  <button class="btn ghost" id="btnPingReverse">⇄ наоборот</button>
+  <span class="ws-label" id="linksLine"></span>
+</div>
+<div class="two-col">
+  <div>
+    <div class="ws-label" style="margin-bottom:6px">Устройства — адреса можно менять</div>
+    <div class="net-grid" id="topoList"></div>
+  </div>
+  <div>
+    <div class="ws-label" style="margin-bottom:6px">Что происходит с пакетом</div>
+    <div class="console" id="pingLog" style="max-height:52vh;min-height:200px"></div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+.ai-canvas{width:100%;max-width:460px;border:1px solid #263041;border-radius:10px;background:#0d1117;display:block}
+.ai-field{display:flex;flex-direction:column;gap:4px;color:#8b97ad;font-size:12px}
+.ai-field select,.ai-field input[type="number"]{background:#0d1117;color:#e6edf3;border:1px solid #263041;border-radius:8px;padding:6px 8px;font-size:13px}
+.ai-field input[type="number"]{width:90px}
+.ai-field input[type="range"]{width:120px;accent-color:#58a6ff}
+.ai-badge{font-size:13px;color:#8b97ad;background:#0d1117;border:1px solid #263041;border-radius:8px;padding:6px 10px}
+.ai-badge b{color:#7ee787}
+.ai-slider{display:flex;align-items:center;gap:10px;margin:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#8b97ad}
+.ai-slider span{width:22px;color:#e6edf3}
+.ai-slider input{flex:1;accent-color:#f0883e}
+.ai-slider b{width:46px;text-align:right;color:#f0883e}
