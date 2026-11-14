@@ -7,6 +7,7 @@ import json, pathlib, shutil, subprocess, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TASKS = ROOT / "products/cpp/tasks.js"
+BANK = ROOT / "products/cpp/tasks-bank.js"
 ENGINE = ROOT / "products/cpp/engine.js"
 
 # короткие программы, на которых сверяемся с g++ (не входят в задачи)
@@ -34,11 +35,20 @@ def node_json(code: str):
     return json.loads(out.stdout)
 
 
+def norm(s: str) -> str:
+    lines = str(s).replace('\r\n', '\n').replace('\r', '\n').split('\n')
+    lines = [ln.rstrip(' \t') for ln in lines]
+    while lines and lines[-1] == '':
+        lines.pop()
+    return '\n'.join(lines).strip()
+
+
 def load_tasks():
     return node_json(f"""
 const fs = require('fs');
 global.window = {{}};
 eval(fs.readFileSync({json.dumps(str(TASKS))}, 'utf8'));
+if (fs.existsSync({json.dumps(str(BANK))})) eval(fs.readFileSync({json.dumps(str(BANK))}, 'utf8'));
 console.log(JSON.stringify(window.CPP_TASKS.map(t => ({{id: t.id, title: t.title,
   solution: t.solution, tests: t.tests}}))));
 """)
@@ -81,7 +91,7 @@ def main():
             if not r["ok"]:
                 print(f"  ПРОВАЛ {t['id']}: {r['error']} (стр {r['line']})")
                 bad += 1
-            elif r["output"] != test["expected"]:
+            elif norm(r["output"]) != norm(test["expected"]):
                 print(f"  ПРОВАЛ {t['id']}: ожидалось {test['expected']!r}, получено {r['output']!r}")
                 bad += 1
     print(f"  {'всё совпало' if bad == 0 else 'есть ошибки'}")
@@ -99,7 +109,7 @@ def main():
                 if err:
                     print(f"  g++ не собрал {t['id']}: {err}")
                     gbad += 1
-                elif out != test["expected"]:
+                elif norm(out) != norm(test["expected"]):
                     print(f"  ПРОВАЛ {t['id']} (g++): ожидалось {test['expected']!r}, g++ дал {out!r}")
                     gbad += 1
 

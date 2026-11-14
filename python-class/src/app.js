@@ -392,4 +392,12 @@
   openTask(unlocked(firstUnsolved) ? firstUnsolved : 0);
   $('engineBadge').textContent = 'движок: встроенный · офлайн · без Pyodide';
   window.__app = { state: state, doRun: doRun, doCheck: doCheck, openTask: openTask };
+  window.__solve = function (i) {
+    var t = TASKS[i];
+    if (!t) return;
+    openTask(i);
+    setEditor(t.solution);
+    $('stdin').value = t.tests[0] ? t.tests[0].stdin : '';
+    doRun();
+  };
 })();

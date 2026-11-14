@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Собирает один автономный HTML-файл из src/*."""
 import pathlib
+import re
 
 BASE = pathlib.Path(__file__).resolve().parent   # python-class/
 src = BASE / 'src'
 html = (src / 'index.html').read_text(encoding='utf-8')
-modules = sorted((src / 'modules').glob('*.js'))
+modules = sorted((src / 'modules').glob('*.js'),
+                 key=lambda m: [int(x) if x.isdigit() else x for x in re.split(r'(\d+)', m.name)])
 assert modules, 'нет файлов задач в src/modules'
 module_js = '\n'.join(
     '/* ===== %s ===== */\n%s' % (m.name, m.read_text(encoding='utf-8')) for m in modules

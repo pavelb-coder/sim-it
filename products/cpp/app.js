@@ -183,7 +183,8 @@
 
     window.__solve = function (i) {
       var t = window.CPP_TASKS[i];
-      openTask(t);
+      if (window.Shell && window.Shell.openTask) window.Shell.openTask(i);
+      else openTask(t);
       $('cppCode').value = t.solution;
       $('cppStdin').value = (t.tests[0] && t.tests[0].stdin) || '';
       renderGutter();

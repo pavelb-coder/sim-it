@@ -626,6 +626,8 @@
   Interp.prototype.defaultValue = function (ty) {
     if (ty.name === 'string') return V('string', '');
     if (ty.name === 'bool') return V('bool', false);
+    if (ty.name === 'char') return V('char', '\0');
+    if (ty.name === 'double') return V('double', 0);
     return V('int', 0);
   };
 
@@ -929,7 +931,9 @@
         var old = lv.value;
         if (!old || !isNumType(old.t)) throw CppError('++ и -- работают только с числами', node.line);
         var delta = node.op === '++' ? 1 : -1;
-        var next = V(old.t === 'double' ? 'double' : 'int', numOf(old) + delta);
+        var nextType = old.t === 'double' ? 'double' : (old.t === 'char' ? 'char' : 'int');
+        var nextValue = numOf(old) + delta;
+        var next = nextType === 'char' ? V('char', String.fromCharCode(nextValue)) : V(nextType, nextValue);
         lv.set(next);
         return node.prefix ? next : old;
       }

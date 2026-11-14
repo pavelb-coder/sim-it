@@ -19,13 +19,13 @@ TEMPLATE = (SHARED / 'page.html').read_text(encoding='utf-8')
 PRODUCTS = [
     dict(slug='python', mark='Py', h1='Python-класс',
          title='Python-класс · тренажёр для IT-квантума',
-         subtitle='39 задач с автопроверкой · 6 модулей',
-         description='Браузерный тренажёр Python для IT-квантума: 39 задач с автопроверкой, без установки и без интернета.',
+         subtitle='239 задач с автопроверкой · 10 модулей',
+         description='Браузерный тренажёр Python для IT-квантума: 239 задач по 26 темам с автопроверкой, без установки и без интернета.',
          tag='язык программирования', color='#7bd88f'),
     dict(slug='cpp', mark='C++', h1='C++-класс',
          title='C++-класс · тренажёр для IT-квантума',
-         subtitle='11 задач · свой компилятор C++ прямо в браузере',
-         description='Тренажёр C++ для IT-квантума: 11 задач с автопроверкой, учебное подмножество C++ выполняется в браузере без установки.',
+         subtitle='211 задач · свой компилятор C++ прямо в браузере',
+         description='Тренажёр C++ для IT-квантума: 211 задач по 20 темам с автопроверкой, учебное подмножество C++ выполняется в браузере без установки.',
          tag='язык программирования', color='#5aa9ff'),
     dict(slug='terminal', mark='$_', h1='Терминал Linux',
          title='Терминал Linux · тренажёр для IT-квантума',
@@ -88,6 +88,8 @@ def build_product(cfg: dict) -> str:
     workspace = (pdir / 'workspace.html').read_text(encoding='utf-8')
     tools = (pdir / 'tools.html').read_text(encoding='utf-8') if (pdir / 'tools.html').exists() else ''
     tasks = (pdir / 'tasks.js').read_text(encoding='utf-8')
+    if (pdir / 'tasks-bank.js').exists():
+        tasks += '\n' + (pdir / 'tasks-bank.js').read_text(encoding='utf-8')
     app = ''
     if (pdir / 'engine.js').exists():
         app += (pdir / 'engine.js').read_text(encoding='utf-8') + '\n'
