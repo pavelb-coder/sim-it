@@ -10,9 +10,20 @@
 
 Если хочется красивых адресов и раздачи по классу:
 
-    Windows:      start.bat
+    Windows:      start.bat        (или двойной щелчок по нему)
     Linux/macOS:  ./start.sh
     затем откройте  http://localhost:8087/
+
+Сервер не обязателен. Он нужен только для адреса localhost и раздачи по сети.
+Без него всё работает так же:
+
+    Windows:      open.bat         или start.bat file
+    Linux/macOS:  открыть index.html двойным щелчком
+
+Сервер не поднялся? Диагностика:
+
+    Windows:      start.bat --check
+    Linux/macOS:  ./start.sh --check
 
 Что внутри (каждый продукт — автономный HTML-файл):
 

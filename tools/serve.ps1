@@ -8,7 +8,8 @@
 # Запуск:  powershell -NoProfile -ExecutionPolicy Bypass -File tools\serve.ps1 -Port 8087
 param(
     [int]$Port = 8087,
-    [switch]$NoOpen
+    [switch]$NoOpen,
+    [switch]$Check
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,6 +33,79 @@ $types = @{
     ".md"   = "text/plain; charset=utf-8"
     ".txt"  = "text/plain; charset=utf-8"
     ".zip"  = "application/zip"
+}
+
+function Test-PortFree {
+    param([int]$Port)
+    try {
+        $l = New-Object System.Net.Sockets.TcpListener ([System.Net.IPAddress]::Any), $Port
+        $l.Start()
+        $l.Stop()
+        return $true
+    } catch { return $false }
+}
+
+function Probe-Url {
+    param([string]$Url)
+    try {
+        $wc = New-Object System.Net.WebClient
+        $wc.Proxy = $null          # мимо системного прокси
+        $null = $wc.DownloadString($Url)
+        return "отвечает"
+    } catch {
+        return ("не отвечает: " + $_.Exception.Message.Split("`n")[0].Trim())
+    }
+}
+
+if ($Check) {
+    Write-Host "Проверка окружения для локального сервера (PowerShell)"
+    Write-Host "============================================================"
+    Write-Host ("  PowerShell:    " + $PSVersionTable.PSVersion.ToString())
+    Write-Host ("  папка сайта:   " + $Root)
+    Write-Host ("  index.html:    " + (Test-Path (Join-Path $Root "index.html")))
+
+    $localNames = ""
+    try {
+        $localNames = ([System.Net.Dns]::GetHostAddresses("localhost") |
+            ForEach-Object { $_.IPAddressToString }) -join ", "
+    } catch {
+        $localNames = "не разрешается"
+    }
+    Write-Host ("  localhost ->   " + $localNames)
+
+    if (Test-PortFree $Port) {
+        $portState = "свободен"
+    } else {
+        $portState = "занят другим процессом — сервер возьмёт следующий"
+    }
+    Write-Host ("  порт " + $Port + ":       " + $portState)
+
+    $proxyNote = "не задан"
+    try {
+        $proxy = [System.Net.WebRequest]::DefaultWebProxy
+        if ($proxy) {
+            $probe = [Uri]("http://127.0.0.1:" + $Port + "/")
+            if ($proxy.IsBypassed($probe)) {
+                $proxyNote = "localhost в исключениях — хорошо"
+            } else {
+                $proxyNote = "localhost идёт через прокси — добавьте его в исключения"
+            }
+        }
+    } catch {
+        $proxyNote = "не удалось определить"
+    }
+    Write-Host ("  прокси:        " + $proxyNote)
+
+    Write-Host ""
+    Write-Host "Адреса (имеет смысл, когда сервер уже запущен):"
+    $urls = @("http://localhost:$Port/", "http://127.0.0.1:$Port/")
+    foreach ($url in $urls) {
+        Write-Host ("  " + $url.PadRight(28) + (Probe-Url $url))
+    }
+    Write-Host ""
+    Write-Host "Если все адреса молчат — сервер не запущен или слушает другой порт."
+    Write-Host "Тренажёры работают и без сервера: откройте index.html из этой папки."
+    exit 0
 }
 
 function Start-Listener {
@@ -81,10 +155,15 @@ Write-Host "  открыть: $url"
 Write-Host "  запасной: http://127.0.0.1:$port/"
 try {
     $ips = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) |
-        Where-Object { $_.AddressFamily -eq 'InterNetwork' -and -not $_.ToString().StartsWith("127.") }
+        Where-Object {
+            $_.AddressFamily -eq 'InterNetwork' -and
+            -not $_.ToString().StartsWith("127.") -and
+            -not $_.ToString().StartsWith("169.254.")
+        }
     foreach ($ip in $ips) { Write-Host "  в локальной сети: http://$ip`:$port/" }
 } catch { }
 Write-Host "  остановить: Ctrl+C в этом окне"
+Write-Host "  (тот же сайт открывается и без сервера: index.html в папке)"
 Write-Host "============================================================"
 if (-not $NoOpen) { Start-Process $url | Out-Null }
 
@@ -105,7 +184,8 @@ while ($true) {
         $rawPath = ($rawPath -split "\?")[0]
         $rel = [System.Uri]::UnescapeDataString($rawPath).TrimStart("/")
         if ([string]::IsNullOrWhiteSpace($rel)) { $rel = "index.html" }
-        $rel = $rel -replace "/", "\"
+        # Разделитель путей берём у системы: на Windows это "\", на Linux "/".
+        $rel = $rel -replace "/", [System.IO.Path]::DirectorySeparatorChar
         $path = Join-Path $Root $rel
 
         if ((Test-Path $path -PathType Container)) { $path = Join-Path $path "index.html" }
