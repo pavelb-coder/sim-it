@@ -1,7 +1,6 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-cd /d "%~dp0"
 
 rem ===========================================================================
 rem  Тренажёры IT-квантума — запуск на Windows.
@@ -11,11 +10,21 @@ rem  start.bat 8090       то же на другом порту
 rem  start.bat file       без сервера: открыть index.html как файл
 rem  start.bat --check    диагностика (результат в start-log.txt)
 rem
-rem  Окно больше не закрывается молча: в конце всегда пауза,
-rem  а все шаги пишутся в start-log.txt рядом со скриптом.
+rem  pushd вместо cd /d: работает и с локального диска, и с сетевой шары
+rem  вида \\server\share\... (cd /d по UNC не работает вообще).
+rem  В конце всегда пауза, шаги пишутся в start-log.txt.
 rem ===========================================================================
 
-set "ROOT=%~dp0"
+set "ORIG=%~dp0"
+pushd "%~dp0"
+if errorlevel 1 (
+  echo Не удалось перейти в папку скрипта: %~dp0
+  echo Проверьте, что папка доступна и имя не содержит лишних символов.
+  pause
+  exit /b 1
+)
+
+set "ROOT=%CD%\"
 set "LOG=%ROOT%start-log.txt"
 set "PORT=%1"
 if "%PORT%"=="" set "PORT=8087"
@@ -40,19 +49,19 @@ if not exist "%ROOT%index.html" (
   echo [ОШИБКА] В этой папке нет index.html.
   echo          Похоже, архив открыт внутри программы-просмотрщика,
   echo          а не распакован. Щёлкните по ZIP правой кнопкой -
-  echo          "Извлечь всё", затем запустите start.bat из распакованной папки.
+  echo          "Извлечь все", затем запустите start.bat из распакованной папки.
   call :log "нет index.html в %ROOT%"
   goto fail
 )
 
-rem --- 1. Python через лаунчер py (заглушка из Microsoft Store не считается) --
+rem --- 1. Python через лаунчер py (заглушка Microsoft Store не считается) ---
 where py >nul 2>nul
 if %errorlevel%==0 (
   py -3 -c "import sys" >nul 2>&1
   if !errorlevel!==0 goto use_py
 )
 
-rem --- 2. Python в PATH -------------------------------------------------------
+rem --- 2. Python в PATH ----------------------------------------------------
 where python >nul 2>nul
 if %errorlevel%==0 (
   python -c "import sys" >nul 2>&1
@@ -62,16 +71,16 @@ if %errorlevel%==0 (
 goto use_powershell
 
 :use_py
-call :log "сервер: py -3 tools\\serve.py"
-py -3 tools\serve.py %PORT%
+call :log "сервер: py -3 tools\serve.py"
+py -3 "%ROOT%tools\serve.py" %PORT%
 set "RC=!errorlevel!"
 call :log "serve.py завершился с кодом !RC!"
 if not "!RC!"=="0" goto hint
 goto end
 
 :use_python
-call :log "сервер: python tools\\serve.py"
-python tools\serve.py %PORT%
+call :log "сервер: python tools\serve.py"
+python "%ROOT%tools\serve.py" %PORT%
 set "RC=!errorlevel!"
 call :log "serve.py завершился с кодом !RC!"
 if not "!RC!"=="0" goto hint
@@ -79,7 +88,7 @@ goto end
 
 :use_powershell
 echo Python не найден — поднимаю сервер на PowerShell (без прав администратора).
-call :log "сервер: powershell tools\\serve.ps1 -Port %PORT%"
+call :log "сервер: powershell tools\serve.ps1 -Port %PORT%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\serve.ps1" -Port %PORT%
 set "RC=!errorlevel!"
 call :log "serve.ps1 завершился с кодом !RC!"
@@ -91,28 +100,32 @@ echo.
 echo [ОШИБКА] Сервер на PowerShell не запустился (код !RC!).
 echo          Тренажёры всё равно работают: открываю каталог как обычный файл.
 echo          Подробности: %LOG%
+echo.
+echo Если выше были строки вида "Unexpected token" и кракозябры
+echo (РѕРїСЂРµРґРµР»РёС‚СЊ) — файл tools\serve.ps1 сохранён без BOM.
+echo Возьмите свежий архив с сайта или запустите open.bat (без сервера).
 call :log "powershell-сервер не запустился"
 goto openfile
 
 :hint
 echo.
-echo [ВНИМАНИЕ] Сервер завершился. Если окно было открыто двойным щелчком,
-echo            проверьте сообщение выше или выполните start.bat --check.
-echo            Можно вообще без сервера: open.bat
+echo [ВНИМАНИЕ] Сервер завершился. Если окно открыто двойным щелчком,
+echo            выполните start.bat --check или просто откройте open.bat.
 goto end
 
 :check
 echo Диагностика окружения…
 echo.
+echo Диагностика >> "%LOG%"
 if exist "%ROOT%tools\serve.py" (
   where py >nul 2>nul
   if !errorlevel!==0 (
-    py -3 tools\serve.py --check
+    py -3 "%ROOT%tools\serve.py" --check
     goto checkdone
   )
   where python >nul 2>nul
   if !errorlevel!==0 (
-    python tools\serve.py --check
+    python "%ROOT%tools\serve.py" --check
     goto checkdone
   )
 )
@@ -127,7 +140,7 @@ echo   Открываю каталог тренажёров как файл: ind
 echo   Сервер и интернет не нужны — всё работает локально.
 echo ============================================================
 if exist "%ROOT%index.html" (
-  start "" "%ROOT%index.html"
+  start "" "%ORIG%index.html"
 ) else (
   echo [ОШИБКА] index.html не найден. Соберите сайт: python3 build_site.py
   goto fail
@@ -143,9 +156,10 @@ goto end
 echo.
 echo Окно можно закрыть. Если что-то не открылось — пришлите start-log.txt.
 pause
+popd
 endlocal
 exit /b 0
 
 :log
->> "%LOG%" echo %~1
+>> "%LOG%" echo %~1 2>nul
 exit /b 0
