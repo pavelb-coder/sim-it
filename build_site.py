@@ -97,7 +97,11 @@ def build_python() -> str:
                    cwd=str(BASE / 'python-class'), stdout=subprocess.DEVNULL)
     dst = BASE / 'python' / 'index.html'
     dst.parent.mkdir(exist_ok=True)
-    shutil.copyfile(BASE / 'python-class' / 'dist' / 'python-class.html', dst)
+    html = (BASE / 'python-class' / 'dist' / 'python-class.html').read_text(encoding='utf-8')
+    # В dist ссылка «все тренажёры» ведёт на два уровня вверх (python-class/dist/),
+    # а в python/index.html достаточно одного: python/ → корень.
+    html = html.replace('href="../../index.html"', 'href="../index.html"')
+    dst.write_text(html, encoding='utf-8')
     return 'python/index.html'
 
 
@@ -174,7 +178,7 @@ def build_hub(products_built: list) -> str:
         size = f"{(page.stat().st_size / 1024):.0f} КБ" if ready else ''
         arrow = ' · открыть →' if ready else ' · скоро'
         card = (
-            '<a class="hub-card' + ('' if ready else ' soon') + '" href="' + cfg['slug'] + '/">'
+            '<a class="hub-card' + ('' if ready else ' soon') + '" href="' + cfg['slug'] + '/index.html">'
             '<div class="chips"><span class="chip module">' + cfg['tag'] + '</span></div>'
             '<h3>' + cfg['mark'].replace('&', '&amp;') + ' ' + cfg['h1'] + '</h3>'
             '<p>' + cfg['subtitle'] + '</p>'

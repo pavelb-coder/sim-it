@@ -26,7 +26,10 @@ for marker, code in parts.items():
 out = BASE / 'dist'
 out.mkdir(exist_ok=True)
 target = out / 'python-class.html'
-target.write_text(html, encoding='utf-8')
+# В dist файл лежит на уровень глубже (python-class/dist/), поэтому ссылка
+# «все тренажёры» поднимается на две папки: dist → python-class → корень.
+dist_html = html.replace('href="../index.html"', 'href="../../index.html"')
+target.write_text(dist_html, encoding='utf-8')
 print('собрано:', target, round(len(html) / 1024, 1), 'КБ')
 
 # копия в корне репозитория — её отдаёт локальный сервер и GitHub Pages
