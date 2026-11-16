@@ -4,6 +4,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT="${1:-8087}"
+if [ "$PORT" = "--check" ] || [ "$PORT" = "-c" ]; then
+  exec python3 tools/serve.py --check
+fi
 PY=""
 for candidate in python3 python; do
   if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
@@ -24,5 +27,7 @@ if command -v busybox >/dev/null 2>&1; then
 fi
 
 echo "Не найден ни python3, ни npx, ни busybox."
+echo "Проверить окружение (если сервер запускается, а localhost не открывается):"
+echo "  python3 tools/serve.py --check"
 echo "Откройте файл напрямую: python-class/dist/python-class.html"
 exit 1
