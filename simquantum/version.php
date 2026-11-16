@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_simquantum';
-$plugin->version   = 2026111400;
+$plugin->version   = 2026111600;
 $plugin->requires  = 2022041900;      // Moodle 4.0 и новее.
 $plugin->supported = [400, 500];      // Проверено на Moodle 4.0 … 5.x.
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.0';
+$plugin->release   = '1.0.1';
